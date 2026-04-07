@@ -1,0 +1,29 @@
+# Dependências de Bibliotecas
+node_modules/
+
+# Ficheiros de Build/Produção
+# Estes ficheiros são gerados automaticamente para colocar o site online
+dist/
+
+# Logs e Cache
+npm-debug. log*
+yarn-debug. log*
+yarn-error. log*
+.pnpm-debug. log*
+.cache/
+
+# Ficheiros do Ambiente Local
+.env
+.env. local
+.env.*.local
+
+
+
+# Configurações pessoais do Editor (Opcional, mas recomendado)
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
