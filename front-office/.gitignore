@@ -1,9 +1,13 @@
-# Dependências de Bibliotecas
+# Dependências de Bibliotecas (O MAIS IMPORTANTE)
+# Nunca fazer push desta pasta. Ela é recriada com 'npm install'
 node_modules/
 
 # Ficheiros de Build/Produção
 # Estes ficheiros são gerados automaticamente para colocar o site online
 dist/
+# Se usares Nuxt, ignora também:
+.output/
+.nuxt/
 
 # Logs e Cache
 npm-debug. log*
@@ -12,12 +16,15 @@ yarn-error. log*
 .pnpm-debug. log*
 .cache/
 
-# Ficheiros do Ambiente Local
+# Ficheiros do Ambiente Local (Segurança)
+# Contêm senhas ou chaves de API privadas
 .env
 .env. local
 .env.*.local
 
-
+# Ficheiros específicos do Sistema Operacional
+.DS_Store
+Thumbs.db
 
 # Configurações pessoais do Editor (Opcional, mas recomendado)
 .vscode/

@@ -14,7 +14,7 @@
             Pioneirismo no futuro das experiências espaciais e logística orbital avançada.
           </p>
           <div style="display: flex; flex-wrap: wrap; gap: 14px; margin-top: 24px;">
-            <router-link to="/book" class="btn btn-primary">Reserve Sua Jornada</router-link>
+            <router-link to="/book" class="btn btn-primary">Reserve A Sua Jornada</router-link>
             <router-link to="/missions" class="btn btn-secondary">Ver Missões Ativas</router-link>
           </div>
         </div>
