@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { mockData } from '../mockData'
 import { Search, ChevronLeft, ChevronRight, Plus, X, User, Mail, Phone, Calendar, Truck } from 'lucide-vue-next'
 
@@ -7,10 +7,37 @@ const filter = ref('disponiveis')
 const searchQuery = ref('')
 const isAddCourierOpen = ref(false)
 
+const couriers = ref([])
+
+onMounted(async () => {
+  try {
+    const res = await fetch('http://localhost:1338/api/estafetas')
+    const json = await res.json()
+    couriers.value = json.data.map(item => ({
+      id: `C-${item.documentId ? item.documentId.substring(0,4) : item.id}`,
+      initials: item.Nome ? item.Nome.substring(0, 2).toUpperCase() : '??',
+      name: item.Nome || 'Estafeta Sem Nome',
+      performance: Math.floor(Math.random() * 20) + 80, // Aleatório entre 80 e 100 já que não há no DB
+      status: item.Disponivel ? 'Disponível' : 'Ativo'
+    }))
+  } catch (error) {
+    console.error('Erro ao buscar estafetas do Strapi:', error)
+    couriers.value = mockData.couriers // fallback se o Strapi falhar
+  }
+})
+
+const stats = computed(() => {
+  return {
+    total: couriers.value.length,
+    available: couriers.value.filter(c => c.status === 'Disponível').length,
+    active: couriers.value.filter(c => c.status === 'Ativo').length
+  }
+})
+
 const filteredCouriers = computed(() => {
-  let list = mockData.couriers
-  if (filter.value === 'ativos') list = mockData.couriers.filter(c => c.status === 'Ativo')
-  else if (filter.value === 'disponiveis') list = mockData.couriers.filter(c => c.status === 'Disponível')
+  let list = couriers.value
+  if (filter.value === 'ativos') list = couriers.value.filter(c => c.status === 'Ativo')
+  else if (filter.value === 'disponiveis') list = couriers.value.filter(c => c.status === 'Disponível')
   
   if (searchQuery.value) {
     list = list.filter(c => c.name.toLowerCase().includes(searchQuery.value.toLowerCase()))
@@ -49,15 +76,15 @@ const toggleAddCourier = () => {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
         <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-[#233246] pb-3">TOTAL DE ESTAFETAS</div>
-        <div class="text-5xl font-black text-white relative z-10 p-2">{{ mockData.couriersStats.total }}</div>
+        <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.total }}</div>
       </div>
       <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
         <div class="text-primary font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-[#233246] pb-3">ESTAFETAS DISPONÍVEIS</div>
-        <div class="text-5xl font-black text-white relative z-10 p-2">{{ mockData.couriersStats.available }}</div>
+        <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.available }}</div>
       </div>
       <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
         <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-[#233246] pb-3">ESTAFETAS ATIVOS</div>
-        <div class="text-5xl font-black text-white relative z-10 p-2">{{ mockData.couriersStats.active }}</div>
+        <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.active }}</div>
       </div>
     </div>
 
@@ -75,7 +102,7 @@ const toggleAddCourier = () => {
             @click="setFilter('disponiveis')"
             class="pb-4 border-b-[3px] transition-colors duration-300"
             :class="filter === 'disponiveis' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'"
-          >Disponíveis ({{ mockData.couriersStats.available }})</button>
+          >Disponíveis ({{ stats.available }})</button>
           <button 
             @click="setFilter('ativos')"
             class="pb-4 border-b-[3px] transition-colors duration-300"
@@ -157,7 +184,7 @@ const toggleAddCourier = () => {
         <!-- Pagination -->
         <div class="border-t border-[#233246] p-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-[#111926]">
           <span class="text-sm text-gray-400">
-            <strong class="text-white">1-4</strong> de {{ mockData.couriersStats.available }} resultados
+            <strong class="text-white">1-{{ filteredCouriers.length }}</strong> de {{ filteredCouriers.length }} resultados
           </span>
           <div class="flex gap-2">
             <button class="w-9 h-9 flex items-center justify-center rounded-full border border-[#233246] text-gray-400 hover:text-white hover:border-gray-500 hover:bg-[#1a2636] transition-colors bg-[#080d14]">

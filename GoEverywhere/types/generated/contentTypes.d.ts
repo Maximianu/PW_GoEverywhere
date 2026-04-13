@@ -563,6 +563,38 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiEstafetaEstafeta extends Struct.CollectionTypeSchema {
+  collectionName: 'estafetas';
+  info: {
+    displayName: 'Estafeta';
+    pluralName: 'estafetas';
+    singularName: 'estafeta';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    AreaDeAtuacao: Schema.Attribute.Enumeration<
+      ['Braga', 'Porto', 'Guimaraes']
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    Disponivel: Schema.Attribute.Boolean;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::estafeta.estafeta'
+    > &
+      Schema.Attribute.Private;
+    Nome: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
   collectionName: 'globals';
   info: {
@@ -589,6 +621,40 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     siteDescription: Schema.Attribute.Text & Schema.Attribute.Required;
     siteName: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiPedidoMissionPedidoMission
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'pedido_missions';
+  info: {
+    displayName: 'Pedido(Mission)';
+    pluralName: 'pedido-missions';
+    singularName: 'pedido-mission';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    Cliente: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    Destino: Schema.Attribute.Enumeration<['Lua', 'Marte ', 'Jupiter']>;
+    Estado: Schema.Attribute.Enumeration<
+      ['Pendente', 'Aprovado', 'Rejeitado', 'Transito', 'Cocluido']
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::pedido-mission.pedido-mission'
+    > &
+      Schema.Attribute.Private;
+    Prioridade: Schema.Attribute.Integer;
+    publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1110,7 +1176,9 @@ declare module '@strapi/strapi' {
       'api::article.article': ApiArticleArticle;
       'api::author.author': ApiAuthorAuthor;
       'api::category.category': ApiCategoryCategory;
+      'api::estafeta.estafeta': ApiEstafetaEstafeta;
       'api::global.global': ApiGlobalGlobal;
+      'api::pedido-mission.pedido-mission': ApiPedidoMissionPedidoMission;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

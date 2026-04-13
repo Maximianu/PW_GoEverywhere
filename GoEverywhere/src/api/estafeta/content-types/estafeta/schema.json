@@ -1,0 +1,29 @@
+{
+  "kind": "collectionType",
+  "collectionName": "estafetas",
+  "info": {
+    "singularName": "estafeta",
+    "pluralName": "estafetas",
+    "displayName": "Estafeta"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Nome": {
+      "type": "string"
+    },
+    "AreaDeAtuacao": {
+      "type": "enumeration",
+      "enum": [
+        "Braga",
+        "Porto",
+        "Guimaraes"
+      ]
+    },
+    "Disponivel": {
+      "type": "boolean"
+    }
+  }
+}

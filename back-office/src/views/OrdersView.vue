@@ -1,15 +1,47 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { mockData } from '../mockData'
 import { MapPin, CheckCircle2, XCircle, UserPlus, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
 const filter = ref('pendentes')
 
+const orders = ref([])
+
+onMounted(async () => {
+  try {
+    // A rota API normalmente pluraliza o ID do Content-Type. "pedido-mission" -> "pedido-missions"
+    const res = await fetch('http://localhost:1338/api/pedido-missions')
+    const json = await res.json()
+    
+    orders.value = json.data.map(item => ({
+      id: item.documentId || item.id,
+      client: item.Cliente || 'Sem Cliente',
+      initials: item.Cliente ? item.Cliente.substring(0, 2).toUpperCase() : '??',
+      email: 'n/a', // Não tem no Strapi
+      destination: item.Destino || 'Não Definido',
+      date: new Date(item.createdAt || Date.now()).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }),
+      status: item.Estado || 'Pendente',
+      priority: item.Prioridade || 0
+    }))
+  } catch (error) {
+    console.error('Erro ao buscar pedidos do Strapi:', error)
+    orders.value = mockData.orders // fallback caso o Strapi não esteja acessível
+  }
+})
+
+const stats = computed(() => {
+  return {
+    total: orders.value.length,
+    pending: orders.value.filter(o => o.status === 'Pendente').length,
+    approvedToday: orders.value.filter(o => o.status === 'Aprovado').length
+  }
+})
+
 const filteredOrders = computed(() => {
-  if (filter.value === 'todos') return mockData.orders
-  if (filter.value === 'pendentes') return mockData.orders.filter(o => o.status === 'Pendente')
-  if (filter.value === 'aprovados') return mockData.orders.filter(o => o.status === 'Aprovado')
-  return mockData.orders
+  if (filter.value === 'todos') return orders.value
+  if (filter.value === 'pendentes') return orders.value.filter(o => o.status === 'Pendente')
+  if (filter.value === 'aprovados') return orders.value.filter(o => o.status === 'Aprovado')
+  return orders.value
 })
 
 const setFilter = (val) => {
@@ -29,15 +61,15 @@ const setFilter = (val) => {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
         <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">TOTAL DE PEDIDOS</div>
-        <div class="text-5xl font-black text-white relative z-10 p-2">{{ mockData.ordersStats.total }}</div>
+        <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.total }}</div>
       </div>
       <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
         <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">PEDIDOS PENDENTES</div>
-        <div class="text-5xl font-black text-white relative z-10 p-2">{{ mockData.ordersStats.pending }}</div>
+        <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.pending }}</div>
       </div>
       <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
         <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">APROVADOS HOJE</div>
-        <div class="text-5xl font-black text-white relative z-10 p-2">{{ mockData.ordersStats.approvedToday }}</div>
+        <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.approvedToday }}</div>
       </div>
     </div>
 
@@ -54,7 +86,7 @@ const setFilter = (val) => {
           @click="setFilter('pendentes')"
           class="pb-4 border-b-[3px] transition-colors duration-300"
           :class="filter === 'pendentes' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'"
-        >Pendentes ({{ mockData.ordersStats.pending }})</button>
+        >Pendentes ({{ stats.pending }})</button>
         <button 
           @click="setFilter('aprovados')"
           class="pb-4 border-b-[3px] transition-colors duration-300"
@@ -136,7 +168,7 @@ const setFilter = (val) => {
         <!-- Pagination footer  -->
         <div class="border-t border-[#233246] p-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-[#111926]">
           <span class="text-sm text-gray-400">
-            <strong class="text-white">1-4</strong> de {{ mockData.ordersStats.pending }} resultados
+            <strong class="text-white">1-{{ filteredOrders.length }}</strong> de {{ filteredOrders.length }} resultados
           </span>
           <div class="flex gap-2">
             <button class="w-9 h-9 flex items-center justify-center rounded-full border border-[#233246] text-gray-400 hover:text-white hover:border-gray-500 hover:bg-[#1a2636] transition-colors bg-[#080d14]">

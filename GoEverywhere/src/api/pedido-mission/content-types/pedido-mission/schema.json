@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pedido_missions",
+  "info": {
+    "singularName": "pedido-mission",
+    "pluralName": "pedido-missions",
+    "displayName": "Pedido(Mission)"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Cliente": {
+      "type": "string"
+    },
+    "Destino": {
+      "type": "enumeration",
+      "enum": [
+        "Lua",
+        "Marte ",
+        "Jupiter"
+      ]
+    },
+    "Prioridade": {
+      "type": "integer"
+    },
+    "Estado": {
+      "type": "enumeration",
+      "enum": [
+        "Pendente",
+        "Aprovado",
+        "Rejeitado",
+        "Transito",
+        "Cocluido"
+      ]
+    }
+  }
+}
