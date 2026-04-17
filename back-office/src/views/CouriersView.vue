@@ -6,6 +6,7 @@ import { Search, ChevronLeft, ChevronRight, Plus, X, User, Phone, Calendar, Chec
 const filter = ref('disponiveis')
 const searchQuery = ref('')
 const isAddCourierOpen = ref(false)
+const editingCourierId = ref(null)
 
 const couriers = ref([])
 
@@ -24,6 +25,12 @@ const loadCouriers = async () => {
     const json = await res.json()
     couriers.value = json.data.map(item => ({
       id: `C-${item.documentId ? item.documentId.substring(0,4) : item.id}`,
+      dbId: item.documentId || item.id,
+      dbNome: item.Nome || '',
+      dbTelemovel: item.Telemovel || '',
+      dbIdade: item.Idade || '',
+      dbAreaDeAtuacao: item.AreaDeAtuacao || 'Braga',
+      dbDisponivel: item.Disponivel !== undefined ? item.Disponivel : true,
       initials: item.Nome ? item.Nome.substring(0, 2).toUpperCase() : '??',
       name: item.Nome || 'Estafeta Sem Nome',
       performance: Math.floor(Math.random() * 20) + 80, // Aleatório entre 80 e 100 já que não há no DB
@@ -53,9 +60,13 @@ const submitCourier = async () => {
         Disponivel: newCourier.value.Disponivel
       }
     }
-    
-    const response = await fetch('http://localhost:1338/api/estafetas', {
-      method: 'POST',
+    const isEdit = !!editingCourierId.value
+    const url = isEdit 
+      ? `http://localhost:1338/api/estafetas/${editingCourierId.value}`
+      : 'http://localhost:1338/api/estafetas'
+      
+    const response = await fetch(url, {
+      method: isEdit ? 'PUT' : 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
@@ -64,21 +75,14 @@ const submitCourier = async () => {
     
     if (response.ok) {
       await loadCouriers()
-      toggleAddCourier()
-      newCourier.value = {
-        Nome: '',
-        Telemovel: '',
-        Idade: '',
-        AreaDeAtuacao: 'Braga',
-        Disponivel: true
-      }
+      closeDrawer()
     } else {
       const errorData = await response.json()
-      console.error('Falha ao adicionar estafeta', errorData)
+      console.error(isEdit ? 'Falha ao atualizar estafeta' : 'Falha ao adicionar estafeta', errorData)
       if (response.status === 403) {
-        alert('Erro 403: Permissão negada! Precisa de ir ao painel do Strapi > Settings > Roles > Public e ativar a permissão "create" para Estafeta.')
+        alert(isEdit ? 'Erro 403: Permissão negada! Precisa de ativar a permissão "update" para Estafeta.' : 'Erro 403: Permissão negada! Precisa de ir ao painel do Strapi > Settings > Roles > Public e ativar a permissão "create" para Estafeta.')
       } else {
-        alert('Falha ao adicionar estafeta. Verifique a consola para mais detalhes.')
+        alert(isEdit ? 'Falha ao atualizar estafeta.' : 'Falha ao adicionar estafeta. Verifique a consola para mais detalhes.')
       }
     }
   } catch(error) {
@@ -112,8 +116,28 @@ const setFilter = (val) => {
   filter.value = val
 }
 
-const toggleAddCourier = () => {
-  isAddCourierOpen.value = !isAddCourierOpen.value
+const openAddDrawer = () => {
+  editingCourierId.value = null
+  newCourier.value = { Nome: '', Telemovel: '', Idade: '', AreaDeAtuacao: 'Braga', Disponivel: true }
+  isAddCourierOpen.value = true
+}
+
+const openEditDrawer = (courier) => {
+  editingCourierId.value = courier.dbId
+  newCourier.value = {
+    Nome: courier.dbNome,
+    Telemovel: courier.dbTelemovel,
+    Idade: courier.dbIdade,
+    AreaDeAtuacao: courier.dbAreaDeAtuacao,
+    Disponivel: courier.dbDisponivel
+  }
+  isAddCourierOpen.value = true
+}
+
+const closeDrawer = () => {
+  isAddCourierOpen.value = false
+  editingCourierId.value = null
+  newCourier.value = { Nome: '', Telemovel: '', Idade: '', AreaDeAtuacao: 'Braga', Disponivel: true }
 }
 </script>
 
@@ -127,7 +151,7 @@ const toggleAddCourier = () => {
         <p class="text-gray-400 font-medium tracking-wide">Faça a gestão e a monitorização do desempenho dos estafetas.</p>
       </div>
       <button 
-        @click="toggleAddCourier"
+        @click="openAddDrawer"
         class="flex items-center gap-2 bg-primary text-black px-6 py-3.5 rounded-full font-bold shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:bg-[#33f5ff] transition-all hover:-translate-y-0.5"
       >
         <Plus :size="20" strokeWidth="2.5" />
@@ -236,7 +260,7 @@ const toggleAddCourier = () => {
                   </div>
                 </td>
                 <td class="p-6 text-center">
-                  <button class="text-primary hover:text-[#33f5ff] font-bold text-sm tracking-wide transition-colors">
+                  <button @click="openEditDrawer(courier)" class="text-primary hover:text-[#33f5ff] font-bold text-sm tracking-wide transition-colors">
                     Editar
                   </button>
                 </td>
@@ -270,7 +294,7 @@ const toggleAddCourier = () => {
     <div 
       v-if="isAddCourierOpen" 
       class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 transition-opacity"
-      @click="toggleAddCourier"
+      @click="closeDrawer"
     ></div>
 
     <!-- Add Courier Drawer -->
@@ -280,10 +304,10 @@ const toggleAddCourier = () => {
     >
       <div class="px-8 py-10 border-b border-[#233246] flex justify-between items-start bg-surface/50">
         <div>
-          <h2 class="text-2xl font-bold text-white tracking-tight">Adicionar Estafeta</h2>
-          <p class="text-sm text-gray-400 mt-2 tracking-wide block">Registe os dados do novo estafeta</p>
+          <h2 class="text-2xl font-bold text-white tracking-tight">{{ editingCourierId ? 'Editar Estafeta' : 'Adicionar Estafeta' }}</h2>
+          <p class="text-sm text-gray-400 mt-2 tracking-wide block">{{ editingCourierId ? 'Altere os dados do estafeta' : 'Registe os dados do novo estafeta' }}</p>
         </div>
-        <button @click="toggleAddCourier" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-[#233246] transition-colors -mt-2 -mr-2">
+        <button @click="closeDrawer" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-[#233246] transition-colors -mt-2 -mr-2">
           <X :size="24" />
         </button>
       </div>
@@ -348,7 +372,7 @@ const toggleAddCourier = () => {
           <span v-if="isSubmitting">A Guardar...</span>
           <span v-else>Confirmar</span>
         </button>
-        <button class="w-full bg-transparent text-white font-medium py-4 rounded-full border border-muted hover:bg-muted/50 hover:border-gray-400 transition-colors tracking-wide" @click="toggleAddCourier">
+        <button class="w-full bg-transparent text-white font-medium py-4 rounded-full border border-muted hover:bg-muted/50 hover:border-gray-400 transition-colors tracking-wide" @click="closeDrawer">
           Cancelar
         </button>
       </div>
