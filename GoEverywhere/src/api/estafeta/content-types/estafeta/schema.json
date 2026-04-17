@@ -24,6 +24,12 @@
     },
     "Disponivel": {
       "type": "boolean"
+    },
+    "Idade": {
+      "type": "integer"
+    },
+    "Telemovel": {
+      "type": "integer"
     }
   }
 }

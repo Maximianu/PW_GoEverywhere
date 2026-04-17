@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { mockData } from '../mockData'
-import { Search, ChevronLeft, ChevronRight, Plus, X, User, Mail, Phone, Calendar, Truck } from 'lucide-vue-next'
+import { Search, ChevronLeft, ChevronRight, Plus, X, User, Phone, Calendar, CheckCircle, MapPin } from 'lucide-vue-next'
 
 const filter = ref('disponiveis')
 const searchQuery = ref('')
@@ -9,7 +9,16 @@ const isAddCourierOpen = ref(false)
 
 const couriers = ref([])
 
-onMounted(async () => {
+const newCourier = ref({
+  Nome: '',
+  Telemovel: '',
+  Idade: '',
+  AreaDeAtuacao: 'Braga',
+  Disponivel: true
+})
+const isSubmitting = ref(false)
+
+const loadCouriers = async () => {
   try {
     const res = await fetch('http://localhost:1338/api/estafetas')
     const json = await res.json()
@@ -24,7 +33,61 @@ onMounted(async () => {
     console.error('Erro ao buscar estafetas do Strapi:', error)
     couriers.value = mockData.couriers // fallback se o Strapi falhar
   }
-})
+}
+
+onMounted(loadCouriers)
+
+const submitCourier = async () => {
+  if (!newCourier.value.Nome) {
+    alert('O nome do estafeta é obrigatório.')
+    return
+  }
+  isSubmitting.value = true
+  try {
+    const payload = {
+      data: {
+        Nome: newCourier.value.Nome,
+        Telemovel: newCourier.value.Telemovel ? parseInt(newCourier.value.Telemovel) : null,
+        Idade: newCourier.value.Idade ? parseInt(newCourier.value.Idade) : null,
+        AreaDeAtuacao: newCourier.value.AreaDeAtuacao,
+        Disponivel: newCourier.value.Disponivel
+      }
+    }
+    
+    const response = await fetch('http://localhost:1338/api/estafetas', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+    
+    if (response.ok) {
+      await loadCouriers()
+      toggleAddCourier()
+      newCourier.value = {
+        Nome: '',
+        Telemovel: '',
+        Idade: '',
+        AreaDeAtuacao: 'Braga',
+        Disponivel: true
+      }
+    } else {
+      const errorData = await response.json()
+      console.error('Falha ao adicionar estafeta', errorData)
+      if (response.status === 403) {
+        alert('Erro 403: Permissão negada! Precisa de ir ao painel do Strapi > Settings > Roles > Public e ativar a permissão "create" para Estafeta.')
+      } else {
+        alert('Falha ao adicionar estafeta. Verifique a consola para mais detalhes.')
+      }
+    }
+  } catch(error) {
+    console.error(error)
+    alert('Erro ao comunicar com o servidor.')
+  } finally {
+    isSubmitting.value = false
+  }
+}
 
 const stats = computed(() => {
   return {
@@ -230,15 +293,7 @@ const toggleAddCourier = () => {
           <label class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Nome Completo</label>
           <div class="relative">
             <User :size="18" class="absolute left-5 top-1/2 -translate-y-1/2 text-primary" />
-            <input type="text" placeholder="e.g. Marcus Thorne" class="w-full bg-[#111926] border border-[#233246] rounded-2xl py-4 pl-14 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all placeholder:text-gray-600">
-          </div>
-        </div>
-
-        <div class="space-y-3 relative">
-          <label class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Email</label>
-          <div class="relative">
-            <Mail :size="18" class="absolute left-5 top-1/2 -translate-y-1/2 text-primary" />
-            <input type="email" placeholder="m.thorne@logistics.com" class="w-full bg-[#111926] border border-[#233246] rounded-2xl py-4 pl-14 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all placeholder:text-gray-600">
+            <input v-model="newCourier.Nome" type="text" placeholder="e.g. Marcus Thorne" class="w-full bg-[#111926] border border-[#233246] rounded-2xl py-4 pl-14 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all placeholder:text-gray-600">
           </div>
         </div>
 
@@ -246,7 +301,7 @@ const toggleAddCourier = () => {
           <label class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Telemóvel</label>
           <div class="relative">
             <Phone :size="18" class="absolute left-5 top-1/2 -translate-y-1/2 text-primary" />
-            <input type="tel" placeholder="+351" class="w-full bg-[#111926] border border-[#233246] rounded-2xl py-4 pl-14 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all placeholder:text-gray-600">
+            <input v-model="newCourier.Telemovel" type="number" placeholder="912345678" class="w-full bg-[#111926] border border-[#233246] rounded-2xl py-4 pl-14 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all placeholder:text-gray-600">
           </div>
         </div>
 
@@ -255,27 +310,43 @@ const toggleAddCourier = () => {
             <label class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Idade</label>
             <div class="relative">
               <Calendar :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
-              <input type="number" placeholder="25" class="w-full bg-[#111926] border border-[#233246] rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all placeholder:text-gray-600">
+              <input v-model="newCourier.Idade" type="number" placeholder="25" class="w-full bg-[#111926] border border-[#233246] rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all placeholder:text-gray-600">
             </div>
           </div>
           
           <div class="space-y-3 relative">
-            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Veículo</label>
+            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Área de Atuação</label>
             <div class="relative">
-              <Truck :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
-              <select class="w-full bg-[#111926] border border-[#233246] rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all appearance-none cursor-pointer">
-                <option>Carrinha</option>
-                <option>Mota</option>
-                <option>Camião</option>
+              <MapPin :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
+              <select v-model="newCourier.AreaDeAtuacao" class="w-full bg-[#111926] border border-[#233246] rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all appearance-none cursor-pointer">
+                <option value="Braga">Braga</option>
+                <option value="Porto">Porto</option>
+                <option value="Guimaraes">Guimarães</option>
               </select>
             </div>
           </div>
         </div>
+        
+        <div class="space-y-3 relative pt-2">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <div class="relative flex items-center justify-center">
+              <input v-model="newCourier.Disponivel" type="checkbox" class="peer sr-only">
+              <div class="w-6 h-6 border-2 border-[#233246] rounded-lg peer-checked:bg-primary peer-checked:border-primary transition-all"></div>
+              <CheckCircle :size="14" class="absolute text-black opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth="3" />
+            </div>
+            <span class="text-sm font-semibold text-gray-300">Disponível Imediatamente</span>
+          </label>
+        </div>
       </div>
 
       <div class="p-8 border-t border-[#233246] space-y-4 bg-surface/50">
-        <button class="w-full bg-primary text-black font-bold py-4 rounded-full shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:bg-[#33f5ff] transition-all hover:-translate-y-0.5 tracking-wide" @click="toggleAddCourier">
-          Confirmar
+        <button 
+          @click="submitCourier"
+          :disabled="isSubmitting"
+          class="w-full bg-primary text-black font-bold py-4 rounded-full shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:bg-[#33f5ff] transition-all hover:-translate-y-0.5 tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span v-if="isSubmitting">A Guardar...</span>
+          <span v-else>Confirmar</span>
         </button>
         <button class="w-full bg-transparent text-white font-medium py-4 rounded-full border border-muted hover:bg-muted/50 hover:border-gray-400 transition-colors tracking-wide" @click="toggleAddCourier">
           Cancelar
