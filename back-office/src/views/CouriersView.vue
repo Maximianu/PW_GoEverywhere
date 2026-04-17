@@ -139,6 +139,31 @@ const closeDrawer = () => {
   editingCourierId.value = null
   newCourier.value = { Nome: '', Telemovel: '', Idade: '', AreaDeAtuacao: 'Braga', Disponivel: true }
 }
+
+const deleteCourier = async (courier) => {
+  if (!confirm(`Tem a certeza que deseja eliminar o estafeta ${courier.name}?`)) return
+  
+  try {
+    const response = await fetch(`http://localhost:1338/api/estafetas/${courier.dbId}`, {
+      method: 'DELETE'
+    })
+    
+    if (response.ok) {
+      await loadCouriers()
+    } else {
+      const errorData = await response.json()
+      console.error('Falha ao eliminar estafeta', errorData)
+      if (response.status === 403) {
+        alert('Erro 403: Permissão negada! Precisa de ativar a permissão "delete" para Estafeta no painel do Strapi.')
+      } else {
+        alert('Falha ao eliminar estafeta. Verifique a consola para mais detalhes.')
+      }
+    }
+  } catch (error) {
+    console.error(error)
+    alert('Erro ao comunicar com o servidor.')
+  }
+}
 </script>
 
 <template>
@@ -260,9 +285,14 @@ const closeDrawer = () => {
                   </div>
                 </td>
                 <td class="p-6 text-center">
-                  <button @click="openEditDrawer(courier)" class="text-primary hover:text-[#33f5ff] font-bold text-sm tracking-wide transition-colors">
-                    Editar
-                  </button>
+                  <div class="flex items-center justify-center gap-4">
+                    <button @click="openEditDrawer(courier)" class="text-primary hover:text-[#33f5ff] font-bold text-sm tracking-wide transition-colors">
+                      Editar
+                    </button>
+                    <button @click="deleteCourier(courier)" class="text-red-500 hover:text-red-400 font-bold text-sm tracking-wide transition-colors">
+                      Eliminar
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>

@@ -649,7 +649,9 @@ export interface ApiPedidoMissionPedidoMission
     Estado: Schema.Attribute.Enumeration<
       ['Pendente', 'Aprovado', 'Rejeitado', 'Transito', 'Cocluido']
     >;
+    estafeta: Schema.Attribute.Relation<'oneToOne', 'api::estafeta.estafeta'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
+    LocalEntrega: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::pedido-mission.pedido-mission'
