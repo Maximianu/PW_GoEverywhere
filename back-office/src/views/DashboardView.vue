@@ -1,6 +1,56 @@
 <script setup>
-import { mockData } from '../mockData'
+import { ref, onMounted } from 'vue'
 import { MapPin, ShoppingCart, Clock } from 'lucide-vue-next'
+
+const stats = ref({
+  availableCouriers: 0,
+  totalOrders: 0,
+  avgDeliveryTime: '18.4h'
+})
+
+const regionStats = ref([])
+
+onMounted(async () => {
+  try {
+    const resCouriers = await fetch('http://localhost:1338/api/estafetas?filters[Disponivel][$eq]=true')
+    if (resCouriers.ok) {
+      const jsonCouriers = await resCouriers.json()
+      stats.value.availableCouriers = jsonCouriers.meta?.pagination?.total ?? jsonCouriers.data?.length ?? 0
+    }
+  } catch (error) {
+    console.error('Erro ao buscar estafetas:', error)
+  }
+
+  try {
+    const resOrders = await fetch('http://localhost:1338/api/pedido-missions?pagination[limit]=1000')
+    if (resOrders.ok) {
+      const jsonOrders = await resOrders.json()
+      const dataLength = jsonOrders.data?.length ?? 0
+      stats.value.totalOrders = jsonOrders.meta?.pagination?.total ?? dataLength
+      
+      if (jsonOrders.data && dataLength > 0) {
+        const regionsMap = {}
+        jsonOrders.data.forEach(order => {
+          const dest = order.Destino || 'Desconhecido'
+          regionsMap[dest] = (regionsMap[dest] || 0) + 1
+        })
+        
+        regionStats.value = Object.keys(regionsMap).map(name => {
+          const count = regionsMap[name]
+          return {
+            name,
+            count: count >= 1000 ? (count / 1000).toFixed(1) + 'k' : count.toString(),
+            percent: Math.round((count / dataLength) * 100)
+          }
+        }).sort((a,b) => b.percent - a.percent)
+      } else {
+        regionStats.value = []
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao buscar pedidos:', error)
+  }
+})
 </script>
 
 <template>
@@ -20,7 +70,7 @@ import { MapPin, ShoppingCart, Clock } from 'lucide-vue-next'
             <MapPin :size="14" class="text-primary" />
           </div>
         </div>
-        <div class="text-5xl font-black text-white tracking-tighter relative z-10">{{ mockData.stats.availableCouriers.toLocaleString() }}</div>
+        <div class="text-5xl font-black text-white tracking-tighter relative z-10">{{ stats.availableCouriers.toLocaleString() }}</div>
       </div>
 
       <!-- Card 2 -->
@@ -32,7 +82,7 @@ import { MapPin, ShoppingCart, Clock } from 'lucide-vue-next'
             <ShoppingCart :size="14" class="text-primary" />
           </div>
         </div>
-        <div class="text-5xl font-black text-white tracking-tighter relative z-10">{{ mockData.stats.totalOrders.toLocaleString() }}</div>
+        <div class="text-5xl font-black text-white tracking-tighter relative z-10">{{ stats.totalOrders.toLocaleString() }}</div>
       </div>
 
       <!-- Card 3 -->
@@ -44,7 +94,7 @@ import { MapPin, ShoppingCart, Clock } from 'lucide-vue-next'
             <Clock :size="14" class="text-primary" />
           </div>
         </div>
-        <div class="text-5xl font-black text-white tracking-tighter relative z-10">{{ mockData.stats.avgDeliveryTime }}</div>
+        <div class="text-5xl font-black text-white tracking-tighter relative z-10">{{ stats.avgDeliveryTime }}</div>
       </div>
     </div>
 
@@ -52,7 +102,7 @@ import { MapPin, ShoppingCart, Clock } from 'lucide-vue-next'
     <div class="bg-surface border border-[#233246] hover:border-[#384a60] transition-colors duration-300 rounded-[2.5rem] p-8 shadow-2xl mt-8">
       <h2 class="text-xl font-bold text-white mb-10">Entregas por Região</h2>
       <div class="space-y-8">
-        <div v-for="region in mockData.regionStats" :key="region.name" class="space-y-2.5">
+        <div v-for="region in regionStats" :key="region.name" class="space-y-2.5">
           <div class="flex justify-between text-sm font-semibold">
             <span class="text-gray-200">{{ region.name }}</span>
             <span class="text-primary tracking-wide">{{ region.count }} ({{ region.percent }}%)</span>
