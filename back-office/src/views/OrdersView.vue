@@ -12,6 +12,19 @@ const orderToAssign = ref(null)
 const selectedCourierId = ref('')
 const isSubmitting = ref(false)
 
+const isDetailsOpen = ref(false)
+const selectedOrder = ref(null)
+
+const openDetailsDrawer = (order) => {
+  selectedOrder.value = order
+  isDetailsOpen.value = true
+}
+
+const closeDetailsDrawer = () => {
+  isDetailsOpen.value = false
+  selectedOrder.value = null
+}
+
 const loadOrders = async () => {
   try {
     const res = await fetch('http://localhost:1338/api/pedido-missions?populate=*')
@@ -24,6 +37,9 @@ const loadOrders = async () => {
       email: 'n/a', // Não tem no Strapi
       destination: item.Destino || 'Não Definido',
       date: new Date(item.createdAt || Date.now()).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }),
+      createdAt: item.createdAt || Date.now(),
+      updatedAt: item.updatedAt || Date.now(),
+      localEntrega: item.LocalEntrega || 'Não Definido',
       status: item.Estado || 'Pendente',
       priority: item.Prioridade || 0,
       courier: item.estafeta || null
@@ -183,7 +199,7 @@ const setFilter = (val) => {
               </tr>
             </thead>
             <tbody class="divide-y divide-[#233246]">
-              <tr v-for="order in filteredOrders" :key="order.id" class="hover:bg-[#1a2636] transition-colors group">
+              <tr v-for="order in filteredOrders" :key="order.id" class="hover:bg-[#1a2636] transition-colors group cursor-pointer" @click="openDetailsDrawer(order)">
                 <td class="p-6">
                   <div class="flex items-center gap-4">
                     <div class="w-10 h-10 rounded-full bg-[#1e2e42] flex items-center justify-center text-sm font-bold text-primary shrink-0 shadow-inner">
@@ -220,16 +236,16 @@ const setFilter = (val) => {
                 <td class="p-6">
                   <div class="flex items-center gap-3">
                     <template v-if="order.status === 'Pendente'">
-                      <button @click="updateOrderStatus(order, 'Aprovado')" class="w-8 h-8 flex items-center justify-center text-success border border-success/30 rounded-full hover:bg-success hover:text-black transition-all shadow-[0_0_5px_rgba(16,185,129,0.2)] hover:shadow-[0_0_15px_rgba(16,185,129,0.5)]" title="Aprovar">
+                      <button @click.stop="updateOrderStatus(order, 'Aprovado')" class="w-8 h-8 flex items-center justify-center text-success border border-success/30 rounded-full hover:bg-success hover:text-black transition-all shadow-[0_0_5px_rgba(16,185,129,0.2)] hover:shadow-[0_0_15px_rgba(16,185,129,0.5)]" title="Aprovar">
                         <CheckCircle2 :size="16" strokeWidth="3" />
                       </button>
-                      <button @click="updateOrderStatus(order, 'Rejeitado')" class="w-8 h-8 flex items-center justify-center text-danger border border-danger/30 rounded-full hover:bg-danger hover:text-black transition-all shadow-[0_0_5px_rgba(239,68,68,0.2)] hover:shadow-[0_0_15px_rgba(239,68,68,0.5)]" title="Rejeitar">
+                      <button @click.stop="updateOrderStatus(order, 'Rejeitado')" class="w-8 h-8 flex items-center justify-center text-danger border border-danger/30 rounded-full hover:bg-danger hover:text-black transition-all shadow-[0_0_5px_rgba(239,68,68,0.2)] hover:shadow-[0_0_15px_rgba(239,68,68,0.5)]" title="Rejeitar">
                         <XCircle :size="16" strokeWidth="3" />
                       </button>
                     </template>
                     <button 
                       v-if="!order.courier"
-                      @click="order.status === 'Aprovado' ? openAssignModal(order) : null"
+                      @click.stop="order.status === 'Aprovado' ? openAssignModal(order) : null"
                       class="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-bold transition-all ml-2"
                       :class="order.status === 'Aprovado' ? 'bg-primary text-black shadow-[0_0_15px_rgba(0,242,255,0.4)] hover:bg-[#33f5ff] hover:-translate-y-0.5 cursor-pointer' : 'bg-transparent border border-muted text-gray-300 hover:bg-muted hover:text-white cursor-not-allowed opacity-50'"
                     >
@@ -317,6 +333,121 @@ const setFilter = (val) => {
         </button>
         <button class="w-full bg-transparent text-white font-medium py-4 rounded-full border border-muted hover:bg-muted/50 hover:border-gray-400 transition-colors tracking-wide" @click="closeAssignDrawer">
           Cancelar
+        </button>
+      </div>
+    </div>
+
+    <!-- Order Details Drawer -->
+    <div 
+      v-if="isDetailsOpen" 
+      class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 transition-opacity"
+      @click="closeDetailsDrawer"
+    ></div>
+
+    <div 
+      class="fixed top-0 right-0 h-full w-full sm:w-[500px] bg-[#0c121e] border-l border-[#233246] z-50 transform transition-transform duration-500 ease-in-out shadow-2xl flex flex-col"
+      :class="isDetailsOpen ? 'translate-x-0' : 'translate-x-full'"
+    >
+      <div class="px-8 py-10 border-b border-[#233246] flex justify-between items-start bg-surface/50">
+        <div>
+          <h2 class="text-2xl font-bold text-white tracking-tight">Detalhes do Pedido</h2>
+          <p class="text-sm text-gray-400 mt-2 tracking-wide block flex items-center gap-2">
+            ID: <span class="font-mono text-white">{{ selectedOrder?.id }}</span>
+          </p>
+        </div>
+        <button @click="closeDetailsDrawer" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-[#233246] transition-colors -mt-2 -mr-2">
+          <X :size="24" />
+        </button>
+      </div>
+
+      <div v-if="selectedOrder" class="p-8 flex-1 overflow-y-auto space-y-8">
+        
+        <!-- Estado -->
+        <div class="flex items-center gap-4 p-5 rounded-2xl bg-[#111926] border border-[#233246]">
+          <div class="flex-1">
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Estado Atual</h3>
+            <div class="flex items-center gap-2">
+              <span 
+                class="px-3 py-1.5 rounded-full text-sm font-bold tracking-wide border inline-flex items-center gap-2"
+                :class="selectedOrder.status === 'Pendente' ? 'bg-warning/10 text-warning border-warning/20' : selectedOrder.status === 'Transito' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-success/10 text-success border-success/20'"
+              >
+                {{ selectedOrder.status }}
+              </span>
+            </div>
+          </div>
+          <div class="text-right border-l border-[#233246] pl-6 py-2">
+            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Prioridade</h3>
+            <span class="text-xl font-black text-white" :class="{'text-danger': selectedOrder.priority > 2}">{{ selectedOrder.priority || 'Normal' }}</span>
+          </div>
+        </div>
+
+        <!-- Dados do Cliente -->
+        <div class="space-y-4">
+          <h3 class="text-xs font-bold text-primary uppercase tracking-widest border-b border-[#233246] pb-2">
+            Informação de Entrega
+          </h3>
+          <div class="space-y-3">
+             <div class="flex justify-between items-center py-2 border-b border-[#233246]/50">
+               <span class="text-gray-400 text-sm">Cliente</span>
+               <span class="text-white font-semibold">{{ selectedOrder.client }}</span>
+             </div>
+             <div class="flex justify-between items-center py-2 border-b border-[#233246]/50">
+               <span class="text-gray-400 text-sm">Destino</span>
+               <span class="text-white font-semibold flex items-center gap-2"><MapPin :size="14" class="text-primary"/> {{ selectedOrder.destination }}</span>
+             </div>
+             <div class="flex justify-between items-center py-2 border-b border-[#233246]/50">
+               <span class="text-gray-400 text-sm">Morada / Detalhes</span>
+               <span class="text-white font-semibold text-right max-w-[60%]">{{ selectedOrder.localEntrega }}</span>
+             </div>
+          </div>
+        </div>
+
+        <!-- Dados do Estafeta -->
+        <div class="space-y-4">
+          <h3 class="text-xs font-bold text-primary uppercase tracking-widest border-b border-[#233246] pb-2">
+            Estafeta Atribuído
+          </h3>
+          <div v-if="selectedOrder.courier" class="bg-[#111926] rounded-2xl p-5 border border-[#233246] flex flex-col gap-3">
+             <div class="flex justify-between items-center">
+               <span class="text-gray-400 text-sm">Nome</span>
+               <span class="text-white font-semibold">{{ selectedOrder.courier.Nome }}</span>
+             </div>
+             <div class="flex justify-between items-center">
+               <span class="text-gray-400 text-sm">Área de Atuação</span>
+               <span class="text-white font-medium">{{ selectedOrder.courier.AreaDeAtuacao }}</span>
+             </div>
+             <div class="flex justify-between items-center">
+               <span class="text-gray-400 text-sm">Telemóvel</span>
+               <span class="text-white font-medium">{{ selectedOrder.courier.Telemovel }}</span>
+             </div>
+          </div>
+          <div v-else class="text-gray-500 text-sm italic py-2">
+            Nenhum estafeta atribuído a este pedido no momento.
+          </div>
+        </div>
+
+        <!-- Detalhes do Registo -->
+        <div class="space-y-4">
+          <h3 class="text-xs font-bold text-primary uppercase tracking-widest border-b border-[#233246] pb-2">
+            Detalhes do Registo
+          </h3>
+          <div class="space-y-3">
+             <div class="flex justify-between items-center py-2 border-b border-[#233246]/50">
+               <span class="text-gray-400 text-sm">Data de Criação</span>
+               <span class="text-gray-200 text-sm">{{ new Date(selectedOrder.createdAt).toLocaleString('pt-PT') }}</span>
+             </div>
+             <div class="flex justify-between items-center py-2">
+               <span class="text-gray-400 text-sm">Última Atualização</span>
+               <span class="text-gray-200 text-sm">{{ new Date(selectedOrder.updatedAt).toLocaleString('pt-PT') }}</span>
+             </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="p-8 border-t border-[#233246] bg-surface/50">
+        <button class="w-full bg-[#111926] text-white font-medium flex items-center justify-center gap-2 py-3.5 rounded-full border border-[#233246] hover:bg-[#1a2636] transition-colors tracking-wide" @click="closeDetailsDrawer">
+          Fechar Atalhos
         </button>
       </div>
     </div>
