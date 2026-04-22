@@ -14,21 +14,32 @@
         <p><strong>Estado:</strong> {{ estadoStr }}</p>
       </div>
 
-      <div class="small-box">
-        <p><strong>Instruções :</strong> Deixar na receção</p>
+      <p class="notas-entrega"><strong>Notas da Entrega :</strong> Deixar na receção</p>
+
+      <div class="map-container">
+        <img src="../assets/mapa.png" alt="Mapa da entrega" />
       </div>
 
-      <!-- Atualizar Estado Button -->
+      <!-- Iniciar Corrida Button -->
       <button 
         class="full-action-btn"
-        :class="isUpdatingStatus ? 'primary-btn btn-no-glow' : (isBaseState ? 'primary-btn btn-glow' : 'secondary-btn')"
-        @click="toggleStatus"
+        :class="isEmRota ? 'primary-btn btn-no-glow' : 'secondary-btn'"
+        @click="iniciarCorrida"
       >
-        Atualizar Estado
+        Iniciar Corrida
       </button>
 
-      <!-- Status expanded panel -->
-      <div v-if="isUpdatingStatus" class="expanded-panel radio-panel">
+      <!-- Registar Problema Button -->
+      <button 
+        class="full-action-btn mt-small"
+        :class="isRegistarProblema ? 'primary-btn btn-no-glow' : 'secondary-btn'"
+        @click="toggleProblema"
+      >
+        Registar Problema
+      </button>
+
+      <!-- Problema expanded panel -->
+      <div v-if="isRegistarProblema" class="expanded-panel radio-panel mt-small">
         <label class="radio-option">
           <input type="radio" value="Tentativa de entrega" v-model="statusOption" />
           <span class="radio-custom"></span>
@@ -41,44 +52,23 @@
         </label>
       </div>
       
-      <div v-if="isUpdatingStatus" class="small-box notes-box">
-         <p><strong>Nota(s) :</strong> Cliente não estava em casa, voltar às 18h.</p>
-      </div>
+      <p v-if="isRegistarProblema" class="notas-entrega mt-small"><strong>Nota(s) :</strong> Cliente não estava em casa, voltar às 18h.</p>
 
       <!-- Registar Entrega Button -->
       <button 
-        class="full-action-btn"
-        :class="isRegistering ? 'primary-btn btn-no-glow' : 'secondary-btn'"
-        @click="toggleRegister"
+        class="full-action-btn secondary-btn mt-small"
       >
         Registar Entrega
       </button>
 
-      <!-- Register expanded panel -->
-      <div v-if="isRegistering" class="expanded-panel small-box signature-box">
-        <p><strong>Assinatura :</strong></p>
-      </div>
-      <div v-if="isRegistering" class="expanded-panel photo-box">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 8V20H20V8H4ZM3 6H21C21.5523 6 22 6.44772 22 7V21C22 21.5523 21.5523 22 21 22H3C2.44772 22 2 21.5523 2 21V7C2 6.44772 2.44772 6 3 6Z" fill="#182736"/>
-          <path d="M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6H8ZM9 4V6H15V4H9Z" fill="#182736"/>
-          <circle cx="12" cy="14" r="3" stroke="#182736" stroke-width="2"/>
-        </svg>
-        <p>Adicionar fotografia da entrega</p>
-      </div>
-
-      <button v-if="isBaseState" class="secondary-btn full-action-btn mt-extra">
+      <!-- Guardar Alterações Button -->
+      <button 
+        class="full-action-btn mt-small"
+        :class="isRegistarProblema ? 'primary-btn btn-glow' : 'secondary-btn'"
+      >
         Guardar Alterações
       </button>
 
-      <button v-if="isBaseState" class="secondary-btn full-action-btn">
-        Iniciar corrida
-      </button>
-
-      <!-- Guardar always at bottom if one of them is open -->
-      <button v-if="!isBaseState" class="primary-btn full-action-btn btn-glow form-save-btn">
-        Guardar alterações
-      </button>
     </div>
   </div>
 </template>
@@ -89,28 +79,25 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-const isUpdatingStatus = ref(false)
-const isRegistering = ref(false)
+const isEmRota = ref(false)
+const isRegistarProblema = ref(false)
 const statusOption = ref('Tentativa de entrega')
 
-const isBaseState = computed(() => !isUpdatingStatus.value && !isRegistering.value)
-
 const estadoStr = computed(() => {
-  if (isRegistering.value) return 'Entregue'
-  return 'Em Rota'
+  if (isEmRota.value) return 'Em Rota'
+  return 'Pendente'
 })
 
 function voltar() {
   router.back()
 }
 
-function toggleStatus() {
-  isUpdatingStatus.value = true
-  isRegistering.value = false
+function iniciarCorrida() {
+  isEmRota.value = true
+  isRegistarProblema.value = false
 }
 
-function toggleRegister() {
-  isRegistering.value = true
-  isUpdatingStatus.value = false
+function toggleProblema() {
+  isRegistarProblema.value = !isRegistarProblema.value
 }
 </script>
