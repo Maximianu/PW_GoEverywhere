@@ -191,6 +191,8 @@ input {
   color: white;
   font-size: 12px;
   margin-right: 4px;
+  display: flex;
+  align-items: center;
 }
 
 .search-input {
@@ -264,7 +266,21 @@ input {
   background: rgba(87, 114, 153, 0.72);
 }
 
+.pill-done {
+  background: transparent;
+}
+
 .delivery-line {
+  margin: 5px 0;
+  font-size: 10px;
+  color: rgba(226, 240, 250, 0.92);
+  display: flex;
+  align-items: center;
+}
+
+.delivery-line-flex {
+  display: flex;
+  gap: 12px;
   margin: 5px 0;
   font-size: 10px;
   color: rgba(226, 240, 250, 0.92);
@@ -298,6 +314,7 @@ input {
   padding: 14px;
   border-top: 1px solid rgba(0, 213, 255, 0.12);
   background: rgba(0, 8, 16, 0.96);
+  z-index: 10;
 }
 
 .nav-item {
@@ -370,11 +387,163 @@ input {
   cursor: pointer;
 }
 
+.btn-glow {
+  box-shadow: 0 0 18px rgba(0, 238, 255, 0.6);
+  color: #002a33;
+}
+.btn-no-glow {
+  box-shadow: none;
+  background: #00e7ff;
+  color: #002a33;
+}
+
+.mt-extra {
+  margin-top: 24px;
+}
+
+.expanded-panel {
+  border: 1px solid rgba(179, 222, 255, 0.48);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  margin-bottom: 14px;
+  color: white;
+  padding: 14px;
+}
+
+.radio-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: -6px;
+}
+
+.radio-option {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  cursor: pointer;
+  position: relative;
+}
+
+.radio-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.radio-custom {
+  height: 12px;
+  width: 12px;
+  background-color: transparent;
+  border-radius: 50%;
+  border: 1px solid #dffcff;
+  margin-right: 10px;
+  position: relative;
+}
+
+.radio-option input[type="radio"]:checked ~ .radio-custom {
+  background-color: #00e7ff;
+  border-color: #00e7ff;
+  box-shadow: 0 0 8px #00e7ff;
+}
+
+.notes-box {
+  background: rgba(20, 26, 36, 0.6);
+  border-color: rgba(179, 222, 255, 0.2);
+}
+.notes-box p {
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 11px !important;
+}
+
+.signature-box {
+  margin-top: -6px;
+}
+.signature-box p {
+  margin: 0 !important;
+  font-size: 13px !important;
+}
+
+.photo-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed rgba(179, 222, 255, 0.3);
+  padding: 30px;
+  gap: 12px;
+}
+.photo-box p {
+  margin: 0 !important;
+  font-size: 11px !important;
+  color: rgba(255,255,255,0.7) !important;
+}
+
+.form-save-btn {
+  position: absolute;
+  bottom: 30px;
+  left: 18px;
+  width: calc(100% - 36px);
+}
+
 /* HISTÓRICO E PERFIL */
 .history-screen,
 .profile-screen {
   padding: 24px 18px 86px;
   background: linear-gradient(180deg, #00060f 0%, #020a18 100%);
+}
+
+.profile-avatar-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.profile-avatar {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 2px solid rgba(173, 214, 255, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-name {
+  text-align: center;
+  color: white;
+  margin-bottom: 26px;
+}
+
+.profile-name h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.profile-name p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+}
+
+.profile-stats {
+  grid-template-columns: repeat(2, 1fr);
+  margin-bottom: 24px;
+}
+
+.centered-box {
+  text-align: center;
+  margin-bottom: 34px;
+}
+
+.logout-main-btn {
+  margin: 0 auto;
+  display: block;
+  width: 160px;
+  height: 38px;
+  border-radius: 999px;
+  font-size: 12px;
 }
 
 @media (max-width: 420px) {
