@@ -92,14 +92,7 @@ const deliveries = ref([
     address: 'Avenida D Afonso Henriques 45, Guimarães',
     time: '13:00-15:00',
     status: 'Pendente',
-  },
-  {
-    id: 104,
-    name: 'João Mendes',
-    address: 'Rua de São Torcato 110, Guimarães',
-    time: '15:00-17:00',
-    status: 'Entregue',
-  },
+  }
 ])
 
 const filteredDeliveries = computed(() => {
