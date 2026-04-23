@@ -14,21 +14,43 @@
         <p><strong>Estado:</strong> {{ estadoStr }}</p>
       </div>
 
-      <div class="small-box">
-        <p><strong>Instruções :</strong> Deixar na receção</p>
+      <p class="notas-entrega"><strong>Notas da Entrega :</strong> Deixar na receção</p>
+
+      <div class="map-container">
+        <iframe 
+          src="https://maps.google.com/maps?q=Rua+da+Serpa+Pinto+12,+Guimarães&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+          width="100%" 
+          height="100%" 
+          frameborder="0" 
+          style="border:0;" 
+          allowfullscreen="" 
+          aria-hidden="false" 
+          tabindex="0">
+        </iframe>
       </div>
 
-      <!-- Atualizar Estado Button -->
+      <!-- Iniciar Entrega Button -->
       <button 
         class="full-action-btn"
-        :class="isUpdatingStatus ? 'primary-btn btn-no-glow' : (isBaseState ? 'primary-btn btn-glow' : 'secondary-btn')"
-        @click="toggleStatus"
+        :class="isEmRota ? 'primary-btn btn-no-glow' : 'secondary-btn'"
+        @click="iniciarCorrida"
       >
-        Atualizar Estado
+        Iniciar Entrega
       </button>
 
-      <!-- Status expanded panel -->
-      <div v-if="isUpdatingStatus" class="expanded-panel radio-panel">
+      <!-- Registar Problema Button -->
+      <button 
+        class="full-action-btn"
+        :class="[
+          isRegistarProblema ? 'primary-btn btn-no-glow merged-bottom' : 'secondary-btn'
+        ]"
+        @click="toggleProblema"
+      >
+        Registar Problema
+      </button>
+
+      <!-- Problema expanded panel -->
+      <div v-if="isRegistarProblema" class="expanded-panel radio-panel merged-top">
         <label class="radio-option">
           <input type="radio" value="Tentativa de entrega" v-model="statusOption" />
           <span class="radio-custom"></span>
@@ -41,44 +63,41 @@
         </label>
       </div>
       
-      <div v-if="isUpdatingStatus" class="small-box notes-box">
-         <p><strong>Nota(s) :</strong> Cliente não estava em casa, voltar às 18h.</p>
-      </div>
+      <p v-if="isRegistarProblema" class="notas-entrega mt-small"><strong>Nota(s) :</strong> Cliente não estava em casa, voltar às 18h.</p>
 
       <!-- Registar Entrega Button -->
       <button 
         class="full-action-btn"
-        :class="isRegistering ? 'primary-btn btn-no-glow' : 'secondary-btn'"
-        @click="toggleRegister"
+        :class="isRegistarEntrega ? 'primary-btn btn-no-glow' : 'secondary-btn'"
+        @click="toggleEntrega"
       >
         Registar Entrega
       </button>
 
-      <!-- Register expanded panel -->
-      <div v-if="isRegistering" class="expanded-panel small-box signature-box">
-        <p><strong>Assinatura :</strong></p>
-      </div>
-      <div v-if="isRegistering" class="expanded-panel photo-box">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 8V20H20V8H4ZM3 6H21C21.5523 6 22 6.44772 22 7V21C22 21.5523 21.5523 22 21 22H3C2.44772 22 2 21.5523 2 21V7C2 6.44772 2.44772 6 3 6Z" fill="#182736"/>
-          <path d="M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6H8ZM9 4V6H15V4H9Z" fill="#182736"/>
-          <circle cx="12" cy="14" r="3" stroke="#182736" stroke-width="2"/>
-        </svg>
-        <p>Adicionar fotografia da entrega</p>
-      </div>
+      <template v-if="isRegistarEntrega">
+        <!-- Assinatura -->
+        <div class="info-box signature-box" style="margin-top: 20px;">
+          <p><strong>Assinatura :</strong></p>
+        </div>
 
-      <button v-if="isBaseState" class="secondary-btn full-action-btn mt-extra">
+        <!-- Fotografia -->
+        <div class="photo-box mt-small">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+          <p>Adicionar fotografia da entrega</p>
+        </div>
+
+        <p class="notas-entrega" style="margin-top: 12px;"><strong>Nota(s) :</strong></p>
+      </template>
+
+      <!-- Guardar Alterações Button -->
+      <button 
+        class="full-action-btn mt-small"
+        :class="isGuardarSelecionado ? 'primary-btn btn-glow' : 'primary-btn btn-no-glow'"
+        @click="isGuardarSelecionado = true"
+      >
         Guardar Alterações
       </button>
 
-      <button v-if="isBaseState" class="secondary-btn full-action-btn">
-        Iniciar corrida
-      </button>
-
-      <!-- Guardar always at bottom if one of them is open -->
-      <button v-if="!isBaseState" class="primary-btn full-action-btn btn-glow form-save-btn">
-        Guardar alterações
-      </button>
     </div>
   </div>
 </template>
@@ -89,28 +108,36 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-const isUpdatingStatus = ref(false)
-const isRegistering = ref(false)
+const isEmRota = ref(false)
+const isRegistarProblema = ref(false)
+const isRegistarEntrega = ref(false)
+const isGuardarSelecionado = ref(false)
 const statusOption = ref('Tentativa de entrega')
 
-const isBaseState = computed(() => !isUpdatingStatus.value && !isRegistering.value)
-
 const estadoStr = computed(() => {
-  if (isRegistering.value) return 'Entregue'
-  return 'Em Rota'
+  if (isEmRota.value) return 'Em Rota'
+  return 'Pendente'
 })
 
 function voltar() {
   router.back()
 }
 
-function toggleStatus() {
-  isUpdatingStatus.value = true
-  isRegistering.value = false
+function iniciarCorrida() {
+  isEmRota.value = !isEmRota.value
+  if (isEmRota.value) {
+    isRegistarProblema.value = false
+    isRegistarEntrega.value = false
+  }
 }
 
-function toggleRegister() {
-  isRegistering.value = true
-  isUpdatingStatus.value = false
+function toggleProblema() {
+  isRegistarProblema.value = !isRegistarProblema.value
+  if (isRegistarProblema.value) isRegistarEntrega.value = false
+}
+
+function toggleEntrega() {
+  isRegistarEntrega.value = !isRegistarEntrega.value
+  if (isRegistarEntrega.value) isRegistarProblema.value = false
 }
 </script>

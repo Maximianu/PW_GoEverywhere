@@ -84,7 +84,7 @@ const deliveries = ref([
     name: 'Maria Silva',
     address: 'Rua da Serpa Pinto 12, Guimarães',
     time: '11:00-13:00',
-    status: 'Em rota',
+    status: 'Pendente',
   },
   {
     id: 103,
@@ -92,7 +92,7 @@ const deliveries = ref([
     address: 'Avenida D Afonso Henriques 45, Guimarães',
     time: '13:00-15:00',
     status: 'Pendente',
-  },
+  }
 ])
 
 const filteredDeliveries = computed(() => {
