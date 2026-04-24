@@ -76,11 +76,6 @@ onMounted(() => {
   })
   
   const earth = new THREE.Mesh(geometry, material)
-  
-  // Position Earth a meio, ligeiramente à direita, e em grande
-  earth.position.y = 0.1
-  earth.position.x = 0.4
-  earth.rotation.x = 0.2 // Inclinação menor para ver mais do equador
   scene.add(earth)
 
   // Lighting
@@ -91,6 +86,42 @@ onMounted(() => {
   directionalLight.position.set(5, 3, 5)
   scene.add(directionalLight)
 
+  // Responsive scale and position function
+  const updateEarthTransform = () => {
+    if (!container) return
+    const width = container.clientWidth
+    const isMobile = width <= 450
+
+    if (isMobile) {
+      // Mobile positioning (as requested)
+      earth.position.y = 0
+      earth.position.x = 0.8
+      earth.scale.set(1.2, 1.2, 1.2)
+    } else {
+      // Desktop/Larger screen: scale up so it doesn't "end"
+      // Ratio of current width vs mobile width
+      const ratio = width / 360
+      earth.position.y = 0
+      earth.position.x = 0.8 + (ratio - 1) * 0.5 // Push it slightly more right to keep the center of gravity
+      earth.scale.set(1.2 * ratio * 0.8, 1.2 * ratio * 0.8, 1.2 * ratio * 0.8) 
+    }
+    earth.rotation.x = 0.2
+  }
+
+  updateEarthTransform()
+
+  // Handle window resize
+  const onResize = () => {
+    if (!container) return
+    const newWidth = container.clientWidth
+    const newHeight = container.clientHeight
+    camera.aspect = newWidth / newHeight
+    camera.updateProjectionMatrix()
+    renderer.setSize(newWidth, newHeight)
+    updateEarthTransform()
+  }
+  window.addEventListener('resize', onResize)
+
   // Animation Loop
   const animate = () => {
     reqId = requestAnimationFrame(animate)
@@ -98,6 +129,11 @@ onMounted(() => {
     renderer.render(scene, camera)
   }
   animate()
+  
+  // Cleanup resize listener
+  onBeforeUnmount(() => {
+    window.removeEventListener('resize', onResize)
+  })
 })
 
 onBeforeUnmount(() => {

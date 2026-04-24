@@ -30,23 +30,23 @@ input {
 }
 
 .app-shell {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
   background: #000000;
   overflow: hidden;
 }
 
 .screen {
   width: 100%;
-  max-width: 360px;
-  height: 100vh;
-  max-height: 844px;
-  border: 1px solid rgba(150, 200, 255, 0.16);
+  max-width: 800px;
+  height: 100dvh;
+  border-left: 1px solid rgba(150, 200, 255, 0.16);
+  border-right: 1px solid rgba(150, 200, 255, 0.16);
   position: relative;
   overflow-y: auto;
   overflow-x: hidden;
+  margin: 0 auto;
 }
 
 .screen::-webkit-scrollbar {
@@ -71,7 +71,9 @@ input {
 .login-panel {
   position: relative;
   z-index: 2;
-  margin: 0 32px;
+  margin: 0 auto;
+  max-width: 360px;
+  width: calc(100% - 64px);
   background: rgba(10, 25, 40, 0.4);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -256,8 +258,8 @@ input {
 }
 
 .deliveries-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 14px;
 }
 
@@ -353,15 +355,18 @@ input {
 }
 
 .bottom-nav {
-  position: absolute;
+  position: fixed;
   bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
+  max-width: 800px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   padding: 14px;
   border-top: 1px solid rgba(0, 213, 255, 0.12);
   background: rgba(0, 8, 16, 0.96);
-  z-index: 10;
+  z-index: 100;
 }
 
 .nav-item {
@@ -640,15 +645,46 @@ input {
   font-size: 12px;
 }
 
-@media (max-width: 420px) {
-  .app-shell {
-    padding: 0;
+@media (max-width: 800px) {
+  .screen {
+    border: none;
+  }
+}
+
+@media (min-width: 600px) {
+  .deliveries-list {
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .screen {
-    max-width: 100%;
-    height: 100vh;
-    max-height: 100vh;
-    border: none;
+  .profile-stats {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+
+  .stats-grid-3 {
+    gap: 20px;
+  }
+
+  .search-wrapper {
+    margin: 0 auto 24px;
+    width: 100%;
+  }
+
+  .search-box {
+    height: 44px;
+    border-radius: 22px;
+    padding: 0 16px;
+  }
+
+  .search-input {
+    font-size: 16px;
+  }
+
+  .search-icon {
+    font-size: 16px;
+    margin-right: 8px;
+  }
+
+  .deliveries-header h1 {
+    font-size: 32px;
   }
 }
