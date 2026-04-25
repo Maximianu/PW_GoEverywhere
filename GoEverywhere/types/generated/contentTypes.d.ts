@@ -647,7 +647,7 @@ export interface ApiPedidoMissionPedidoMission
       Schema.Attribute.Private;
     Destino: Schema.Attribute.Enumeration<['Lua', 'Marte ', 'Jupiter']>;
     Estado: Schema.Attribute.Enumeration<
-      ['Pendente', 'Aprovado', 'Rejeitado', 'Transito', 'Cocluido']
+      ['Pendente', 'Aprovado', 'Rejeitado', 'Transito', 'Concluido']
     >;
     estafeta: Schema.Attribute.Relation<'oneToOne', 'api::estafeta.estafeta'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;

@@ -32,7 +32,7 @@
         "Aprovado",
         "Rejeitado",
         "Transito",
-        "Cocluido"
+        "Concluido"
       ]
     },
     "LocalEntrega": {
