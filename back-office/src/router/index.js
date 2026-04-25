@@ -6,6 +6,15 @@ const router = createRouter({
   routes: [
     {
       path: '/',
+      redirect: '/moon-3d'
+    },
+    {
+      path: '/moon-3d',
+      name: 'moon-3d',
+      component: () => import('../views/Moon3DView.vue')
+    },
+    {
+      path: '/dashboard',
       name: 'dashboard',
       component: DashboardView
     },
@@ -13,6 +22,16 @@ const router = createRouter({
       path: '/orders',
       name: 'orders',
       component: () => import('../views/OrdersView.vue')
+    },
+    {
+      path: '/order-history',
+      name: 'order-history',
+      component: () => import('../views/OrderHistoryView.vue')
+    },
+    {
+      path: '/customers',
+      name: 'customers',
+      component: () => import('../views/CustomersView.vue')
     },
     {
       path: '/couriers',

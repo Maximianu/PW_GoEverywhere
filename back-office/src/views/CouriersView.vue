@@ -168,9 +168,11 @@ const deleteCourier = async (courier) => {
 
 <template>
   <div class="p-8 pb-20 max-w-[1400px] mx-auto space-y-10 animate-in fade-in duration-700 relative">
+    <!-- Lua decorativa -->
+    <div class="moon-backdrop moon-backdrop-estafetas"></div>
     
     <!-- Header -->
-    <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
       <div class="space-y-2">
         <h1 class="text-3xl font-bold text-white tracking-tight">Estafetas</h1>
         <p class="text-gray-400 font-medium tracking-wide">Faça a gestão e a monitorização do desempenho dos estafetas.</p>

@@ -54,64 +54,194 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-8 pb-20 max-w-[1400px] mx-auto space-y-10 animate-in fade-in duration-700">
-    <header class="space-y-2">
-      <h1 class="text-3xl font-bold text-white tracking-tight">Dashboard Logística</h1>
-      <p class="text-gray-400 font-medium">Gestão centralizada de operações para monitorização de indicadores e suporte à tomada de decisão em tempo real.</p>
+  <div class="p-8 pb-20 max-w-[1400px] mx-auto space-y-10 section-fade relative">
+    <!-- Lua decorativa de fundo (atrás dos cards) -->
+    <div class="moon-backdrop"></div>
+    
+    <!-- Header -->
+    <header class="space-y-3 relative z-10">
+      <div class="absolute -top-2 left-0 w-32 h-1 bg-gradient-to-r from-cyan-500 to-transparent rounded-full"></div>
+      <h1 class="text-4xl font-bold text-white tracking-tight line-accent">Dashboard Logística</h1>
+      <p class="text-gray-400 font-medium max-w-2xl">Gestão centralizada de operações para monitorização de indicadores e suporte à tomada de decisão em tempo real.</p>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Card 1 -->
-      <div class="bg-surface rounded-[2rem] p-7 border border-[#233246] flex flex-col justify-between hover:border-primary/40 transition-colors duration-300 shadow-xl relative overflow-hidden group min-h-[160px]">
-        <div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500"></div>
-        <div class="flex items-center gap-3 text-gray-300 font-bold mb-4 uppercase text-xs tracking-widest relative z-10">
-          ESTAFETAS DISPONÍVEIS
-          <div class="bg-primary/10 p-1.5 rounded-full">
-            <MapPin :size="14" class="text-primary" />
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+      <!-- Card: Estafetas Disponíveis -->
+      <div class="card card-dashboard relative p-7 min-h-[180px] flex flex-col justify-between group overflow-hidden">
+        <div class="absolute -right-12 -top-12 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+        
+        <div class="flex items-center justify-between relative z-10">
+          <div class="space-y-1">
+            <div class="badge-glow bg-blue-500/10 border-blue-500/30 text-blue-400">
+              <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+              Estafetas
+            </div>
+            <p class="text-sm text-gray-400 uppercase tracking-widest">Disponíveis agora</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center border border-blue-500/30 group-hover:scale-110 transition-transform duration-300">
+            <MapPin :size="24" class="text-blue-400" />
           </div>
         </div>
-        <div class="text-5xl font-black text-white tracking-tighter relative z-10">{{ stats.availableCouriers.toLocaleString() }}</div>
+
+        <div class="text-5xl font-black text-white tracking-tighter mt-6 relative z-10">
+          {{ stats.availableCouriers.toLocaleString() }}
+        </div>
+
+        <div class="h-1 bg-gradient-to-r from-blue-500/50 to-transparent rounded-full mt-4"></div>
       </div>
 
-      <!-- Card 2 -->
-      <div class="bg-surface rounded-[2rem] p-7 border border-[#233246] flex flex-col justify-between hover:border-primary/40 transition-colors duration-300 shadow-xl relative overflow-hidden group min-h-[160px]">
-        <div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500"></div>
-        <div class="flex items-center gap-3 text-gray-300 font-bold mb-4 uppercase text-xs tracking-widest relative z-10">
-          TOTAL DE PEDIDOS
-          <div class="bg-primary/10 p-1.5 rounded-full">
-            <ShoppingCart :size="14" class="text-primary" />
+      <!-- Card: Total de Pedidos -->
+      <div class="card card-pedidos relative p-7 min-h-[180px] flex flex-col justify-between group overflow-hidden">
+        <div class="absolute -right-12 -top-12 w-40 h-40 bg-red-500/10 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+        
+        <div class="flex items-center justify-between relative z-10">
+          <div class="space-y-1">
+            <div class="badge-glow bg-red-500/10 border-red-500/30 text-red-400">
+              <div class="w-2 h-2 rounded-full bg-red-500"></div>
+              Pedidos
+            </div>
+            <p class="text-sm text-gray-400 uppercase tracking-widest">Em sistema</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500/20 to-red-600/20 flex items-center justify-center border border-red-500/30 group-hover:scale-110 transition-transform duration-300">
+            <ShoppingCart :size="24" class="text-red-400" />
           </div>
         </div>
-        <div class="text-5xl font-black text-white tracking-tighter relative z-10">{{ stats.totalOrders.toLocaleString() }}</div>
+
+        <div class="text-5xl font-black text-white tracking-tighter mt-6 relative z-10">
+          {{ stats.totalOrders.toLocaleString() }}
+        </div>
+
+        <div class="h-1 bg-gradient-to-r from-red-500/50 to-transparent rounded-full mt-4"></div>
       </div>
 
-      <!-- Card 3 -->
-      <div class="bg-surface rounded-[2rem] p-7 border border-[#233246] flex flex-col justify-between hover:border-primary/40 transition-colors duration-300 shadow-xl relative overflow-hidden group min-h-[160px]">
-        <div class="absolute -right-8 -top-8 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/20 transition-all duration-500"></div>
-        <div class="flex items-center gap-3 text-gray-300 font-bold mb-4 uppercase text-xs tracking-widest relative z-10">
-          TEMPO DE ENTREGA MÉDIO
-          <div class="bg-primary/10 p-1.5 rounded-full">
-            <Clock :size="14" class="text-primary" />
+      <!-- Card: Tempo Médio -->
+      <div class="card card-clientes relative p-7 min-h-[180px] flex flex-col justify-between group overflow-hidden">
+        <div class="absolute -right-12 -top-12 w-40 h-40 bg-green-500/10 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
+        
+        <div class="flex items-center justify-between relative z-10">
+          <div class="space-y-1">
+            <div class="badge-glow bg-green-500/10 border-green-500/30 text-green-400">
+              <div class="w-2 h-2 rounded-full bg-green-500"></div>
+              Performance
+            </div>
+            <p class="text-sm text-gray-400 uppercase tracking-widest">Tempo médio</p>
+          </div>
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/20 flex items-center justify-center border border-green-500/30 group-hover:scale-110 transition-transform duration-300">
+            <Clock :size="24" class="text-green-400" />
           </div>
         </div>
-        <div class="text-5xl font-black text-white tracking-tighter relative z-10">{{ stats.avgDeliveryTime }}</div>
+
+        <div class="text-5xl font-black text-white tracking-tighter mt-6 relative z-10">
+          {{ stats.avgDeliveryTime }}
+        </div>
+
+        <div class="h-1 bg-gradient-to-r from-green-500/50 to-transparent rounded-full mt-4"></div>
       </div>
     </div>
 
-    <!-- Chart area mockup -->
-    <div class="bg-surface border border-[#233246] hover:border-[#384a60] transition-colors duration-300 rounded-[2.5rem] p-8 shadow-2xl mt-8">
-      <h2 class="text-xl font-bold text-white mb-10">Entregas por Região</h2>
-      <div class="space-y-8">
-        <div v-for="region in regionStats" :key="region.name" class="space-y-2.5">
-          <div class="flex justify-between text-sm font-semibold">
-            <span class="text-gray-200">{{ region.name }}</span>
-            <span class="text-primary tracking-wide">{{ region.count }} ({{ region.percent }}%)</span>
+    <!-- Chart Section -->
+    <div class="card card-dashboard relative p-8 min-h-[400px] overflow-hidden group z-10">
+      <div class="absolute -right-20 -bottom-20 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+      
+      <div class="relative z-10">
+        <div class="flex items-center justify-between mb-8">
+          <div>
+            <h2 class="text-2xl font-bold text-white mb-2 line-accent">Entregas por Região</h2>
+            <p class="text-gray-400 text-sm">Distribuição geográfica das operações</p>
           </div>
-          <div class="w-full bg-[#080d14] rounded-full h-3 overflow-hidden flex">
-            <div class="bg-gradient-to-r from-primary/40 to-primary h-full rounded-full shadow-[0_0_15px_rgba(0,242,255,0.6)]" :style="`width: ${region.percent}%`"></div>
+          <div class="badge-glow">
+            {{ regionStats.length }} Regiões
           </div>
+        </div>
+
+        <div class="divider-glass mb-8"></div>
+
+        <div v-if="regionStats.length > 0" class="space-y-6">
+          <div v-for="(region, index) in regionStats" :key="region.name" class="animate-in" :style="`animation-delay: ${index * 100}ms`">
+            <div class="flex items-end justify-between mb-3">
+              <div>
+                <p class="text-gray-200 font-semibold">{{ region.name }}</p>
+                <p class="text-xs text-gray-500 mt-0.5">{{ region.count }} entregas</p>
+              </div>
+              <div class="text-right">
+                <span class="text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{{ region.percent }}%</span>
+              </div>
+            </div>
+            
+            <div class="w-full bg-white/5 rounded-full h-3 overflow-hidden border border-white/10 backdrop-blur-sm">
+              <div 
+                class="h-full rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 transition-all duration-1000 ease-out shadow-glow-cyan"
+                :style="{ width: region.percent + '%', animation: `slideIn 0.8s ease-out ${index * 100}ms both` }"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <div v-else class="flex items-center justify-center h-40 text-gray-400">
+          <p>Sem dados de regiões disponíveis</p>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Lua decorativa de fundo */
+.moon-backdrop {
+  position: absolute;
+  bottom: -150px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 900px;
+  background-image: url('/luadash.jpg');
+  background-size: cover;
+  background-position: center;
+  border-radius: 50%;
+  opacity: 0.22;
+  filter: blur(0.5px) brightness(1.2) saturate(0.85);
+  z-index: 0;
+  pointer-events: none;
+  box-shadow: 
+    0 0 100px rgba(0, 242, 255, 0.15),
+    inset 0 0 80px rgba(0, 0, 0, 0.2);
+}
+
+/* Em ecrãs pequenos, reduzir ou esconder */
+@media (max-width: 768px) {
+  .moon-backdrop {
+    width: 600px;
+    height: 600px;
+    bottom: -100px;
+    opacity: 0.12;
+  }
+}
+
+/* Animação sutil de pulsação */
+@keyframes moonGlow {
+  0%, 100% {
+    opacity: 0.22;
+    filter: blur(0.5px) brightness(1.2) saturate(0.85);
+  }
+  50% {
+    opacity: 0.26;
+    filter: blur(1px) brightness(1.25) saturate(0.9);
+  }
+}
+
+.moon-backdrop:hover {
+  animation: moonGlow 4s ease-in-out infinite;
+}
+
+@keyframes slideIn {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: var(--width, 100%);
+    opacity: 1;
+  }
+}
+</style>

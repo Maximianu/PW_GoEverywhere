@@ -3,7 +3,217 @@
 @tailwind utilities;
 
 @layer base {
+  * {
+    @apply transition-colors duration-300;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
-    @apply bg-background text-gray-200 font-sans;
+    @apply bg-background text-gray-200 font-sans overflow-x-hidden;
+    background-image: 
+      radial-gradient(circle at 20% 50%, rgba(0, 242, 255, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 40% 0%, rgba(167, 139, 250, 0.03) 0%, transparent 40%);
+    background-attachment: fixed;
+    position: relative;
+  }
+
+  /* Estrelas sutis de fundo */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      radial-gradient(1px 1px at 20px 30px, #eee, rgba(0, 0, 0, 0)),
+      radial-gradient(1px 1px at 60px 70px, #fff, rgba(0, 0, 0, 0)),
+      radial-gradient(1px 1px at 50px 50px, #ddd, rgba(0, 0, 0, 0)),
+      radial-gradient(1px 1px at 130px 80px, #fff, rgba(0, 0, 0, 0)),
+      radial-gradient(1px 1px at 90px 10px, #eee, rgba(0, 0, 0, 0));
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    animation: twinkle 5s ease-in-out infinite;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.3; }
+  }
+}
+
+@layer components {
+  /* Cards modernos com glass effect */
+  .card {
+    @apply relative rounded-2xl border border-white/10 overflow-hidden;
+    background: linear-gradient(135deg, rgba(21, 31, 46, 0.8) 0%, rgba(12, 18, 30, 0.6) 100%);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 1rem;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(0, 242, 255, 0.1), transparent 80%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .card:hover::before {
+    opacity: 1;
+  }
+
+  .card:hover {
+    transform: translateY(-8px);
+    border-color: rgba(0, 242, 255, 0.2);
+    box-shadow: 0 20px 50px rgba(0, 242, 255, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Variantes de cards por cor */
+  .card-dashboard {
+    @apply card;
+  }
+
+  .card-dashboard:hover {
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 20px 50px rgba(59, 130, 246, 0.1), 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .card-pedidos {
+    @apply card;
+  }
+
+  .card-pedidos:hover {
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 20px 50px rgba(239, 68, 68, 0.1), 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .card-clientes {
+    @apply card;
+  }
+
+  .card-clientes:hover {
+    border-color: rgba(16, 185, 129, 0.3);
+    box-shadow: 0 20px 50px rgba(16, 185, 129, 0.1), 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Badges com glow */
+  .badge-glow {
+    @apply inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider;
+    background: rgba(0, 242, 255, 0.1);
+    color: #00f2ff;
+    border: 1px solid rgba(0, 242, 255, 0.3);
+    box-shadow: inset 0 0 10px rgba(0, 242, 255, 0.1);
+  }
+
+  /* Botões melhorados */
+  .btn-primary {
+    @apply px-6 py-3 rounded-xl font-semibold text-sm uppercase tracking-wide;
+    background: linear-gradient(135deg, rgba(0, 242, 255, 0.2), rgba(0, 242, 255, 0.05));
+    border: 1px solid rgba(0, 242, 255, 0.3);
+    color: #00f2ff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 242, 255, 0.1);
+    transition: left 0.3s ease;
+    z-index: -1;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 30px rgba(0, 242, 255, 0.3), inset 0 0 20px rgba(0, 242, 255, 0.1);
+    border-color: rgba(0, 242, 255, 0.6);
+  }
+
+  .btn-primary:hover::before {
+    left: 0;
+  }
+
+  /* Efeito glass geral */
+  .glass {
+    @apply backdrop-blur border border-white/10 bg-white/5;
+  }
+
+  /* Seções suaves */
+  .section-fade {
+    animation: fade-in-up 0.6s ease-out;
+  }
+
+  /* Gradiente de texto para títulos */
+  .text-gradient {
+    @apply bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent;
+  }
+
+  /* Linhas decorativas */
+  .line-accent {
+    @apply relative;
+  }
+
+  .line-accent::before {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #00f2ff, transparent);
+    border-radius: 999px;
+  }
+
+  /* Divisores elegantes */
+  .divider-glass {
+    @apply h-px bg-gradient-to-r from-transparent via-white/10 to-transparent;
+  }
+
+  /* Estados de hover para elementos interativos */
+  .interactive {
+    @apply cursor-pointer transition-all duration-300;
+  }
+
+  .interactive:hover {
+    @apply transform -translate-y-1;
+  }
+
+  /* Animações de entrada */
+  .animate-in {
+    animation: fade-in-up 0.5s ease-out;
+  }
+
+  /* Overlay subtil para profundidade */
+  .depth-layer {
+    @apply relative z-10;
+  }
+
+  .depth-layer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.1) 100%);
+    pointer-events: none;
   }
 }
