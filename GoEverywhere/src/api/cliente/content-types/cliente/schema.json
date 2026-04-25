@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "clientes",
+  "info": {
+    "singularName": "cliente",
+    "pluralName": "clientes",
+    "displayName": "Cliente"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "PrimeiroNome": {
+      "type": "string"
+    },
+    "UltimoNome": {
+      "type": "string"
+    },
+    "Email": {
+      "type": "email"
+    },
+    "pedido_missions": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::pedido-mission.pedido-mission",
+      "mappedBy": "cliente"
+    }
+  }
+}

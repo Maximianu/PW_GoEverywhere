@@ -11,9 +11,6 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "Cliente": {
-      "type": "string"
-    },
     "Destino": {
       "type": "enumeration",
       "enum": [
@@ -42,6 +39,12 @@
       "type": "relation",
       "relation": "oneToOne",
       "target": "api::estafeta.estafeta"
+    },
+    "cliente": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::cliente.cliente",
+      "inversedBy": "pedido_missions"
     }
   }
 }

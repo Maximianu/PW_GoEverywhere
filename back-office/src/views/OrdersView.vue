@@ -32,9 +32,9 @@ const loadOrders = async () => {
     
     orders.value = json.data.map(item => ({
       id: item.documentId || item.id,
-      client: item.Cliente || 'Sem Cliente',
-      initials: item.Cliente ? item.Cliente.substring(0, 2).toUpperCase() : '??',
-      email: 'n/a', // Não tem no Strapi
+      client: item.cliente ? `${item.cliente.PrimeiroNome || ''} ${item.cliente.UltimoNome || ''}`.trim() : (item.Cliente || 'Sem Cliente'),
+      initials: item.cliente ? ((item.cliente.PrimeiroNome ? item.cliente.PrimeiroNome[0] : '') + (item.cliente.UltimoNome ? item.cliente.UltimoNome[0] : '')).toUpperCase() || '??' : (item.Cliente ? item.Cliente.substring(0, 2).toUpperCase() : '??'),
+      email: item.cliente ? (item.cliente.Email || 'n/a') : 'n/a',
       destination: item.Destino || 'Não Definido',
       date: new Date(item.createdAt || Date.now()).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }),
       createdAt: item.createdAt || Date.now(),

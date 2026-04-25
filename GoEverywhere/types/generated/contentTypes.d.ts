@@ -563,6 +563,40 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiClienteCliente extends Struct.CollectionTypeSchema {
+  collectionName: 'clientes';
+  info: {
+    displayName: 'Cliente';
+    pluralName: 'clientes';
+    singularName: 'cliente';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    Email: Schema.Attribute.Email;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::cliente.cliente'
+    > &
+      Schema.Attribute.Private;
+    pedido_missions: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::pedido-mission.pedido-mission'
+    >;
+    PrimeiroNome: Schema.Attribute.String;
+    publishedAt: Schema.Attribute.DateTime;
+    UltimoNome: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiEstafetaEstafeta extends Struct.CollectionTypeSchema {
   collectionName: 'estafetas';
   info: {
@@ -641,7 +675,7 @@ export interface ApiPedidoMissionPedidoMission
     draftAndPublish: true;
   };
   attributes: {
-    Cliente: Schema.Attribute.String;
+    cliente: Schema.Attribute.Relation<'manyToOne', 'api::cliente.cliente'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1180,6 +1214,7 @@ declare module '@strapi/strapi' {
       'api::article.article': ApiArticleArticle;
       'api::author.author': ApiAuthorAuthor;
       'api::category.category': ApiCategoryCategory;
+      'api::cliente.cliente': ApiClienteCliente;
       'api::estafeta.estafeta': ApiEstafetaEstafeta;
       'api::global.global': ApiGlobalGlobal;
       'api::pedido-mission.pedido-mission': ApiPedidoMissionPedidoMission;

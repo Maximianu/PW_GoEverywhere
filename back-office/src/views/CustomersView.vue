@@ -3,100 +3,40 @@ import { ref, computed, onMounted } from 'vue'
 import { Search, Plus, X, User, Mail, Phone, Calendar, MapPin } from 'lucide-vue-next'
 
 const searchQuery = ref('')
-const isAddCustomerOpen = ref(false)
-const editingCustomerId = ref(null)
+const isDetailsCustomerOpen = ref(false)
+const selectedCustomer = ref(null)
 const customers = ref([])
-const isSubmitting = ref(false)
-
-const newCustomer = ref({
-  Nome: '',
-  Email: '',
-  Telemovel: '',
-  Endereco: '',
-  Cidade: ''
-})
 
 const loadCustomers = async () => {
   try {
-    // Nota: Você precisa ter uma API de clientes no Strapi
-    // ou pode adaptar para buscar de "pedido-missions" para extrair clientes únicos
-    const res = await fetch('http://localhost:1338/api/clientes')
+    const res = await fetch('http://localhost:1338/api/clientes?populate=*')
     const json = await res.json()
     customers.value = json.data.map(item => ({
       id: item.documentId || item.id,
-      nome: item.Nome || 'Sem Nome',
+      nome: `${item.PrimeiroNome || ''} ${item.UltimoNome || ''}`.trim() || 'Sem Nome',
+      primeiroNome: item.PrimeiroNome || '',
+      ultimoNome: item.UltimoNome || '',
       email: item.Email || 'n/a',
-      telemovel: item.Telemovel || 'n/a',
-      endereco: item.Endereco || 'Não informado',
-      cidade: item.Cidade || 'Não informado',
-      initials: (item.Nome || '??').substring(0, 2).toUpperCase(),
-      pedidos: item.pedidos?.length || 0,
+      initials: ((item.PrimeiroNome ? item.PrimeiroNome[0] : '') + (item.UltimoNome ? item.UltimoNome[0] : '')).toUpperCase() || '??',
+      pedidos: item.pedido_missions?.length || 0,
       dataCriacao: new Date(item.createdAt).toLocaleDateString('pt-PT')
     }))
   } catch (error) {
     console.error('Erro ao buscar clientes:', error)
-    customers.value = [] // Sem dados mock por agora
+    customers.value = []
   }
 }
 
 onMounted(loadCustomers)
 
-const submitCustomer = async () => {
-  if (!newCustomer.value.Nome || !newCustomer.value.Email) {
-    alert('Nome e Email são obrigatórios.')
-    return
-  }
-  
-  isSubmitting.value = true
-  try {
-    const payload = {
-      data: {
-        Nome: newCustomer.value.Nome,
-        Email: newCustomer.value.Email,
-        Telemovel: newCustomer.value.Telemovel,
-        Endereco: newCustomer.value.Endereco,
-        Cidade: newCustomer.value.Cidade
-      }
-    }
-    
-    const isEdit = !!editingCustomerId.value
-    const url = isEdit 
-      ? `http://localhost:1338/api/clientes/${editingCustomerId.value}`
-      : 'http://localhost:1338/api/clientes'
-    
-    const response = await fetch(url, {
-      method: isEdit ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-    
-    if (response.ok) {
-      await loadCustomers()
-      closeDrawer()
-    } else {
-      if (response.status === 403) {
-        alert('Erro 403: Permissão negada! Ative a permissão no Strapi.')
-      } else {
-        alert(isEdit ? 'Falha ao atualizar cliente.' : 'Falha ao adicionar cliente.')
-      }
-    }
-  } catch (error) {
-    console.error(error)
-    alert('Erro ao comunicar com o servidor.')
-  } finally {
-    isSubmitting.value = false
-  }
-}
-
-const openAddDrawer = () => {
-  editingCustomerId.value = null
-  newCustomer.value = { Nome: '', Email: '', Telemovel: '', Endereco: '', Cidade: '' }
-  isAddCustomerOpen.value = true
+const openDetailsDrawer = (customer) => {
+  selectedCustomer.value = customer
+  isDetailsCustomerOpen.value = true
 }
 
 const closeDrawer = () => {
-  isAddCustomerOpen.value = false
-  editingCustomerId.value = null
+  isDetailsCustomerOpen.value = false
+  selectedCustomer.value = null
 }
 
 const stats = computed(() => {
@@ -151,13 +91,6 @@ const filteredCustomers = computed(() => {
           class="w-full pl-12 pr-4 py-2.5 bg-[#0c1219] border border-[#2a3b4f] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary"
         />
       </div>
-      <button
-        @click="openAddDrawer"
-        class="ml-4 flex items-center gap-2 px-6 py-2.5 bg-primary text-black rounded-xl font-semibold hover:bg-primary/90 transition-colors"
-      >
-        <Plus :size="18" />
-        Novo Cliente
-      </button>
     </div>
 
     <!-- Customers Table -->
@@ -168,14 +101,12 @@ const filteredCustomers = computed(() => {
             <tr class="border-b border-[#1f2937] bg-[#0c1219]">
               <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase">Cliente</th>
               <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase">Email</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase">Telefone</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase">Cidade</th>
               <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase">Pedidos</th>
               <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase">Data</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-[#1f2937]">
-            <tr v-for="customer in filteredCustomers" :key="customer.id" class="hover:bg-[#1a2332] transition-colors">
+            <tr v-for="customer in filteredCustomers" :key="customer.id" class="hover:bg-[#1a2332] transition-colors cursor-pointer" @click="openDetailsDrawer(customer)">
               <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-black font-semibold text-sm">
@@ -188,18 +119,6 @@ const filteredCustomers = computed(() => {
                 <div class="flex items-center gap-2 text-sm">
                   <Mail :size="16" class="text-gray-500" />
                   {{ customer.email }}
-                </div>
-              </td>
-              <td class="px-6 py-4 text-gray-300">
-                <div class="flex items-center gap-2 text-sm">
-                  <Phone :size="16" class="text-gray-500" />
-                  {{ customer.telemovel }}
-                </div>
-              </td>
-              <td class="px-6 py-4 text-gray-300">
-                <div class="flex items-center gap-2 text-sm">
-                  <MapPin :size="16" class="text-gray-500" />
-                  {{ customer.cidade }}
                 </div>
               </td>
               <td class="px-6 py-4">
@@ -220,13 +139,13 @@ const filteredCustomers = computed(() => {
       </div>
     </div>
 
-    <!-- Add/Edit Customer Drawer -->
+    <!-- Customer Details Drawer -->
     <Teleport to="body">
       <Transition
         enterActiveClass="transition-opacity duration-300"
         leaveActiveClass="transition-opacity duration-300"
       >
-        <div v-if="isAddCustomerOpen" class="fixed inset-0 bg-black/50 z-40" @click="closeDrawer" />
+        <div v-if="isDetailsCustomerOpen" class="fixed inset-0 bg-black/50 z-40" @click="closeDrawer" />
       </Transition>
 
       <Transition
@@ -235,11 +154,11 @@ const filteredCustomers = computed(() => {
         enterFromClass="translate-x-full"
         leaveToClass="translate-x-full"
       >
-        <div v-if="isAddCustomerOpen" class="fixed right-0 top-0 h-full w-96 bg-[#141b27] border-l border-[#1f2937] z-50 flex flex-col shadow-2xl">
+        <div v-if="isDetailsCustomerOpen && selectedCustomer" class="fixed right-0 top-0 h-full w-96 bg-[#141b27] border-l border-[#1f2937] z-50 flex flex-col shadow-2xl">
           <!-- Header -->
           <div class="flex items-center justify-between p-6 border-b border-[#1f2937]">
             <h3 class="text-xl font-bold text-white">
-              {{ editingCustomerId ? 'Editar Cliente' : 'Novo Cliente' }}
+              Detalhes do Cliente
             </h3>
             <button @click="closeDrawer" class="text-gray-400 hover:text-white transition-colors">
               <X :size="24" />
@@ -247,67 +166,41 @@ const filteredCustomers = computed(() => {
           </div>
 
           <!-- Content -->
-          <div class="flex-1 overflow-y-auto p-6 space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Nome *</label>
-              <input
-                v-model="newCustomer.Nome"
-                type="text"
-                class="w-full px-4 py-2 bg-[#0c1219] border border-[#2a3b4f] rounded-lg text-white focus:outline-none focus:border-primary"
-              />
+          <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="flex flex-col items-center justify-center space-y-4 mb-8">
+              <div class="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-black font-bold text-2xl shadow-lg">
+                {{ selectedCustomer.initials }}
+              </div>
+              <div class="text-center">
+                <h4 class="text-xl font-bold text-white">{{ selectedCustomer.nome }}</h4>
+                <p class="text-gray-400 mt-1 flex items-center justify-center gap-2"><Mail :size="16"/> {{ selectedCustomer.email }}</p>
+              </div>
             </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Email *</label>
-              <input
-                v-model="newCustomer.Email"
-                type="email"
-                class="w-full px-4 py-2 bg-[#0c1219] border border-[#2a3b4f] rounded-lg text-white focus:outline-none focus:border-primary"
-              />
+            <div class="space-y-4">
+              <h5 class="text-xs font-bold text-primary uppercase tracking-widest border-b border-[#1f2937] pb-2">Estatísticas</h5>
+              <div class="bg-[#0c1219] p-4 rounded-xl border border-[#2a3b4f] flex justify-between items-center">
+                <span class="text-gray-400 font-medium">Total de Pedidos</span>
+                <span class="text-white font-bold text-lg bg-blue-500/20 px-3 py-1 rounded-lg text-blue-300">{{ selectedCustomer.pedidos }}</span>
+              </div>
             </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Telefone</label>
-              <input
-                v-model="newCustomer.Telemovel"
-                type="tel"
-                class="w-full px-4 py-2 bg-[#0c1219] border border-[#2a3b4f] rounded-lg text-white focus:outline-none focus:border-primary"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Endereço</label>
-              <input
-                v-model="newCustomer.Endereco"
-                type="text"
-                class="w-full px-4 py-2 bg-[#0c1219] border border-[#2a3b4f] rounded-lg text-white focus:outline-none focus:border-primary"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">Cidade</label>
-              <input
-                v-model="newCustomer.Cidade"
-                type="text"
-                class="w-full px-4 py-2 bg-[#0c1219] border border-[#2a3b4f] rounded-lg text-white focus:outline-none focus:border-primary"
-              />
+            <div class="space-y-4">
+              <h5 class="text-xs font-bold text-primary uppercase tracking-widest border-b border-[#1f2937] pb-2">Informação de Registo</h5>
+              <div class="bg-[#0c1219] p-4 rounded-xl border border-[#2a3b4f] flex justify-between items-center">
+                <span class="text-gray-400 font-medium">Data de Registo</span>
+                <span class="text-white font-medium flex items-center gap-2"><Calendar :size="16" class="text-gray-500"/> {{ selectedCustomer.dataCriacao }}</span>
+              </div>
             </div>
           </div>
 
           <!-- Footer -->
-          <div class="p-6 border-t border-[#1f2937] flex gap-3">
+          <div class="p-6 border-t border-[#1f2937]">
             <button
               @click="closeDrawer"
-              class="flex-1 px-4 py-2 bg-[#0c1219] border border-[#2a3b4f] rounded-lg text-white font-medium hover:bg-[#1a2332] transition-colors"
+              class="w-full px-4 py-3 bg-[#0c1219] border border-[#2a3b4f] rounded-lg text-white font-medium hover:bg-[#1a2332] transition-colors"
             >
-              Cancelar
-            </button>
-            <button
-              @click="submitCustomer"
-              :disabled="isSubmitting"
-              class="flex-1 px-4 py-2 bg-primary text-black rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
-              {{ isSubmitting ? 'Guardando...' : 'Guardar' }}
+              Fechar Atalhos
             </button>
           </div>
         </div>
