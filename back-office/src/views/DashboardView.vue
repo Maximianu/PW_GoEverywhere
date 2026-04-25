@@ -55,9 +55,6 @@ onMounted(async () => {
 
 <template>
   <div class="p-8 pb-20 max-w-[1400px] mx-auto space-y-10 section-fade relative">
-    <!-- Lua decorativa de fundo (atrás dos cards) -->
-    <div class="moon-backdrop"></div>
-    
     <!-- Header -->
     <header class="space-y-3 relative z-10">
       <div class="absolute -top-2 left-0 w-32 h-1 bg-gradient-to-r from-cyan-500 to-transparent rounded-full"></div>
@@ -187,52 +184,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-/* Lua decorativa de fundo */
-.moon-backdrop {
-  position: absolute;
-  bottom: -150px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 900px;
-  height: 900px;
-  background-image: url('/luadash.jpg');
-  background-size: cover;
-  background-position: center;
-  border-radius: 50%;
-  opacity: 0.22;
-  filter: blur(0.5px) brightness(1.2) saturate(0.85);
-  z-index: 0;
-  pointer-events: none;
-  box-shadow: 
-    0 0 100px rgba(0, 242, 255, 0.15),
-    inset 0 0 80px rgba(0, 0, 0, 0.2);
-}
-
-/* Em ecrãs pequenos, reduzir ou esconder */
-@media (max-width: 768px) {
-  .moon-backdrop {
-    width: 600px;
-    height: 600px;
-    bottom: -100px;
-    opacity: 0.12;
-  }
-}
-
-/* Animação sutil de pulsação */
-@keyframes moonGlow {
-  0%, 100% {
-    opacity: 0.22;
-    filter: blur(0.5px) brightness(1.2) saturate(0.85);
-  }
-  50% {
-    opacity: 0.26;
-    filter: blur(1px) brightness(1.25) saturate(0.9);
-  }
-}
-
-.moon-backdrop:hover {
-  animation: moonGlow 4s ease-in-out infinite;
-}
 
 @keyframes slideIn {
   from {

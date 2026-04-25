@@ -56,9 +56,9 @@ const isActive = (path) => {
 </script>
 
 <template>
-  <div class="min-h-screen flex bg-gradient-lunar selection:bg-primary/30">
+  <div class="h-screen overflow-hidden flex bg-gradient-lunar selection:bg-primary/30">
     <!-- Sidebar -->
-    <aside class="w-[280px] bg-gradient-to-b from-[#0a0f18] via-[#080d14] to-[#0c121e] border-r border-white/5 flex flex-col items-center py-6 px-4 shrink-0 shadow-2xl z-20 backdrop-blur-sm">
+    <aside class="w-[280px] h-full overflow-y-auto bg-gradient-to-b from-[#0a0f18] via-[#080d14] to-[#0c121e] border-r border-white/5 flex flex-col items-center py-6 px-4 shrink-0 shadow-2xl z-20 backdrop-blur-sm">
       <!-- Borda decorativa luminosa -->
       <div class="absolute right-0 top-0 w-1 h-32 bg-gradient-to-b from-cyan-500/30 via-purple-500/20 to-transparent"></div>
       
@@ -139,7 +139,10 @@ const isActive = (path) => {
     </aside>
 
     <!-- Main Content Slot -->
-    <main class="flex-1 min-w-0 bg-background overflow-y-auto h-screen relative">
+    <main class="flex-1 min-w-0 bg-background relative h-full overflow-y-auto">
+      <!-- Lua decorativa global do back-office -->
+      <div class="moon-backdrop-global"></div>
+
       <!-- Subtle animated background elements -->
       <div class="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl -z-10 animate-float"></div>
       <div class="absolute bottom-20 left-0 w-80 h-80 bg-purple-500/5 rounded-full blur-3xl -z-10 animate-float" style="animation-delay: 2s;"></div>
@@ -163,5 +166,34 @@ const isActive = (path) => {
 /* Smooth transitions */
 .router-link-active {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Lua Global sem círculo escuro */
+.moon-backdrop-global {
+  position: fixed;
+  bottom: -250px;
+  left: calc(50% + 140px);
+  transform: translateX(-50%);
+  width: 1000px;
+  height: 1000px;
+  background-image: url('/luadash.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 50%;
+  opacity: 0.15;
+  filter: blur(1px) brightness(1.1);
+  mix-blend-mode: screen;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .moon-backdrop-global {
+    width: 600px;
+    height: 600px;
+    bottom: -150px;
+    left: 50%;
+  }
 }
 </style>

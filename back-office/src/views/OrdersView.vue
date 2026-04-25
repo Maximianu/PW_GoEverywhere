@@ -142,9 +142,6 @@ const setFilter = (val) => {
 
 <template>
   <div class="p-8 pb-20 max-w-[1400px] mx-auto space-y-10 animate-in fade-in duration-700 relative">
-    <!-- Lua decorativa -->
-    <div class="moon-backdrop moon-backdrop-pedidos"></div>
-    
     <!-- Header -->
     <header class="space-y-2 relative z-10">
       <h1 class="text-3xl font-bold text-white tracking-tight">Pedidos</h1>
@@ -457,55 +454,4 @@ const setFilter = (val) => {
   </div>
 </template>
 
-<style scoped>
-/* Lua decorativa de fundo - Pedidos (Vermelho) */
-.moon-backdrop {
-  position: absolute;
-  bottom: -150px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 900px;
-  height: 900px;
-  background-image: url('/luadash.jpg');
-  background-size: cover;
-  background-position: center;
-  border-radius: 50%;
-  opacity: 0.22;
-  filter: blur(0.5px) brightness(1.2) saturate(0.85);
-  z-index: 0;
-  pointer-events: none;
-  box-shadow: 
-    0 0 100px rgba(239, 68, 68, 0.15),
-    inset 0 0 80px rgba(0, 0, 0, 0.2);
-}
 
-.moon-backdrop-pedidos {
-  box-shadow: 
-    0 0 100px rgba(239, 68, 68, 0.2),
-    inset 0 0 80px rgba(0, 0, 0, 0.2);
-}
-
-@media (max-width: 768px) {
-  .moon-backdrop {
-    width: 600px;
-    height: 600px;
-    bottom: -100px;
-    opacity: 0.12;
-  }
-}
-
-@keyframes moonGlow {
-  0%, 100% {
-    opacity: 0.22;
-    filter: blur(0.5px) brightness(1.2) saturate(0.85);
-  }
-  50% {
-    opacity: 0.26;
-    filter: blur(1px) brightness(1.25) saturate(0.9);
-  }
-}
-
-.moon-backdrop:hover {
-  animation: moonGlow 4s ease-in-out infinite;
-}
-</style>
