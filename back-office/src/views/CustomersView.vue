@@ -9,7 +9,7 @@ const customers = ref([])
 
 const loadCustomers = async () => {
   try {
-    const res = await fetch('http://localhost:1338/api/clientes?populate=*')
+    const res = await fetch('http://localhost:1338/api/clientes')
     const json = await res.json()
     customers.value = json.data.map(item => ({
       id: item.documentId || item.id,

@@ -1,12 +1,11 @@
 <template>
   <div class="side-layout">
-    <SidePanel />
     <main class="page-shell" style="padding: 0;">
       <section class="panel">
         <div class="section-header">
           <div>
             <p class="small-note">Escolha o seu kit</p>
-            <h1 class="headline" style="font-size: 2.8rem;">Monte sua carga espacial</h1>
+            <h1 class="headline" style="font-size: 2.8rem;">Escolha a sua carga espacial</h1>
           </div>
         </div>
 
@@ -43,7 +42,7 @@
                 <li>• Kevlar-Mylar Hybrid</li>
                 <li>• 24H Life Support</li>
               </ul>
-              <button class="btn btn-primary">Selecionar</button>
+              <button class="btn btn-secondary">Selecionar</button>
             </div>
           </div>
 
@@ -76,6 +75,3 @@
   </div>
 </template>
 
-<script setup>
-import SidePanel from '../components/SidePanel.vue'
-</script>

@@ -1,0 +1,355 @@
+/**
+ * GoEverywhere Design System - Front Office Theme
+ * 
+ * Este ficheiro contém os estilos visuais baseados no design do Figma.
+ * Importar em main.js ou no componente raiz.
+ * 
+ * Fontes: Space Grotesk (títulos), Manrope (corpo)
+ * Cores: Cyan (#00f2ff), Dark (#181c22), Light (#e1fdff)
+ */
+
+/* ============================================
+   CSS CUSTOM PROPERTIES (DESIGN TOKENS)
+   ============================================ */
+
+:root {
+  /* Cores Primárias */
+  --color-primary: #00f2ff;
+  --color-primary-hover: #53e4ff;
+  --color-primary-muted: rgba(0, 242, 255, 0.8);
+  --color-accent: #53e4ff;
+  
+  /* Cores de Fundo */
+  --color-bg-dark: #181c22;
+  --color-bg-surface: rgba(24, 28, 34, 0.6);
+  --color-bg-input: rgba(49, 53, 60, 0.5);
+  --color-bg-overlay: rgba(4, 10, 20, 0.65);
+  
+  /* Cores de Texto */
+  --color-text-heading: #e1fdff;
+  --color-text-body: #b9cacb;
+  --color-text-muted: rgba(185, 202, 203, 0.3);
+  --color-text-inverse: #00363a;
+  
+  /* Cores de Bordas */
+  --color-border-default: rgba(58, 73, 75, 0.3);
+  --color-border-subtle: rgba(58, 73, 75, 0.1);
+  
+  /* Espaçamentos */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 40px;
+  --spacing-3xl: 41px;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 24px;
+  
+  /* Sombras */
+  --shadow-panel: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-overlay: 0 28px 90px rgba(4, 10, 20, 0.25);
+  
+  /* Backdrop */
+  --blur-overlay: blur(10px);
+  
+  /* Transições */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+}
+
+/* ============================================
+   TIPOGRAFIA
+   ============================================ */
+
+.font-heading {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.font-body {
+  font-family: 'Manrope', sans-serif;
+}
+
+/* Labels - maiúsculas, letter-spacing */
+.label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-body);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.label-primary {
+  color: var(--color-primary);
+  letter-spacing: 2.4px;
+}
+
+/* Títulos */
+.heading-xl {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--color-text-heading);
+  letter-spacing: -0.75px;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.heading-lg {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text-heading);
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+.heading-md {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text-heading);
+  margin: 0;
+}
+
+/* Subtítulos */
+.subtitle {
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  color: var(--color-text-body);
+  line-height: 1.62;
+  margin: 8px 0 0 0;
+}
+
+.subtitle-small {
+  font-size: 12px;
+}
+
+/* ============================================
+   PAINÉIS E CONTAINERS
+   ============================================ */
+
+.panel {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  backdrop-filter: var(--blur-overlay);
+  box-shadow: var(--shadow-panel);
+}
+
+.panel-ghost {
+  background: var(--color-bg-overlay);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ============================================
+   CAMPOS DE FORMULÁRIO
+   ============================================ */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.form-label {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-text-body);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 17px;
+  background: var(--color-bg-input);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  font-family: 'Manrope', sans-serif;
+  font-size: 16px;
+  color: var(--color-text-heading);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.form-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.form-input:focus {
+  border-color: rgba(0, 242, 255, 0.5);
+}
+
+.form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Grupo de inputs */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* ============================================
+   BOTÕES
+   ============================================ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 24px;
+  border-radius: var(--radius-sm);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: none;
+}
+
+/* Botão Primário (Cyan) */
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* Botão Secundário (Outline) */
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--color-border-default);
+  color: var(--color-primary);
+}
+
+.btn-secondary:hover {
+  background: rgba(0, 242, 255, 0.1);
+  border-color: var(--color-primary);
+}
+
+/* Botão Terciário (Texto) */
+.btn-tertiary {
+  background: transparent;
+  color: var(--color-primary-muted);
+  padding: 8px 16px;
+  font-size: 10px;
+  letter-spacing: -0.5px;
+}
+
+.btn-tertiary:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+/* ============================================
+   LINKS
+   ============================================ */
+
+.link {
+  font-family: 'Manrope', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.link-muted {
+  color: var(--color-primary-muted);
+}
+
+/* ============================================
+   ESTADOS DE LOADING
+   ============================================ */
+
+.loading {
+  text-align: center;
+  color: var(--color-primary);
+  padding: var(--spacing-md) 0;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border-default);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   SEPARADORES
+   ============================================ */
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--color-border-subtle);
+  margin: var(--spacing-lg) 0;
+}
+
+.divider-vertical {
+  border: none;
+  border-left: 1px solid var(--color-border-subtle);
+  width: 1px;
+  height: 100%;
+}
+
+/* ============================================
+   UTILITÁRIOS
+   ============================================ */
+
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.gap-sm { gap: var(--spacing-sm); }
+.gap-md { gap: var(--spacing-md); }
+.gap-lg { gap: var(--spacing-lg); }
+
+.mt-sm { margin-top: var(--spacing-sm); }
+.mt-md { margin-top: var(--spacing-md); }
+.mt-lg { margin-top: var(--spacing-lg); }
+.mb-sm { margin-bottom: var(--spacing-sm); }
+.mb-md { margin-bottom: var(--spacing-md); }
+.mb-lg { margin-bottom: var(--spacing-lg); }
+
+.p-sm { padding: var(--spacing-sm); }
+.p-md { padding: var(--spacing-md); }
+.p-lg { padding: var(--spacing-lg); }
+
+.w-full { width: 100%; }
+.h-full { height: 100%; }
