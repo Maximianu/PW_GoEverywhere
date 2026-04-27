@@ -65,75 +65,21 @@ onMounted(async () => {
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
       <!-- Card: Estafetas Disponíveis -->
-      <div class="card card-dashboard relative p-7 min-h-[180px] flex flex-col justify-between group overflow-hidden">
-        <div class="absolute -right-12 -top-12 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
-        
-        <div class="flex items-center justify-between relative z-10">
-          <div class="space-y-1">
-            <div class="badge-glow bg-blue-500/10 border-blue-500/30 text-blue-400">
-              <div class="w-2 h-2 rounded-full bg-blue-500"></div>
-              Estafetas
-            </div>
-            <p class="text-sm text-gray-400 uppercase tracking-widest">Disponíveis agora</p>
-          </div>
-          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center border border-blue-500/30 group-hover:scale-110 transition-transform duration-300">
-            <MapPin :size="24" class="text-blue-400" />
-          </div>
-        </div>
-
-        <div class="text-5xl font-black text-white tracking-tighter mt-6 relative z-10">
-          {{ stats.availableCouriers.toLocaleString() }}
-        </div>
-
-        <div class="h-1 bg-gradient-to-r from-blue-500/50 to-transparent rounded-full mt-4"></div>
+      <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
+        <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">ESTAFETAS DISPONÍVEIS</div>
+        <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.availableCouriers.toLocaleString() }}</div>
       </div>
 
       <!-- Card: Total de Pedidos -->
-      <div class="card card-pedidos relative p-7 min-h-[180px] flex flex-col justify-between group overflow-hidden">
-        <div class="absolute -right-12 -top-12 w-40 h-40 bg-red-500/10 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
-        
-        <div class="flex items-center justify-between relative z-10">
-          <div class="space-y-1">
-            <div class="badge-glow bg-red-500/10 border-red-500/30 text-red-400">
-              <div class="w-2 h-2 rounded-full bg-red-500"></div>
-              Pedidos
-            </div>
-            <p class="text-sm text-gray-400 uppercase tracking-widest">Em sistema</p>
-          </div>
-          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-red-500/20 to-red-600/20 flex items-center justify-center border border-red-500/30 group-hover:scale-110 transition-transform duration-300">
-            <ShoppingCart :size="24" class="text-red-400" />
-          </div>
-        </div>
-
-        <div class="text-5xl font-black text-white tracking-tighter mt-6 relative z-10">
-          {{ stats.totalOrders.toLocaleString() }}
-        </div>
-
-        <div class="h-1 bg-gradient-to-r from-red-500/50 to-transparent rounded-full mt-4"></div>
+      <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
+        <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">TOTAL DE PEDIDOS</div>
+        <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.totalOrders.toLocaleString() }}</div>
       </div>
 
       <!-- Card: Tempo Médio -->
-      <div class="card card-clientes relative p-7 min-h-[180px] flex flex-col justify-between group overflow-hidden">
-        <div class="absolute -right-12 -top-12 w-40 h-40 bg-green-500/10 rounded-full blur-3xl group-hover:blur-2xl transition-all duration-500 opacity-0 group-hover:opacity-100"></div>
-        
-        <div class="flex items-center justify-between relative z-10">
-          <div class="space-y-1">
-            <div class="badge-glow bg-green-500/10 border-green-500/30 text-green-400">
-              <div class="w-2 h-2 rounded-full bg-green-500"></div>
-              Performance
-            </div>
-            <p class="text-sm text-gray-400 uppercase tracking-widest">Tempo médio</p>
-          </div>
-          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/20 flex items-center justify-center border border-green-500/30 group-hover:scale-110 transition-transform duration-300">
-            <Clock :size="24" class="text-green-400" />
-          </div>
-        </div>
-
-        <div class="text-5xl font-black text-white tracking-tighter mt-6 relative z-10">
-          {{ stats.avgDeliveryTime }}
-        </div>
-
-        <div class="h-1 bg-gradient-to-r from-green-500/50 to-transparent rounded-full mt-4"></div>
+      <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
+        <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">TEMPO MÉDIO DE ENTREGA</div>
+        <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.avgDeliveryTime }}</div>
       </div>
     </div>
 
