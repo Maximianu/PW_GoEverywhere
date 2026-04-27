@@ -42,7 +42,6 @@ const closeDrawer = () => {
 const stats = computed(() => {
   return {
     total: customers.value.length,
-    premium: customers.value.filter(c => c.pedidos > 5).length,
     thisMonth: customers.value.length // Pode ser melhorado com data
   }
 })
@@ -65,68 +64,64 @@ const filteredCustomers = computed(() => {
     </header>
 
     <!-- Stats -->
-    <div class="grid grid-cols-3 gap-6">
-      <div class="bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/30 rounded-2xl p-6">
-        <div class="text-sm text-gray-400 font-medium mb-2">Total de Clientes</div>
-        <div class="text-4xl font-bold text-white">{{ stats.total }}</div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+      <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
+        <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">TOTAL DE CLIENTES</div>
+        <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.total }}</div>
       </div>
-      <div class="bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 rounded-2xl p-6">
-        <div class="text-sm text-gray-400 font-medium mb-2">Clientes Premium</div>
-        <div class="text-4xl font-bold text-white">{{ stats.premium }}</div>
-      </div>
-      <div class="bg-gradient-to-br from-green-500/20 to-green-600/10 border border-green-500/30 rounded-2xl p-6">
-        <div class="text-sm text-gray-400 font-medium mb-2">Este Mês</div>
-        <div class="text-4xl font-bold text-white">{{ stats.thisMonth }}</div>
+      <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
+        <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">ESTE MÊS</div>
+        <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.thisMonth }}</div>
       </div>
     </div>
 
     <!-- Toolbar -->
-    <div class="flex items-center justify-between bg-[#141b27] rounded-2xl p-4 border border-[#1f2937]">
+    <div class="flex items-center justify-between bg-surface rounded-3xl p-4 border border-[#233246]">
       <div class="flex-1 relative">
         <Search class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" :size="18" />
         <input
           v-model="searchQuery"
           type="text"
           placeholder="Procurar clientes..."
-          class="w-full pl-12 pr-4 py-2.5 bg-[#0c1219] border border-[#2a3b4f] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-primary"
+          class="w-full pl-12 pr-4 py-3 bg-[#111926] border border-[#233246] rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all"
         />
       </div>
     </div>
 
     <!-- Customers Table -->
-    <div class="bg-[#141b27] border border-[#1f2937] rounded-2xl overflow-hidden">
+    <div class="bg-surface border border-[#233246] rounded-[2rem] overflow-hidden shadow-2xl">
       <div v-if="filteredCustomers.length > 0" class="overflow-x-auto">
-        <table class="w-full">
+        <table class="w-full text-left border-collapse min-w-[900px]">
           <thead>
-            <tr class="border-b border-[#1f2937] bg-[#0c1219]">
-              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase">Cliente</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase">Email</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase">Pedidos</th>
-              <th class="px-6 py-4 text-left text-xs font-semibold text-gray-400 uppercase">Data</th>
+            <tr class="border-b border-[#233246] text-gray-400 text-xs uppercase tracking-widest font-semibold bg-[#111926]">
+              <th class="p-6 font-semibold w-1/3">Cliente</th>
+              <th class="p-6 font-semibold w-1/3">Email</th>
+              <th class="p-6 font-semibold w-1/6">Pedidos</th>
+              <th class="p-6 font-semibold w-1/6">Data</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-[#1f2937]">
-            <tr v-for="customer in filteredCustomers" :key="customer.id" class="hover:bg-[#1a2332] transition-colors cursor-pointer" @click="openDetailsDrawer(customer)">
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-black font-semibold text-sm">
+          <tbody class="divide-y divide-[#233246]">
+            <tr v-for="customer in filteredCustomers" :key="customer.id" class="hover:bg-[#1a2636] transition-colors group cursor-pointer" @click="openDetailsDrawer(customer)">
+              <td class="p-6">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 rounded-full bg-[#1e2e42] flex items-center justify-center text-sm font-bold text-primary shrink-0 shadow-inner">
                     {{ customer.initials }}
                   </div>
-                  <span class="text-white font-medium">{{ customer.nome }}</span>
+                  <span class="text-white font-semibold">{{ customer.nome }}</span>
                 </div>
               </td>
-              <td class="px-6 py-4 text-gray-300">
-                <div class="flex items-center gap-2 text-sm">
+              <td class="p-6 text-sm">
+                <div class="flex items-center gap-2 text-gray-300">
                   <Mail :size="16" class="text-gray-500" />
                   {{ customer.email }}
                 </div>
               </td>
-              <td class="px-6 py-4">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-500/20 text-blue-300">
+              <td class="p-6">
+                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold tracking-wide border bg-blue-500/10 text-blue-400 border-blue-500/20">
                   {{ customer.pedidos }}
                 </span>
               </td>
-              <td class="px-6 py-4 text-gray-400 text-sm">{{ customer.dataCriacao }}</td>
+              <td class="p-6 text-gray-300 text-sm">{{ customer.dataCriacao }}</td>
             </tr>
           </tbody>
         </table>
