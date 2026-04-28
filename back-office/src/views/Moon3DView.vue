@@ -10,18 +10,17 @@ const isLoading = ref(true)
 const labelsContainer = ref(null)
 
 let scene, camera, renderer, moon, raycaster, mouse
-let isDragging = false
+let isDragging = ref(false)
 let dragStartPosition = { x: 0, y: 0 }
 const points = []
 let animationId = null
 
 const flyingObjects = []
 
-// ALTERAÇÃO: Tamanho do foguetão aumentado ligeiramente
 const MODEL_SCALE = {
-  rocket: 1.35,     
-  astronaut: 0.22, 
-  ice: 0.65        
+  rocket: 3.2,     // Aumentado um pouco mais para destaque total
+  astronaut: 0.32, 
+  ice: 0.95        
 }
 
 const moonPoints = [
@@ -37,16 +36,15 @@ const randomBetween = (min, max) => min + Math.random() * (max - min)
 
 const createOrbitalCurve = () => {
   const isComing = Math.random() > 0.5
-  const farZ = -1200
-  const nearZ = 800
+  const farZ = -1800 
+  const nearZ = 1200
   const startZ = isComing ? farZ : nearZ
   const endZ = isComing ? nearZ : farZ
-  const offset = 180 
-
+  
   return new THREE.CatmullRomCurve3([
-    new THREE.Vector3(randomBetween(-600, 600), randomBetween(-400, 400), startZ),
-    new THREE.Vector3(isComing ? offset : -offset, randomBetween(-150, 150), (startZ + endZ) / 2),
-    new THREE.Vector3(randomBetween(-700, 700), randomBetween(-500, 500), endZ)
+    new THREE.Vector3(randomBetween(-900, 900), randomBetween(-600, 600), startZ),
+    new THREE.Vector3(randomBetween(-400, 400), randomBetween(-300, 300), (startZ + endZ) / 2),
+    new THREE.Vector3(randomBetween(-900, 900), randomBetween(-600, 600), endZ)
   ], false, 'catmullrom', 0.5)
 }
 
@@ -55,19 +53,18 @@ const initThreeJS = () => {
   if (!container) return
 
   scene = new THREE.Scene()
-  scene.background = new THREE.Color(0x000000)
-
-  camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 4000)
-  camera.position.z = 280
+  camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 5000)
+  camera.position.z = 300
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
   renderer.setSize(container.clientWidth, container.clientHeight)
-  renderer.setPixelRatio(window.devicePixelRatio)
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
   container.appendChild(renderer.domElement)
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.4)) 
-  const sunLight = new THREE.DirectionalLight(0xffffff, 0.8)
-  sunLight.position.set(5, 3, 5)
+  // AJUSTE: Brilho da lua subiu "só um pouquinho" (Ambient 0.3 -> 0.45 | Sun 0.7 -> 0.9)
+  scene.add(new THREE.AmbientLight(0xffffff, 0.45)) 
+  const sunLight = new THREE.DirectionalLight(0xffffff, 0.9)
+  sunLight.position.set(10, 5, 10)
   scene.add(sunLight)
 
   createStars()
@@ -77,26 +74,29 @@ const initThreeJS = () => {
   mouse = new THREE.Vector2()
 
   window.addEventListener('mousemove', onMouseMove)
-  window.addEventListener('click', onMouseClick)
+  container.addEventListener('click', onContainerClick)
   window.addEventListener('resize', onWindowResize)
 
   let prevMouse = { x: 0, y: 0 }
   container.addEventListener('mousedown', (e) => {
-    isDragging = true
+    isDragging.value = true
     prevMouse = { x: e.clientX, y: e.clientY }
     dragStartPosition = { x: e.clientX, y: e.clientY }
   })
 
-  container.addEventListener('mousemove', (e) => {
-    if (isDragging && moon) {
-      moon.rotation.y += (e.clientX - prevMouse.x) * 0.003
-      moon.rotation.x += (e.clientY - prevMouse.y) * 0.003
+  window.addEventListener('mousemove', (e) => {
+    if (isDragging.value && moon) {
+      moon.rotation.y += (e.clientX - prevMouse.x) * 0.005
+      moon.rotation.x += (e.clientY - prevMouse.y) * 0.005
       prevMouse = { x: e.clientX, y: e.clientY }
       updateLabels()
     }
   })
 
-  window.addEventListener('mouseup', () => isDragging = false)
+  window.addEventListener('mouseup', () => {
+    setTimeout(() => isDragging.value = false, 50)
+  })
+
   loadModels()
   animate()
 }
@@ -107,33 +107,34 @@ const loadModels = () => {
   dracoLoader.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/draco/')
   loader.setDRACOLoader(dracoLoader)
 
-  // ALTERAÇÃO: Velocidade reduzida para um efeito mais "orbital" e suave
   const config = [
-    { name: 'rocket', path: '/models/Explorer_Jupiter-C_Rocket.glb', scale: MODEL_SCALE.rocket, speed: 0.0006 },
-    { name: 'astronaut', path: '/models/Astronaut.glb', scale: MODEL_SCALE.astronaut, speed: 0.0004 },
-    { name: 'ice', path: '/models/Aeronomy_of_Ice_in_the_Mesosphere.glb', scale: MODEL_SCALE.ice, speed: 0.0005 }
+    { name: 'rocket_1', path: '/models/Explorer_Jupiter-C_Rocket.glb', scale: MODEL_SCALE.rocket, speed: 0.0006 },
+    { name: 'rocket_2', path: '/models/Explorer_Jupiter-C_Rocket.glb', scale: MODEL_SCALE.rocket * 0.8, speed: 0.0004 },
+    { name: 'rocket_3', path: '/models/Explorer_Jupiter-C_Rocket.glb', scale: MODEL_SCALE.rocket * 0.7, speed: 0.0005 },
+    { name: 'astronaut_1', path: '/models/Astronaut.glb', scale: MODEL_SCALE.astronaut, speed: 0.0003 },
+    { name: 'astronaut_2', path: '/models/Astronaut.glb', scale: MODEL_SCALE.astronaut, speed: 0.00025 },
+    { name: 'astronaut_3', path: '/models/Astronaut.glb', scale: MODEL_SCALE.astronaut * 1.1, speed: 0.00032 },
+    { name: 'ice_1', path: '/models/Aeronomy_of_Ice_in_the_Mesosphere.glb', scale: MODEL_SCALE.ice, speed: 0.00035 },
+    { name: 'ice_2', path: '/models/Aeronomy_of_Ice_in_the_Mesosphere.glb', scale: MODEL_SCALE.ice * 0.9, speed: 0.0003 }
   ]
 
   config.forEach(objCfg => {
     loader.load(objCfg.path, (gltf) => {
       const model = gltf.scene
       model.scale.set(objCfg.scale, objCfg.scale, objCfg.scale)
-      
-      model.traverse((child) => {
-        if (child.isMesh) {
-          child.material.emissive = new THREE.Color(0xffffff)
-          child.material.emissiveIntensity = 0.2
-        }
-      })
-      
       scene.add(model)
+      
       flyingObjects.push({
         mesh: model,
         type: objCfg.name,
         curve: createOrbitalCurve(),
         speed: objCfg.speed,
-        t: Math.random(),
-        active: true
+        t: Math.random(), 
+        rotSpeed: {
+            x: randomBetween(0.002, 0.008),
+            y: randomBetween(0.002, 0.008),
+            z: randomBetween(0.002, 0.008)
+        }
       })
     })
   })
@@ -142,6 +143,7 @@ const loadModels = () => {
 const updateFlyingObjects = () => {
   const pos = new THREE.Vector3()
   const next = new THREE.Vector3()
+  
   flyingObjects.forEach(obj => {
     obj.t += obj.speed
     if (obj.t >= 1) { 
@@ -150,16 +152,22 @@ const updateFlyingObjects = () => {
     }
     obj.curve.getPoint(obj.t, pos)
     obj.mesh.position.copy(pos)
-    obj.curve.getPoint(Math.min(obj.t + 0.01, 1), next)
-    obj.mesh.lookAt(next)
-    if (obj.type === 'rocket') obj.mesh.rotateX(Math.PI / 2)
+    
+    if (obj.type.includes('astronaut')) {
+      obj.mesh.rotation.x += obj.rotSpeed.x
+      obj.mesh.rotation.y += obj.rotSpeed.y
+    } else {
+      obj.curve.getPoint(Math.min(obj.t + 0.01, 1), next)
+      obj.mesh.lookAt(next)
+      if (obj.type.includes('rocket')) obj.mesh.rotateX(Math.PI / 2)
+    }
   })
 }
 
 const createStars = () => {
   const geo = new THREE.BufferGeometry()
   const vertices = []
-  for (let i = 0; i < 2000; i++) vertices.push((Math.random() - 0.5) * 3000, (Math.random() - 0.5) * 3000, (Math.random() - 0.5) * 3000)
+  for (let i = 0; i < 4000; i++) vertices.push((Math.random() - 0.5) * 5000, (Math.random() - 0.5) * 5000, (Math.random() - 0.5) * 5000)
   geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3))
   scene.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.7 })))
 }
@@ -173,7 +181,7 @@ const loadMoon = () => {
     scene.add(moon)
     moonPoints.forEach(p => {
       const v = new THREE.Vector3(p.x, p.y, p.z).normalize().multiplyScalar(105)
-      const dot = new THREE.Mesh(new THREE.SphereGeometry(3.5, 16, 16), new THREE.MeshBasicMaterial({ color: p.color }))
+      const dot = new THREE.Mesh(new THREE.SphereGeometry(2, 12, 12), new THREE.MeshBasicMaterial({ color: p.color, transparent: true, opacity: 0.8 }))
       dot.position.copy(v)
       dot.userData = p
       moon.add(dot)
@@ -192,9 +200,12 @@ const updateLabels = () => {
     v.project(camera)
     const el = labelsContainer.value.querySelector(`[data-id="${p.userData.id}"]`)
     if (el) {
-      el.style.left = `${(v.x * 0.5 + 0.5) * renderer.domElement.clientWidth}px`
-      el.style.top = `${(v.y * -0.5 + 0.5) * renderer.domElement.clientHeight}px`
+      const x = (v.x * 0.5 + 0.5) * renderer.domElement.clientWidth
+      const y = (v.y * -0.5 + 0.5) * renderer.domElement.clientHeight
+      el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`
       el.style.opacity = v.z > 1 ? '0' : '1'
+      // pointer-events continua desligando no drag para não travar, mas visualmente não muda
+      el.style.pointerEvents = (v.z > 1 || isDragging.value) ? 'none' : 'auto'
     }
   })
 }
@@ -203,18 +214,25 @@ const onMouseMove = (e) => {
   const rect = containerRef.value.getBoundingClientRect()
   mouse.x = ((e.clientX - rect.left) / containerRef.value.clientWidth) * 2 - 1
   mouse.y = -((e.clientY - rect.top) / containerRef.value.clientHeight) * 2 + 1
+  
   raycaster.setFromCamera(mouse, camera)
-  containerRef.value.style.cursor = raycaster.intersectObjects(points).length > 0 ? 'pointer' : (isDragging ? 'grabbing' : 'grab')
+  const intersects = raycaster.intersectObjects(points)
+  containerRef.value.style.cursor = intersects.length > 0 ? 'pointer' : (isDragging.value ? 'grabbing' : 'grab')
 }
 
-const onMouseClick = (e) => {
+const onContainerClick = (e) => {
   if (Math.hypot(e.clientX - dragStartPosition.x, e.clientY - dragStartPosition.y) > 5) return
   raycaster.setFromCamera(mouse, camera)
   const hits = raycaster.intersectObjects(points)
   if (hits.length > 0) selectedPoint.value = hits[0].object.userData
 }
 
+const selectFromLabel = (point) => {
+  if (!isDragging.value) selectedPoint.value = point
+}
+
 const onWindowResize = () => {
+  if (!containerRef.value) return
   camera.aspect = containerRef.value.clientWidth / containerRef.value.clientHeight
   camera.updateProjectionMatrix()
   renderer.setSize(containerRef.value.clientWidth, containerRef.value.clientHeight)
@@ -222,14 +240,19 @@ const onWindowResize = () => {
 
 const animate = () => {
   animationId = requestAnimationFrame(animate)
-  if (moon && !isDragging) moon.rotation.y += 0.0005
+  if (moon && !isDragging.value) moon.rotation.y += 0.0008
   updateFlyingObjects()
   updateLabels()
   renderer.render(scene, camera)
 }
 
 onMounted(() => {
-  const check = setInterval(() => { if (window.THREE && window.THREE.GLTFLoader) { clearInterval(check); initThreeJS() } }, 100)
+  const check = setInterval(() => { 
+    if (window.THREE && window.THREE.GLTFLoader) { 
+        clearInterval(check)
+        initThreeJS() 
+    } 
+  }, 100)
 })
 
 onBeforeUnmount(() => {
@@ -246,17 +269,19 @@ onBeforeUnmount(() => {
 
     <div ref="containerRef" class="w-full h-full" />
 
-    <div ref="labelsContainer" class="absolute inset-0 pointer-events-none">
+    <div ref="labelsContainer" class="absolute inset-0 pointer-events-none z-10">
       <div v-for="point in moonPoints" :key="point.id" :data-id="point.id"
-        class="absolute transform -translate-x-1/2 -translate-y-1/2">
-        <div class="flex items-center gap-2 bg-black/60 backdrop-blur-md px-3 py-1.5 border border-white/10 rounded-md">
-          <div class="w-2 h-2 rounded-full shadow-[0_0_8px_currentColor]" :style="{ color: '#' + point.color.toString(16).padStart(6, '0'), backgroundColor: 'currentColor' }" />
+        class="absolute left-0 top-0 transition-opacity duration-300"
+        :style="{ pointerEvents: isDragging ? 'none' : 'auto' }"
+        @click="selectFromLabel(point)">
+        <div class="flex items-center gap-2 bg-black/70 backdrop-blur-md px-3 py-1.5 border border-white/10 rounded-md hover:bg-white/20 hover:scale-110 transition-all cursor-pointer">
+          <div class="w-2.5 h-2.5 rounded-full shadow-[0_0_10px_currentColor]" :style="{ color: '#' + point.color.toString(16).padStart(6, '0'), backgroundColor: 'currentColor' }" />
           <span class="text-white text-[11px] font-bold tracking-wider uppercase whitespace-nowrap">{{ point.name }}</span>
         </div>
       </div>
     </div>
 
-    <div class="absolute top-10 left-10 z-10 flex flex-col items-start">
+    <div class="absolute top-10 left-10 z-20 flex flex-col items-start pointer-events-none">
       <h1 class="text-4xl font-black text-white mb-2 tracking-tighter italic opacity-90 uppercase">GoEverywhere</h1>
       <div class="flex items-center justify-center w-full gap-2 opacity-60">
         <div class="h-[1px] flex-1 bg-blue-500 max-w-[20px]"></div>
@@ -265,7 +290,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div class="absolute top-10 right-10 z-10 flex gap-3">
+    <div class="absolute top-10 right-10 z-20 flex gap-3">
       <router-link to="/dashboard" class="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 text-white rounded-lg hover:bg-white/10 transition-all text-xs font-semibold backdrop-blur-xl">
         <Home :size="14" /> Dashboard
       </router-link>
@@ -275,15 +300,21 @@ onBeforeUnmount(() => {
     </div>
 
     <Teleport to="body">
-      <Transition enterActiveClass="transition-all duration-400 ease-out" leaveActiveClass="transition-all duration-300 ease-in"
-        enterFromClass="opacity-0 scale-95" leaveToClass="opacity-0 scale-95">
-        <div v-if="selectedPoint" class="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 bg-[#0a0a0a]/90 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 shadow-2xl max-w-sm w-full">
+      <Transition 
+        enterActiveClass="transition-all duration-400 ease-out" 
+        leaveActiveClass="transition-all duration-300 ease-in"
+        enterFromClass="opacity-0 scale-95 translate-y-10" 
+        leaveToClass="opacity-0 scale-95 translate-y-10">
+        <div v-if="selectedPoint" class="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 bg-[#0a0a0a]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 shadow-2xl max-w-sm w-full">
           <div class="flex justify-between items-start mb-4">
-            <h3 class="text-2xl font-bold text-white uppercase">{{ selectedPoint.name }}</h3>
-            <button @click="selectedPoint = null" class="text-white/30 hover:text-white">✕</button>
+            <div class="flex items-center gap-3">
+               <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: '#' + selectedPoint.color.toString(16).padStart(6, '0') }"></div>
+               <h3 class="text-2xl font-bold text-white uppercase">{{ selectedPoint.name }}</h3>
+            </div>
+            <button @click="selectedPoint = null" class="text-white/30 hover:text-white transition-colors text-xl">✕</button>
           </div>
-          <p class="text-gray-400 text-xs mb-8 leading-relaxed">{{ selectedPoint.description }}</p>
-          <button @click="router.push(selectedPoint.path)" class="w-full py-4 bg-white text-black rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-blue-600 hover:text-white transition-all">
+          <p class="text-gray-400 text-sm mb-8 leading-relaxed">{{ selectedPoint.description }}</p>
+          <button @click="router.push(selectedPoint.path)" class="w-full py-4 bg-white text-black rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-blue-600 hover:text-white transition-all shadow-lg active:scale-95">
             Abrir Módulo
           </button>
         </div>
