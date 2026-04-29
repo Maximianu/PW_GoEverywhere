@@ -50,7 +50,7 @@
           </div>
           <div style="display: flex; gap: 16px; align-items: flex-start;">
             <div style="background: rgba(0,242,255,0.1); display: flex; align-items: flex-start; padding: 8px; border-radius: 8px;">
-              <img src="https://www.figma.com/api/mcp/asset/83b7028c-68c0-42ec-820b-539a3d15e1b6" alt="" style="width: 24px; height: 24px;" />
+              <img src="../assets/Escudo.svg" alt="" style="width: 24px; height: 24px;" />
             </div>
             <div>
               <div style="font-family: 'Inter', sans-serif; font-weight: 600; font-size: 16px; color: white;">Tecnologia de Ponta</div>
@@ -59,7 +59,7 @@
           </div>
         </div>
         <div style="display: flex; align-items: center; justify-content: center;">
-          <img src="https://www.figma.com/api/mcp/asset/2fdc9e7c-6e48-4016-9c6a-3910bdcc00a9" alt="" style="width: 100%; max-width: 500px;" />
+          <img src="../assets/galaxia.png" alt="" style="width: 100%; max-width: 500px;" />
         </div>
       </div>
     </div>
@@ -282,6 +282,7 @@
 </template>
 
 <script>
+import Galaxia from '../assets/galaxia.png'
 export default {
   name: 'HomeView'
 }
