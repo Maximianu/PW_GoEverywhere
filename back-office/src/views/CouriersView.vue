@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { mockData } from '../mockData'
 import { Search, ChevronLeft, ChevronRight, Plus, X, User, Phone, Calendar, CheckCircle, MapPin } from 'lucide-vue-next'
 
-const filter = ref('disponiveis')
+const filter = ref('todos')
 const searchQuery = ref('')
 const isAddCourierOpen = ref(false)
 const editingCourierId = ref(null)
