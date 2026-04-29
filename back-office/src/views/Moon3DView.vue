@@ -18,7 +18,7 @@ let animationId = null
 const flyingObjects = []
 
 const MODEL_SCALE = {
-  rocket: 3.2,     // Aumentado um pouco mais para destaque total
+  rocket: 3.2,
   astronaut: 0.32, 
   ice: 0.95        
 }
@@ -34,17 +34,61 @@ const moonPoints = [
 
 const randomBetween = (min, max) => min + Math.random() * (max - min)
 
-const createOrbitalCurve = () => {
+// Moon center is at origin (0,0,0), radius 100.
+// Any curve point closer than this to origin risks clipping through the moon.
+const MOON_SAFE_RADIUS = 160
+
+// Checks if a candidate XYZ point is safely outside the moon sphere
+const isSafeFromMoon = (x, y, z) => (x * x + y * y + z * z) >= MOON_SAFE_RADIUS * MOON_SAFE_RADIUS
+
+// Generate a random XZ position that stays outside the moon bubble
+const safeLateralPos = (zVal) => {
+  // For near-camera z values the moon is irrelevant (moon is at z=0, camera at z=300)
+  // For mid/far z we need to make sure the XY displacement clears the moon
+  const minLateral = Math.max(0, MOON_SAFE_RADIUS - Math.abs(zVal))
+  const lateral = minLateral + randomBetween(80, 600)
+  const sign = Math.random() > 0.5 ? 1 : -1
+  return { x: sign * lateral * (0.5 + Math.random()), y: (Math.random() - 0.5) * 500 }
+}
+
+const createOrbitalCurve = (type = 'default') => {
   const isComing = Math.random() > 0.5
-  const farZ = -1800 
-  const nearZ = 1200
+  const farZ = -1800
+
+  // Rockets: 60% chance of an extreme close pass (z > 700, camera is at 300 so delta < 400 units)
+  //          40% chance of a regular near pass
+  // Others: moderate near values only
+  let nearZ
+  if (type === 'rocket') {
+    nearZ = Math.random() < 0.60
+      ? randomBetween(750, 950)   // rockets VERY close — almost touching the camera
+      : randomBetween(450, 700)   // still noticeably close
+  } else if (type === 'astronaut') {
+    nearZ = randomBetween(300, 500)
+  } else {
+    nearZ = randomBetween(250, 450)
+  }
+
   const startZ = isComing ? farZ : nearZ
-  const endZ = isComing ? nearZ : farZ
-  
+  const endZ   = isComing ? nearZ : farZ
+
+  // Build points that all pass the moon-safety check
+  const buildSafePoint = (z) => {
+    let attempt = 0
+    while (attempt++ < 20) {
+      const { x, y } = safeLateralPos(z)
+      if (isSafeFromMoon(x, y, z)) return new THREE.Vector3(x, y, z)
+    }
+    // Fallback: push far to the side
+    return new THREE.Vector3(randomBetween(300, 700) * (Math.random() > 0.5 ? 1 : -1), randomBetween(-300, 300), z)
+  }
+
+  const midZ = (startZ + endZ) / 2 + randomBetween(50, 250)
+
   return new THREE.CatmullRomCurve3([
-    new THREE.Vector3(randomBetween(-900, 900), randomBetween(-600, 600), startZ),
-    new THREE.Vector3(randomBetween(-400, 400), randomBetween(-300, 300), (startZ + endZ) / 2),
-    new THREE.Vector3(randomBetween(-900, 900), randomBetween(-600, 600), endZ)
+    buildSafePoint(startZ),
+    buildSafePoint(midZ),
+    buildSafePoint(endZ)
   ], false, 'catmullrom', 0.5)
 }
 
@@ -108,14 +152,14 @@ const loadModels = () => {
   loader.setDRACOLoader(dracoLoader)
 
   const config = [
-    { name: 'rocket_1', path: '/models/Explorer_Jupiter-C_Rocket.glb', scale: MODEL_SCALE.rocket, speed: 0.0006 },
-    { name: 'rocket_2', path: '/models/Explorer_Jupiter-C_Rocket.glb', scale: MODEL_SCALE.rocket * 0.8, speed: 0.0004 },
-    { name: 'rocket_3', path: '/models/Explorer_Jupiter-C_Rocket.glb', scale: MODEL_SCALE.rocket * 0.7, speed: 0.0005 },
-    { name: 'astronaut_1', path: '/models/Astronaut.glb', scale: MODEL_SCALE.astronaut, speed: 0.0003 },
-    { name: 'astronaut_2', path: '/models/Astronaut.glb', scale: MODEL_SCALE.astronaut, speed: 0.00025 },
-    { name: 'astronaut_3', path: '/models/Astronaut.glb', scale: MODEL_SCALE.astronaut * 1.1, speed: 0.00032 },
-    { name: 'ice_1', path: '/models/Aeronomy_of_Ice_in_the_Mesosphere.glb', scale: MODEL_SCALE.ice, speed: 0.00035 },
-    { name: 'ice_2', path: '/models/Aeronomy_of_Ice_in_the_Mesosphere.glb', scale: MODEL_SCALE.ice * 0.9, speed: 0.0003 }
+    { name: 'rocket', path: '/models/Explorer_Jupiter-C_Rocket.glb', scale: MODEL_SCALE.rocket, speed: 0.0006 },
+    { name: 'rocket', path: '/models/Explorer_Jupiter-C_Rocket.glb', scale: MODEL_SCALE.rocket * 0.8, speed: 0.0004 },
+    { name: 'rocket', path: '/models/Explorer_Jupiter-C_Rocket.glb', scale: MODEL_SCALE.rocket * 0.7, speed: 0.0005 },
+    { name: 'astronaut', path: '/models/Astronaut.glb', scale: MODEL_SCALE.astronaut, speed: 0.0003 },
+    { name: 'astronaut', path: '/models/Astronaut.glb', scale: MODEL_SCALE.astronaut, speed: 0.00025 },
+    { name: 'astronaut', path: '/models/Astronaut.glb', scale: MODEL_SCALE.astronaut * 1.1, speed: 0.00032 },
+    { name: 'ice', path: '/models/Aeronomy_of_Ice_in_the_Mesosphere.glb', scale: MODEL_SCALE.ice, speed: 0.00035 },
+    { name: 'ice', path: '/models/Aeronomy_of_Ice_in_the_Mesosphere.glb', scale: MODEL_SCALE.ice * 0.9, speed: 0.0003 }
   ]
 
   config.forEach(objCfg => {
@@ -127,7 +171,7 @@ const loadModels = () => {
       flyingObjects.push({
         mesh: model,
         type: objCfg.name,
-        curve: createOrbitalCurve(),
+        curve: createOrbitalCurve(objCfg.name),
         speed: objCfg.speed,
         t: Math.random(), 
         rotSpeed: {
@@ -148,7 +192,7 @@ const updateFlyingObjects = () => {
     obj.t += obj.speed
     if (obj.t >= 1) { 
         obj.t = 0
-        obj.curve = createOrbitalCurve() 
+        obj.curve = createOrbitalCurve(obj.type)
     }
     obj.curve.getPoint(obj.t, pos)
     obj.mesh.position.copy(pos)
@@ -204,7 +248,6 @@ const updateLabels = () => {
       const y = (v.y * -0.5 + 0.5) * renderer.domElement.clientHeight
       el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`
       el.style.opacity = v.z > 1 ? '0' : '1'
-      // pointer-events continua desligando no drag para não travar, mas visualmente não muda
       el.style.pointerEvents = (v.z > 1 || isDragging.value) ? 'none' : 'auto'
     }
   })
