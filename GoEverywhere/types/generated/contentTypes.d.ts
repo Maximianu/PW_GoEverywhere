@@ -615,6 +615,7 @@ export interface ApiEstafetaEstafeta extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     Disponivel: Schema.Attribute.Boolean;
+    Email: Schema.Attribute.Email;
     Idade: Schema.Attribute.Integer;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -623,6 +624,8 @@ export interface ApiEstafetaEstafeta extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     Nome: Schema.Attribute.String;
+    Password: Schema.Attribute.Password;
+    PIN: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     Telemovel: Schema.Attribute.Integer;
     updatedAt: Schema.Attribute.DateTime;

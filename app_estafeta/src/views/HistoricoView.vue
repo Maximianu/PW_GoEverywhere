@@ -9,23 +9,21 @@
       <section class="stats-grid stats-grid-3 history-stats">
         <div class="stat-card">
           <span class="stat-label">Total</span>
-          <strong>99</strong>
+          <strong>{{ history.length }}</strong>
         </div>
         <div class="stat-card">
           <span class="stat-label">Entregues</span>
-          <strong>89</strong>
+          <strong>{{ deliveredCount }}</strong>
         </div>
         <div class="stat-card active-stat">
           <span class="stat-label">Não Entregues</span>
-          <strong>10</strong>
+          <strong>{{ notDeliveredCount }}</strong>
         </div>
       </section>
 
       <section class="search-wrapper">
         <div class="search-box">
-          <i class="search-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-          </i>
+          <span class="search-icon">⌕</span>
           <input
             v-model="search"
             type="text"
@@ -42,24 +40,20 @@
               <h2>{{ item.name }}</h2>
               <span class="delivery-id">#{{ item.id }}</span>
             </div>
-            <span class="status-pill" :class="item.status === 'Entregue' ? 'pill-done' : 'pill-pending'">
+
+            <span
+              class="status-pill"
+              :class="item.status === 'Entregue' ? 'pill-done' : 'pill-pending'"
+            >
               {{ item.status }}
             </span>
           </div>
 
-          <p class="delivery-line">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; opacity:0.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-            {{ item.address }}
-          </p>
+          <p class="delivery-line">📍 {{ item.address }}</p>
+
           <div class="delivery-line-flex">
-            <span>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; opacity:0.8"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              {{ item.time }}
-            </span>
-            <span>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; opacity:0.8"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-              {{ item.date }}
-            </span>
+            <span>⏰ {{ item.time }}</span>
+            <span>📅 {{ item.date }}</span>
           </div>
         </article>
       </section>
@@ -74,30 +68,58 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const search = ref('')
+const history = ref([])
 
-const history = ref([
-  { id: 100, name: 'João Santos', address: 'Avenida D. João IV 19, Guimarães', time: '17:12', date: '19/03/2026', status: 'Entregue' },
-  { id: 99, name: 'Rita Leite', address: 'Rua de Francos 9B, Guimarães', time: '14:52', date: '19/03/2026', status: 'Entregue' },
-  { id: 98, name: 'Luísa Lopes', address: 'Rua Gil Vicente 23, Guimarães', time: '9:18', date: '19/03/2026', status: 'Não Entregue' },
-  { id: 97, name: 'Sérgio Peixoto', address: 'Largo da Oliveira 83, Guimarães', time: '16:43', date: '18/03/2026', status: 'Não Entregue' },
-])
+function mapStatus(status) {
+  if (!status) return 'Pendente'
+
+  if (status.toLowerCase().includes('concluido')) return 'Entregue'
+  if (status.toLowerCase().includes('não')) return 'Não Entregue'
+
+  return 'Pendente'
+}
+
+async function carregarHistorico() {
+  const response = await fetch('http://localhost:1338/api/pedido-missions')
+  const result = await response.json()
+
+  history.value = result.data
+    .map((item) => ({
+      id: item.id,
+      name: item.Cliente || 'Cliente não definido',
+      address: item.LocalEntrega || item.Destino || 'Morada não definida',
+      time: item.Horario || '—',
+      date: item.createdAt?.slice(0, 10) || '—',
+      status: mapStatus(item.Estado),
+    }))
+    .filter((item) => item.status === 'Entregue' || item.status === 'Não Entregue')
+}
+
+onMounted(carregarHistorico)
 
 const filteredHistory = computed(() => {
-  const term = search.value.trim().toLowerCase()
+  const term = search.value.toLowerCase()
   if (!term) return history.value
 
   return history.value.filter((item) =>
     item.name.toLowerCase().includes(term) ||
     String(item.id).includes(term) ||
-    item.address.toLowerCase().includes(term) ||
-    item.status.toLowerCase().includes(term)
+    item.address.toLowerCase().includes(term)
   )
 })
+
+const deliveredCount = computed(
+  () => history.value.filter((h) => h.status === 'Entregue').length,
+)
+
+const notDeliveredCount = computed(
+  () => history.value.filter((h) => h.status === 'Não Entregue').length,
+)
 
 function go(path) {
   router.push(path)

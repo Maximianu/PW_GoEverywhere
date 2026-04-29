@@ -141,12 +141,41 @@ onBeforeUnmount(() => {
   if (renderer) renderer.dispose()
 })
 
-function login() {
-  if (username.value === '1234' && password.value === '1234') {
+async function login() {
+  try {
+    const response = await fetch(
+      `http://localhost:1338/api/estafetas?filters[Email][$eq]=${username.value}&populate=*`
+    )
+
+    const result = await response.json()
+
+    if (result.data.length === 0) {
+      erro.value = true
+      return
+    }
+
+    const estafeta = result.data[0]
+
+    if (estafeta.PIN !== password.value) {
+      erro.value = true
+      return
+    }
+    localStorage.setItem(
+      'estafeta',
+      JSON.stringify({
+        id: estafeta.id,
+        nome: estafeta.Nome,
+        email: estafeta.Email,
+        telemovel: estafeta.Telemovel,
+      }),
+    )
+
     erro.value = false
     router.push('/entregas')
-  } else {
+  } catch (error) {
+    console.error(error)
     erro.value = true
   }
 }
+
 </script>

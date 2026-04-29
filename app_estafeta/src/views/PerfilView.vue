@@ -12,8 +12,9 @@
       </div>
 
       <div class="profile-name">
-        <h2>José Tomás Silva</h2>
-        <p>Nº12</p>
+        <h2>{{ estafeta.nome }}</h2>
+        <p>{{ estafeta.email }}</p>
+        <p v-if="estafeta.telemovel">📞 {{ estafeta.telemovel }}</p>
       </div>
 
       <section class="stats-grid profile-stats">
@@ -39,15 +40,34 @@
 </template>
 
 <script setup>
+import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+
+const estafeta = ref({
+  nome: 'Estafeta',
+  email: 'Email não definido',
+  telemovel: '',
+})
+
+onMounted(() => {
+  const dados = localStorage.getItem('estafeta')
+
+  if (dados) {
+    estafeta.value = {
+      ...estafeta.value,
+      ...JSON.parse(dados),
+    }
+  }
+})
 
 function go(path) {
   router.push(path)
 }
 
 function logout() {
+  localStorage.removeItem('estafeta')
   router.push('/')
 }
 </script>

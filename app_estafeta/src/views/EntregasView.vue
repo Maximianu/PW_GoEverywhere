@@ -72,28 +72,32 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const search = ref('')
+const deliveries = ref([])
 
-const deliveries = ref([
-  {
-    id: 102,
-    name: 'Maria Silva',
-    address: 'Rua da Serpa Pinto 12, Guimarães',
-    time: '11:00-13:00',
-    status: 'Pendente',
-  },
-  {
-    id: 103,
-    name: 'Ana Costa',
-    address: 'Avenida D Afonso Henriques 45, Guimarães',
-    time: '13:00-15:00',
-    status: 'Pendente',
-  }
-])
+async function carregarEntregas() {
+  const estafeta = JSON.parse(localStorage.getItem('estafeta'))
+
+  const response = await fetch(
+    `http://localhost:1338/api/pedido-missions?filters[estafeta][id][$eq]=${estafeta.id}&populate=*`
+  )
+
+  const result = await response.json()
+
+  deliveries.value = result.data.map((item) => ({
+    id: item.id,
+    name: item.Cliente || 'Cliente não definido',
+    address: item.LocalEntrega || item.Destino || 'Morada não definida',
+    time: item.Horario || 'Horário não definido',
+    status: item.Estado === 'Transito' ? 'Em rota' : item.Estado || 'Pendente',
+  }))
+}
+
+onMounted(carregarEntregas)
 
 const filteredDeliveries = computed(() => {
   const term = search.value.trim().toLowerCase()
