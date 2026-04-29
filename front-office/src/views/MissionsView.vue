@@ -1,62 +1,109 @@
 <template>
-  <div class="side-layout">
-    <SidePanel />
-    <main class="page-shell" style="padding: 0;">
-      <section class="panel">
-        <div class="section-header">
-          <div>
-            <p class="small-note">Entregas</p>
-            <h1 class="headline" style="font-size: 2.8rem;">Veja as suas Entregas e Viagens</h1>
-          </div>
-          <div style="display: flex; gap: 12px;">
-            <button class="btn btn-secondary">Ativas</button>
-            <button class="btn btn-secondary">Concluídas</button>
-          </div>
+  <main class="missions-page">
+    <section class="panel">
+      <div class="section-header">
+        <div>
+          <p class="small-note">Entregas</p>
+          <h1 class="headline">Veja as suas Entregas e Viagens</h1>
         </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary">Ativas</button>
+          <button class="btn btn-secondary">Concluídas</button>
+        </div>
+      </div>
 
-        <div class="list-card" style="margin-top: 16px;">
-          <div class="list-row">
-            <div>
-              <strong>Órbita Terrestre</strong>
-              <small>Oct 24, 2024</small>
-            </div>
-            <div><span class="label-pill status-active">Equipamento: em progresso</span></div>
-            <div>3</div>
-            <router-link to="/missions/terrestrial" class="btn btn-primary">→</router-link>
+      <div class="list-card">
+        <div class="list-row">
+          <div class="mission-info">
+            <strong>Órbita Terrestre</strong>
+            <small>Oct 24, 2024</small>
           </div>
-          <div class="list-row">
-            <div>
-              <strong>Base Lunar</strong>
-              <small>Dec 12, 2024</small>
-            </div>
-            <div><span class="label-pill status-wait">Viagem: Agendada</span></div>
-            <div>4</div>
-            <router-link to="/missions/lunar" class="btn btn-primary">→</router-link>
+          <div class="mission-status">
+            <span class="label-pill status-active">Equipamento: em progresso</span>
           </div>
-          <div class="list-row">
-            <div>
-              <strong>Colônia de Marte</strong>
-              <small>Jan 02, 2025</small>
-            </div>
-            <div><span class="label-pill status-pause">Equipamento: Em Espera</span></div>
-            <div>1</div>
-            <router-link to="/missions/mars" class="btn btn-primary">→</router-link>
-          </div>
-          <div class="list-row">
-            <div>
-              <strong>Anéis de Saturno</strong>
-              <small>Jan 15, 2025</small>
-            </div>
-            <div><span class="label-pill status-wait">Viagem: Agendada</span></div>
-            <div>2</div>
-            <router-link to="/missions/saturn" class="btn btn-primary">→</router-link>
-          </div>
+          <div class="mission-passengers">3</div>
+          <router-link to="/missions/terrestrial" class="btn btn-primary">→</router-link>
         </div>
-      </section>
-    </main>
-  </div>
+        
+        </div>
+    </section>
+  </main>
 </template>
 
-<script setup>
-import SidePanel from '../components/SidePanel.vue'
-</script>
+<style scoped>
+/* 1. O contentor principal agora ocupa a largura total */
+.missions-page {
+  width: 100%;
+  min-height: 100vh;
+  /* O padding-top garante que o título não fique por baixo da Navbar */
+  padding-top: 140px !important; 
+  display: flex;
+  justify-content: center;
+}
+
+/* 2. O painel que centraliza o conteúdo */
+.panel {
+  width: 100%;
+  max-width: 1100px; /* Largura ideal para leitura */
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 32px;
+}
+
+.headline {
+  font-size: 2.8rem;
+  margin: 8px 0 0 0;
+  color: #e1fdff;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* 3. A lista de missões */
+.list-card {
+  background: rgba(24, 28, 34, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.list-row {
+  display: grid;
+  /* Define colunas fixas para que tudo fique alinhado verticalmente */
+  grid-template-columns: 2fr 2fr 1fr 60px;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.list-row:last-child {
+  border-bottom: none;
+}
+
+.mission-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mission-info strong {
+  font-size: 1.1rem;
+  color: #e0e2eb;
+}
+
+.label-pill {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  background: rgba(0, 242, 255, 0.1);
+  color: #00f2ff;
+}
+</style>

@@ -597,6 +597,38 @@ export interface ApiClienteCliente extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiDestinoDestino extends Struct.CollectionTypeSchema {
+  collectionName: 'destinos';
+  info: {
+    displayName: 'Destino';
+    pluralName: 'destinos';
+    singularName: 'destino';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    Combustivel: Schema.Attribute.Integer & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    Dias: Schema.Attribute.Integer & Schema.Attribute.Required;
+    LifeSupport: Schema.Attribute.Integer & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::destino.destino'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    Seguro: Schema.Attribute.Integer & Schema.Attribute.Required;
+    Tipo: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiEstafetaEstafeta extends Struct.CollectionTypeSchema {
   collectionName: 'estafetas';
   info: {
@@ -1218,6 +1250,7 @@ declare module '@strapi/strapi' {
       'api::author.author': ApiAuthorAuthor;
       'api::category.category': ApiCategoryCategory;
       'api::cliente.cliente': ApiClienteCliente;
+      'api::destino.destino': ApiDestinoDestino;
       'api::estafeta.estafeta': ApiEstafetaEstafeta;
       'api::global.global': ApiGlobalGlobal;
       'api::pedido-mission.pedido-mission': ApiPedidoMissionPedidoMission;

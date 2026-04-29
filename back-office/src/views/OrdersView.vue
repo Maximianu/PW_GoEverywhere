@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { mockData } from '../mockData'
 import { MapPin, CheckCircle2, XCircle, UserPlus, ChevronLeft, ChevronRight, X } from 'lucide-vue-next'
 
-const filter = ref('pendentes')
+const filter = ref('todos')
 
 const orders = ref([])
 const availableCouriers = ref([])

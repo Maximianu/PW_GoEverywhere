@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "destinos",
+  "info": {
+    "singularName": "destino",
+    "pluralName": "destinos",
+    "displayName": "Destino"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Tipo": {
+      "type": "string",
+      "required": true
+    },
+    "Combustivel": {
+      "type": "integer",
+      "required": true
+    },
+    "LifeSupport": {
+      "type": "integer",
+      "required": true
+    },
+    "Seguro": {
+      "type": "integer",
+      "required": true
+    },
+    "Dias": {
+      "type": "integer",
+      "required": true
+    }
+  }
+}

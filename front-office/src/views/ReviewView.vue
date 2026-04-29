@@ -1,6 +1,5 @@
 <template>
   <div class="side-layout">
-    <SidePanel />
     <main class="page-shell" style="padding: 0;">
       <section class="panel">
         <div class="section-header">
@@ -61,5 +60,4 @@
 </template>
 
 <script setup>
-import SidePanel from '../components/SidePanel.vue'
 </script>
