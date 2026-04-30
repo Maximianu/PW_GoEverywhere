@@ -5,7 +5,7 @@ import { Moon, LayoutDashboard, ListOrdered, Users, Map, LogOut, Rocket, Clock, 
 const route = useRoute()
 
 const navItems = [
-  { name: 'Lua', path: '/moon-3d', icon: Moon, color: 'cyan', colorHex: '#FFD93D' },
+  { name: 'Viagens', path: '/moon-3d', icon: Rocket, color: 'cyan', colorHex: '#FFD93D' },
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, color: 'blue', colorHex: '#3b82f6' },
   { name: 'Pedidos', path: '/orders', icon: ListOrdered, color: 'red', colorHex: '#ef4444' },
   { name: 'Histórico', path: '/order-history', icon: Clock, color: 'amber', colorHex: '#f59e0b' },
