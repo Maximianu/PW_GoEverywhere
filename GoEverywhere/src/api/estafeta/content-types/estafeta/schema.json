@@ -30,6 +30,15 @@
     },
     "Telemovel": {
       "type": "integer"
+    },
+    "Password": {
+      "type": "password"
+    },
+    "Email": {
+      "type": "email"
+    },
+    "PIN": {
+      "type": "string"
     }
   }
 }

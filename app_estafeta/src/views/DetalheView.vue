@@ -6,15 +6,15 @@
       <h1 class="details-title">Detalhes da Encomenda</h1>
 
       <div class="info-box">
-        <p><strong>Cliente :</strong> Maria Silva</p>
-        <p><strong>Encomenda:</strong> #102</p>
-        <p><strong>Morada:</strong> Rua da Serpa Pinto 12, Guimarães</p>
-        <p><strong>Telefone:</strong> 912 345 678</p>
-        <p><strong>Janela:</strong> 11:00-13:00</p>
-        <p><strong>Estado:</strong> {{ estadoStr }}</p>
+       <p><strong>Cliente :</strong> {{ pedido.name }}</p>
+       <p><strong>Encomenda:</strong> #{{ pedido.id }}</p>
+       <p><strong>Morada:</strong> {{ pedido.address }}</p>
+       <p><strong>Telefone:</strong> {{ pedido.phone }}</p>
+       <p><strong>Janela:</strong> {{ pedido.time }}</p>
+       <p><strong>Estado:</strong> {{ pedido.status }}</p>
       </div>
 
-      <p class="notas-entrega"><strong>Notas da Entrega :</strong> Deixar na receção</p>
+      <p class="notas-entrega"><strong>Notas da Entrega :</strong> {{ pedido.notes }}</p>
 
       <div class="map-container">
         <iframe 
@@ -93,7 +93,7 @@
       <button 
         class="full-action-btn mt-small"
         :class="isGuardarSelecionado ? 'primary-btn btn-glow' : 'primary-btn btn-no-glow'"
-        @click="isGuardarSelecionado = true"
+        @click="guardarAlteracoes"
       >
         Guardar Alterações
       </button>
@@ -103,10 +103,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { getPedidoById, updatePedidoEstado } from '../services/api'
 
 const router = useRouter()
+const route = useRoute()
 
 const isEmRota = ref(false)
 const isRegistarProblema = ref(false)
@@ -114,20 +116,86 @@ const isRegistarEntrega = ref(false)
 const isGuardarSelecionado = ref(false)
 const statusOption = ref('Tentativa de entrega')
 
-const estadoStr = computed(() => {
-  if (isEmRota.value) return 'Em Rota'
-  return 'Pendente'
+const pedido = ref({
+  id: '',
+  name: '',
+  address: '',
+  phone: '',
+  time: '',
+  status: 'Pendente',
+  notes: '',
 })
+
+function getAttr(item) {
+  return item.attributes || item
+}
+
+function mapStatus(status) {
+  if (!status) return 'Pendente'
+
+  const normalized = status.toLowerCase()
+
+  if (normalized.includes('transito') || normalized.includes('trânsito') || normalized.includes('rota')) {
+    return 'Em Rota'
+  }
+
+  if (normalized.includes('concluido') || normalized.includes('concluído')) {
+    return 'Concluída'
+  }
+
+  if (normalized.includes('não') || normalized.includes('nao')) {
+    return 'Não Entregue'
+  }
+
+  return 'Pendente'
+}
+
+function mapPedido(item) {
+  const data = getAttr(item)
+  const cliente = data.cliente?.data?.attributes || data.cliente || {}
+
+  return {
+    id: item.id,
+    name: cliente.Nome || cliente.nome || data.Cliente || data.clienteNome || 'Cliente sem nome',
+    address: data.LocalEntrega || data.Destino || data.Morada || 'Morada não definida',
+    phone: cliente.Telefone || cliente.telefone || data.Telefone || 'Sem telefone',
+    time: data.Horario || data.Janela || data.DataHora || 'Horário não definido',
+    status: mapStatus(data.Estado),
+    notes: data.Observacoes || data.Notas || data.Descricao || 'Sem notas',
+  }
+}
+
+async function carregarPedido() {
+  try {
+    const response = await getPedidoById(route.params.id)
+    pedido.value = mapPedido(response.data)
+
+    if (pedido.value.status === 'Em Rota') {
+      isEmRota.value = true
+    }
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+onMounted(carregarPedido)
+
+const estadoStr = computed(() => pedido.value.status)
 
 function voltar() {
   router.back()
 }
 
-function iniciarCorrida() {
-  isEmRota.value = !isEmRota.value
-  if (isEmRota.value) {
+async function iniciarCorrida() {
+  try {
+    await updatePedidoEstado(route.params.id, 'Transito')
+    pedido.value.status = 'Em Rota'
+    isEmRota.value = true
     isRegistarProblema.value = false
     isRegistarEntrega.value = false
+  } catch (err) {
+    console.error(err)
+    alert('Erro ao atualizar o estado da entrega.')
   }
 }
 
@@ -139,5 +207,26 @@ function toggleProblema() {
 function toggleEntrega() {
   isRegistarEntrega.value = !isRegistarEntrega.value
   if (isRegistarEntrega.value) isRegistarProblema.value = false
+}
+
+async function guardarAlteracoes() {
+  try {
+    let novoEstado = pedido.value.status
+
+    if (isRegistarEntrega.value) {
+      novoEstado = 'Concluido'
+    }
+
+    if (isRegistarProblema.value) {
+      novoEstado = statusOption.value
+    }
+
+    await updatePedidoEstado(route.params.id, novoEstado)
+    pedido.value.status = mapStatus(novoEstado)
+    isGuardarSelecionado.value = true
+  } catch (err) {
+    console.error(err)
+    alert('Erro ao guardar alterações.')
+  }
 }
 </script>
