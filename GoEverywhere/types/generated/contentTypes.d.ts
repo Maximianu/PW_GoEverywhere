@@ -584,6 +584,7 @@ export interface ApiClienteCliente extends Struct.CollectionTypeSchema {
       'api::cliente.cliente'
     > &
       Schema.Attribute.Private;
+    missaos: Schema.Attribute.Relation<'manyToMany', 'api::missao.missao'>;
     pedido_missions: Schema.Attribute.Relation<
       'oneToMany',
       'api::pedido-mission.pedido-mission'
@@ -698,11 +699,70 @@ export interface ApiGlobalGlobal extends Struct.SingleTypeSchema {
   };
 }
 
+export interface ApiKitKit extends Struct.CollectionTypeSchema {
+  collectionName: 'kits';
+  info: {
+    displayName: 'Kit';
+    pluralName: 'kits';
+    singularName: 'kit';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::kit.kit'> &
+      Schema.Attribute.Private;
+    Modelo: Schema.Attribute.String;
+    Preco: Schema.Attribute.Decimal;
+    publishedAt: Schema.Attribute.DateTime;
+    Tamanho: Schema.Attribute.Enumeration<['XS', 'S', 'M', 'L', 'XL', 'XXL']>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiMissaoMissao extends Struct.CollectionTypeSchema {
+  collectionName: 'missaos';
+  info: {
+    displayName: 'Missao';
+    pluralName: 'missaos';
+    singularName: 'missao';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    clientes: Schema.Attribute.Relation<'manyToMany', 'api::cliente.cliente'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    Data: Schema.Attribute.Date;
+    Destino: Schema.Attribute.Enumeration<['Lua', 'Marte', 'Jupiter']>;
+    Hora_Chegada: Schema.Attribute.Time;
+    Hora_Partida: Schema.Attribute.Time;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::missao.missao'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiPedidoMissionPedidoMission
   extends Struct.CollectionTypeSchema {
   collectionName: 'pedido_missions';
   info: {
-    displayName: 'Pedido(Mission)';
+    displayName: 'Pedido';
     pluralName: 'pedido-missions';
     singularName: 'pedido-mission';
   };
@@ -1253,6 +1313,8 @@ declare module '@strapi/strapi' {
       'api::destino.destino': ApiDestinoDestino;
       'api::estafeta.estafeta': ApiEstafetaEstafeta;
       'api::global.global': ApiGlobalGlobal;
+      'api::kit.kit': ApiKitKit;
+      'api::missao.missao': ApiMissaoMissao;
       'api::pedido-mission.pedido-mission': ApiPedidoMissionPedidoMission;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;

@@ -25,6 +25,12 @@
       "relation": "oneToMany",
       "target": "api::pedido-mission.pedido-mission",
       "mappedBy": "cliente"
+    },
+    "missaos": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::missao.missao",
+      "inversedBy": "clientes"
     }
   }
 }

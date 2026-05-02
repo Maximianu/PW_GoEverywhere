@@ -4,7 +4,7 @@
   "info": {
     "singularName": "pedido-mission",
     "pluralName": "pedido-missions",
-    "displayName": "Pedido(Mission)"
+    "displayName": "Pedido"
   },
   "options": {
     "draftAndPublish": true
