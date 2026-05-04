@@ -830,10 +830,6 @@ const animate = () => {
       warpProgress = 0
       camera.fov = 45
 
-      if (currentLayout === 'earth' && earth) {
-        earth.rotation.set(0.3, -0.2, 23.5 * Math.PI / 180)
-      }
-
       if (warpLines) {
         warpLines.material.opacity = 0
         warpLines.scale.z = 1

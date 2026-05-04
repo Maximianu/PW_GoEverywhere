@@ -649,12 +649,14 @@ export interface ApiEstafetaEstafeta extends Struct.CollectionTypeSchema {
     Disponivel: Schema.Attribute.Boolean;
     Email: Schema.Attribute.Email;
     Idade: Schema.Attribute.Integer;
+    Latitude: Schema.Attribute.Decimal;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::estafeta.estafeta'
     > &
       Schema.Attribute.Private;
+    Longitude: Schema.Attribute.Decimal;
     Nome: Schema.Attribute.String;
     Password: Schema.Attribute.Password;
     PIN: Schema.Attribute.String;

@@ -39,6 +39,12 @@
     },
     "PIN": {
       "type": "string"
+    },
+    "Latitude": {
+      "type": "decimal"
+    },
+    "Longitude": {
+      "type": "decimal"
     }
   }
 }
