@@ -43,7 +43,7 @@ const closeDrawer = () => {
 const stats = computed(() => {
   return {
     total: customers.value.length,
-    thisMonth: customers.value.length // Pode ser melhorado com data
+    thisMonth: customers.value.length
   }
 })
 
@@ -58,10 +58,19 @@ const filteredCustomers = computed(() => {
 
 <template>
   <div class="p-8 pb-20 max-w-[1400px] mx-auto space-y-10 animate-in fade-in duration-700 relative">
-    <!-- Header -->
-    <header class="space-y-2 relative z-10">
-      <h1 class="text-3xl font-bold text-white tracking-tight">Clientes</h1>
-      <p class="text-gray-400 font-medium tracking-wide">Gerencie e visualize todos os clientes registrados.</p>
+
+    <!-- Header — igual ao GoEverywhere -->
+    <header class="flex flex-col items-start relative z-10">
+      <h1 class="text-4xl font-black text-white mb-2 tracking-tighter italic opacity-90 uppercase">
+        Clientes
+      </h1>
+      <div class="flex items-center gap-2 opacity-60">
+        <div class="h-[1px] w-5 bg-blue-500"></div>
+        <p class="text-white text-[9px] font-mono uppercase tracking-[0.2em] whitespace-nowrap">
+          Gerencie e visualize todos os clientes registados
+        </p>
+        <div class="h-[1px] w-5 bg-blue-500"></div>
+      </div>
     </header>
 
     <!-- Stats -->
@@ -151,17 +160,13 @@ const filteredCustomers = computed(() => {
         leaveToClass="translate-x-full"
       >
         <div v-if="isDetailsCustomerOpen && selectedCustomer" class="fixed right-0 top-0 h-full w-96 bg-[#141b27] border-l border-[#1f2937] z-50 flex flex-col shadow-2xl">
-          <!-- Header -->
           <div class="flex items-center justify-between p-6 border-b border-[#1f2937]">
-            <h3 class="text-xl font-bold text-white">
-              Detalhes do Cliente
-            </h3>
+            <h3 class="text-xl font-bold text-white">Detalhes do Cliente</h3>
             <button @click="closeDrawer" class="text-gray-400 hover:text-white transition-colors">
               <X :size="24" />
             </button>
           </div>
 
-          <!-- Content -->
           <div class="flex-1 overflow-y-auto p-6 space-y-6">
             <div class="flex flex-col items-center justify-center space-y-4 mb-8">
               <div class="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-black font-bold text-2xl shadow-lg">
@@ -211,7 +216,6 @@ const filteredCustomers = computed(() => {
             </div>
           </div>
 
-          <!-- Footer -->
           <div class="p-6 border-t border-[#1f2937]">
             <button
               @click="closeDrawer"
@@ -225,5 +229,3 @@ const filteredCustomers = computed(() => {
     </Teleport>
   </div>
 </template>
-
-

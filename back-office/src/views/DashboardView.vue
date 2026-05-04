@@ -55,28 +55,31 @@ onMounted(async () => {
 
 <template>
   <div class="p-8 pb-20 max-w-[1400px] mx-auto space-y-10 section-fade relative">
-    <!-- Header -->
-    <header class="space-y-3 relative z-10">
-      <div class="absolute -top-2 left-0 w-32 h-1 bg-gradient-to-r from-cyan-500 to-transparent rounded-full"></div>
-      <h1 class="text-4xl font-bold text-white tracking-tight line-accent">Dashboard Logística</h1>
-      <p class="text-gray-400 font-medium max-w-2xl">Gestão centralizada de operações para monitorização de indicadores e suporte à tomada de decisão em tempo real.</p>
+
+    <!-- Header — igual ao GoEverywhere -->
+    <header class="space-y-2 relative z-10">
+      <h1 class="text-4xl font-black text-white mb-2 tracking-tighter italic opacity-90 uppercase">
+        Dashboard
+      </h1>
+      <div class="flex items-center gap-2 opacity-60">
+        <div class="h-[1px] w-5 bg-blue-500"></div>
+        <p class="text-white text-[9px] font-mono uppercase tracking-[0.2em] whitespace-nowrap">
+          Plataforma de Gestão
+        </p>
+        <div class="h-[1px] w-5 bg-blue-500"></div>
+      </div>
     </header>
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-      <!-- Card: Estafetas Disponíveis -->
       <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
         <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">ESTAFETAS DISPONÍVEIS</div>
         <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.availableCouriers.toLocaleString() }}</div>
       </div>
-
-      <!-- Card: Total de Pedidos -->
       <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
         <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">TOTAL DE PEDIDOS</div>
         <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.totalOrders.toLocaleString() }}</div>
       </div>
-
-      <!-- Card: Tempo Médio -->
       <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
         <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">TEMPO MÉDIO DE ENTREGA</div>
         <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.avgDeliveryTime }}</div>
@@ -111,7 +114,6 @@ onMounted(async () => {
                 <span class="text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{{ region.percent }}%</span>
               </div>
             </div>
-            
             <div class="w-full bg-white/5 rounded-full h-3 overflow-hidden border border-white/10 backdrop-blur-sm">
               <div 
                 class="h-full rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 transition-all duration-1000 ease-out shadow-glow-cyan"
@@ -130,7 +132,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-
 @keyframes slideIn {
   from {
     width: 0;

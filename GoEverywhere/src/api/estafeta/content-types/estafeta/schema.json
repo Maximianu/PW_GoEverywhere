@@ -19,7 +19,8 @@
       "enum": [
         "Braga",
         "Porto",
-        "Guimaraes"
+        "Guimaraes",
+        "Barcelona"
       ]
     },
     "Disponivel": {

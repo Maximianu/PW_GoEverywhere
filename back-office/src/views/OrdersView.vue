@@ -12,8 +12,6 @@ const orderToAssign = ref(null)
 const selectedCourierId = ref('')
 const isSubmitting = ref(false)
 
-
-
 const loadOrders = async () => {
   try {
     const res = await fetch('http://localhost:1338/api/pedido-missions?populate=*')
@@ -35,7 +33,7 @@ const loadOrders = async () => {
     }))
   } catch (error) {
     console.error('Erro ao buscar pedidos do Strapi:', error)
-    orders.value = mockData.orders // fallback caso o Strapi não esteja acessível
+    orders.value = mockData.orders
   }
 }
 
@@ -61,10 +59,10 @@ const updateOrderStatus = async (order, newStatus) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: { Estado: newStatus } })
     })
-    if(response.ok) {
+    if (response.ok) {
       await loadOrders()
     } else {
-      if(response.status === 403) alert('Erro 403: Permissão negada! Ative a permissão "update" para Pedido(Mission) na Role Public do Strapi.')
+      if (response.status === 403) alert('Erro 403: Permissão negada! Ative a permissão "update" para Pedido(Mission) na Role Public do Strapi.')
       else alert('Falha ao atualizar o estado.')
     }
   } catch (error) {
@@ -99,7 +97,7 @@ const confirmAssign = async () => {
       await loadOrders()
       closeAssignDrawer()
     } else {
-      if(response.status === 403) alert('Erro 403: Permissão negada! Ative a permissão "update" para Pedido(Mission) no Strapi.')
+      if (response.status === 403) alert('Erro 403: Permissão negada! Ative a permissão "update" para Pedido(Mission) no Strapi.')
       else alert('Falha ao atribuir estafeta.')
     }
   } catch(error) {
@@ -131,10 +129,19 @@ const setFilter = (val) => {
 
 <template>
   <div class="p-8 pb-20 max-w-[1400px] mx-auto space-y-10 animate-in fade-in duration-700 relative">
-    <!-- Header -->
-    <header class="space-y-2 relative z-10">
-      <h1 class="text-3xl font-bold text-white tracking-tight">Pedidos</h1>
-      <p class="text-gray-400 font-medium tracking-wide">Veja, aprove e atribua estafetas aos pedidos dos clientes.</p>
+
+    <!-- Header — igual ao GoEverywhere -->
+    <header class="flex flex-col items-start relative z-10">
+      <h1 class="text-4xl font-black text-white mb-2 tracking-tighter italic opacity-90 uppercase">
+        Pedidos
+      </h1>
+      <div class="flex items-center gap-2 opacity-60">
+        <div class="h-[1px] w-5 bg-blue-500"></div>
+        <p class="text-white text-[9px] font-mono uppercase tracking-[0.2em] whitespace-nowrap">
+          Veja, aprove e atribua estafetas aos pedidos
+        </p>
+        <div class="h-[1px] w-5 bg-blue-500"></div>
+      </div>
     </header>
 
     <!-- Stats -->
@@ -256,6 +263,7 @@ const setFilter = (val) => {
         </div>
       </div>
     </div>
+
     <!-- Assign Courier Drawer -->
     <Teleport to="body">
       <Transition
@@ -325,5 +333,3 @@ const setFilter = (val) => {
     </Teleport>
   </div>
 </template>
-
-

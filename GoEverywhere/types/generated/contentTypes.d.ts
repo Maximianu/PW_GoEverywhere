@@ -642,7 +642,7 @@ export interface ApiEstafetaEstafeta extends Struct.CollectionTypeSchema {
   };
   attributes: {
     AreaDeAtuacao: Schema.Attribute.Enumeration<
-      ['Braga', 'Porto', 'Guimaraes']
+      ['Braga', 'Porto', 'Guimaraes', 'Barcelona']
     >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

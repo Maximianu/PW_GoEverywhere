@@ -30,7 +30,6 @@ const loadOrders = async () => {
       price: item.Preco || '0€'
     }))
     
-    // Ordenar por data mais recente
     orders.value.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
   } catch (error) {
     console.error('Erro ao buscar histórico de pedidos:', error)
@@ -52,52 +51,37 @@ const closeDetailsDrawer = () => {
 
 const getStatusColor = (status) => {
   switch (status) {
-    case 'Entregue':
-      return 'bg-green-500/20 text-green-300 border-green-500/30'
-    case 'Transito':
-      return 'bg-blue-500/20 text-blue-300 border-blue-500/30'
-    case 'Aprovado':
-      return 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-    case 'Pendente':
-      return 'bg-gray-500/20 text-gray-300 border-gray-500/30'
-    case 'Cancelado':
-      return 'bg-red-500/20 text-red-300 border-red-500/30'
-    default:
-      return 'bg-gray-500/20 text-gray-300 border-gray-500/30'
+    case 'Entregue': return 'bg-green-500/20 text-green-300 border-green-500/30'
+    case 'Transito': return 'bg-blue-500/20 text-blue-300 border-blue-500/30'
+    case 'Aprovado': return 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+    case 'Pendente': return 'bg-gray-500/20 text-gray-300 border-gray-500/30'
+    case 'Cancelado': return 'bg-red-500/20 text-red-300 border-red-500/30'
+    default: return 'bg-gray-500/20 text-gray-300 border-gray-500/30'
   }
 }
 
 const getStatusIcon = (status) => {
   switch (status) {
-    case 'Entregue':
-      return CheckCircle2
-    case 'Transito':
-      return Clock
-    case 'Cancelado':
-      return XCircle
-    default:
-      return Clock
+    case 'Entregue': return CheckCircle2
+    case 'Cancelado': return XCircle
+    default: return Clock
   }
 }
 
-const stats = computed(() => {
-  return {
-    total: orders.value.length,
-    entregues: orders.value.filter(o => o.status === 'Entregue').length,
-    emTransito: orders.value.filter(o => o.status === 'Transito').length,
-    cancelados: orders.value.filter(o => o.status === 'Cancelado').length
-  }
-})
+const stats = computed(() => ({
+  total: orders.value.length,
+  entregues: orders.value.filter(o => o.status === 'Entregue').length,
+  emTransito: orders.value.filter(o => o.status === 'Transito').length,
+  cancelados: orders.value.filter(o => o.status === 'Cancelado').length
+}))
 
 const filteredOrders = computed(() => {
   let filtered = orders.value
 
-  // Filtrar por status
   if (statusFilter.value !== 'todos') {
     filtered = filtered.filter(o => o.status === statusFilter.value)
   }
 
-  // Filtrar por data
   if (dateFilter.value !== 'todos') {
     const now = new Date()
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -120,7 +104,6 @@ const filteredOrders = computed(() => {
     }
   }
 
-  // Filtrar por pesquisa
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     filtered = filtered.filter(o =>
@@ -136,10 +119,19 @@ const filteredOrders = computed(() => {
 
 <template>
   <div class="p-8 pb-20 max-w-[1400px] mx-auto space-y-10 animate-in fade-in duration-700 relative">
-    <!-- Header -->
-    <header class="space-y-3 relative z-10">
-      <h1 class="text-3xl font-bold text-white tracking-tight">Histórico de Pedidos</h1>
-      <p class="text-gray-400 font-medium tracking-wide">Visualize o histórico completo de todos os pedidos processados.</p>
+
+    <!-- Header — igual ao GoEverywhere -->
+    <header class="space-y-2 relative z-10">
+      <h1 class="text-4xl font-black text-white mb-2 tracking-tighter italic opacity-90 uppercase">
+        Histórico
+      </h1>
+      <div class="flex items-center gap-2 opacity-60">
+        <div class="h-[1px] w-5 bg-blue-500"></div>
+        <p class="text-white text-[9px] font-mono uppercase tracking-[0.2em] whitespace-nowrap">
+          Histórico completo de todos os pedidos processados
+        </p>
+        <div class="h-[1px] w-5 bg-blue-500"></div>
+      </div>
     </header>
 
     <!-- Stats -->
@@ -174,17 +166,12 @@ const filteredOrders = computed(() => {
             class="w-full pl-12 pr-4 py-3 bg-[#111926] border border-[#233246] rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all"
           />
         </div>
-
         <div class="flex items-center gap-4 w-full md:w-auto">
           <div class="flex items-center gap-2 px-2">
             <Filter :size="18" class="text-gray-400" />
             <span class="text-sm font-semibold text-gray-300">Filtros:</span>
           </div>
-
-          <select
-            v-model="statusFilter"
-            class="px-4 py-3 bg-[#111926] border border-[#233246] rounded-xl text-white text-sm focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all cursor-pointer"
-          >
+          <select v-model="statusFilter" class="px-4 py-3 bg-[#111926] border border-[#233246] rounded-xl text-white text-sm focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all cursor-pointer">
             <option value="todos">Todos os Status</option>
             <option value="Pendente">Pendente</option>
             <option value="Aprovado">Aprovado</option>
@@ -192,11 +179,7 @@ const filteredOrders = computed(() => {
             <option value="Entregue">Entregue</option>
             <option value="Cancelado">Cancelado</option>
           </select>
-
-          <select
-            v-model="dateFilter"
-            class="px-4 py-3 bg-[#111926] border border-[#233246] rounded-xl text-white text-sm focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all cursor-pointer"
-          >
+          <select v-model="dateFilter" class="px-4 py-3 bg-[#111926] border border-[#233246] rounded-xl text-white text-sm focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all cursor-pointer">
             <option value="todos">Qualquer Data</option>
             <option value="hoje">Hoje</option>
             <option value="ontem">Ontem</option>
@@ -244,12 +227,10 @@ const filteredOrders = computed(() => {
               </td>
               <td class="p-6 text-sm text-gray-300 font-medium">{{ order.courier }}</td>
               <td class="p-6">
-                <div class="flex items-center gap-2">
-                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide border" :class="getStatusColor(order.status)">
-                    <component :is="getStatusIcon(order.status)" :size="14" class="shrink-0" />
-                    {{ order.status }}
-                  </span>
-                </div>
+                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide border" :class="getStatusColor(order.status)">
+                  <component :is="getStatusIcon(order.status)" :size="14" class="shrink-0" />
+                  {{ order.status }}
+                </span>
               </td>
               <td class="p-6 text-gray-300 text-sm">
                 <div class="flex flex-col">
@@ -279,21 +260,11 @@ const filteredOrders = computed(() => {
 
     <!-- Details Drawer -->
     <Teleport to="body">
-      <Transition
-        enterActiveClass="transition-opacity duration-300"
-        leaveActiveClass="transition-opacity duration-300"
-      >
+      <Transition enterActiveClass="transition-opacity duration-300" leaveActiveClass="transition-opacity duration-300">
         <div v-if="isDetailsOpen" class="fixed inset-0 bg-black/50 z-40" @click="closeDetailsDrawer" />
       </Transition>
-
-      <Transition
-        enterActiveClass="transition-transform duration-300"
-        leaveActiveClass="transition-transform duration-300"
-        enterFromClass="translate-x-full"
-        leaveToClass="translate-x-full"
-      >
+      <Transition enterActiveClass="transition-transform duration-300" leaveActiveClass="transition-transform duration-300" enterFromClass="translate-x-full" leaveToClass="translate-x-full">
         <div v-if="isDetailsOpen && selectedOrder" class="fixed right-0 top-0 h-full w-96 bg-[#141b27] border-l border-[#1f2937] z-50 flex flex-col shadow-2xl overflow-y-auto">
-          <!-- Header -->
           <div class="sticky top-0 flex items-center justify-between p-6 border-b border-[#1f2937] bg-[#141b27]">
             <h3 class="text-xl font-bold text-white">Detalhes do Pedido</h3>
             <button @click="closeDetailsDrawer" class="text-gray-400 hover:text-white transition-colors">
@@ -302,16 +273,11 @@ const filteredOrders = computed(() => {
               </svg>
             </button>
           </div>
-
-          <!-- Content -->
           <div class="flex-1 p-6 space-y-6">
-            <!-- Order ID -->
             <div>
               <p class="text-xs font-semibold text-gray-400 uppercase mb-2">ID do Pedido</p>
               <p class="text-white font-mono">{{ selectedOrder.id }}</p>
             </div>
-
-            <!-- Client -->
             <div>
               <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Cliente</p>
               <div class="flex items-center gap-3">
@@ -321,8 +287,6 @@ const filteredOrders = computed(() => {
                 <p class="text-white">{{ selectedOrder.client }}</p>
               </div>
             </div>
-
-            <!-- Destination -->
             <div>
               <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Destino</p>
               <div class="flex items-start gap-2">
@@ -330,14 +294,10 @@ const filteredOrders = computed(() => {
                 <p class="text-white">{{ selectedOrder.destination }}</p>
               </div>
             </div>
-
-            <!-- Local de Entrega -->
             <div>
               <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Local de Entrega</p>
               <p class="text-white">{{ selectedOrder.localEntrega }}</p>
             </div>
-
-            <!-- Courier -->
             <div>
               <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Estafeta Atribuído</p>
               <div class="flex items-center gap-2">
@@ -345,19 +305,13 @@ const filteredOrders = computed(() => {
                 <p class="text-white">{{ selectedOrder.courier }}</p>
               </div>
             </div>
-
-            <!-- Status -->
             <div>
               <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Status</p>
-              <div class="flex items-center gap-2">
-                <component :is="getStatusIcon(selectedOrder.status)" :size="16" />
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border" :class="getStatusColor(selectedOrder.status)">
-                  {{ selectedOrder.status }}
-                </span>
-              </div>
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border" :class="getStatusColor(selectedOrder.status)">
+                <component :is="getStatusIcon(selectedOrder.status)" :size="14" />
+                {{ selectedOrder.status }}
+              </span>
             </div>
-
-            <!-- Date and Time -->
             <div>
               <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Data e Hora</p>
               <div class="flex items-center gap-2">
@@ -365,14 +319,10 @@ const filteredOrders = computed(() => {
                 <p class="text-white">{{ selectedOrder.date }} às {{ selectedOrder.time }}</p>
               </div>
             </div>
-
-            <!-- Priority -->
             <div>
               <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Prioridade</p>
               <p class="text-white">{{ selectedOrder.priority > 0 ? '🔴 Alta' : '🟢 Normal' }}</p>
             </div>
-
-            <!-- Price -->
             <div>
               <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Preço</p>
               <p class="text-white font-semibold text-lg">{{ selectedOrder.price }}</p>
@@ -383,5 +333,3 @@ const filteredOrders = computed(() => {
     </Teleport>
   </div>
 </template>
-
-

@@ -296,11 +296,11 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Status chip (top-right) -->
+      <!-- Status chip (top-right) - AGORA ESCURO -->
       <div class="status-chip">
         <Wifi v-if="isConnected" :size="13" class="chip-icon chip-online" />
         <WifiOff v-else :size="13" class="chip-icon chip-offline" />
-        <span>{{ isConnected ? lastUpdateFormatted : 'Offline' }}</span>
+        <span class="status-time">{{ isConnected ? lastUpdateFormatted : 'Offline' }}</span>
         <button @click="fetchCouriers" class="chip-refresh" :disabled="isLoading">
           <RefreshCw :size="12" :class="{ spin: isLoading }" />
         </button>
@@ -451,6 +451,7 @@ onUnmounted(() => {
 .pill.active { background: #0f172a; color: white; }
 .pill.active-dark { background: #1e293b; color: white; border: 1px solid #334155; }
 
+/* ── STATUS CHIP (CONEXÃO) ── */
 .status-chip {
   position: absolute;
   top: 20px;
@@ -458,16 +459,43 @@ onUnmounted(() => {
   z-index: 1000;
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: white;
+  gap: 8px;
+  background: #0f172a; /* Cor da sidebar */
   border-radius: 999px;
-  padding: 8px 14px;
+  padding: 8px 16px;
   font-size: 12px; font-weight: 600;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.09);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  color: white;
 }
-.chip-online { color: #16a34a; }
-.chip-offline { color: #dc2626; }
-.chip-refresh { background: none; border: none; cursor: pointer; color: #94a3b8; }
+.status-time { opacity: 0.9; }
+.chip-online { color: #4ade80; }
+.chip-offline { color: #f87171; }
+.chip-refresh { background: none; border: none; cursor: pointer; color: #94a3b8; margin-left: 4px; display: flex; align-items: center; }
+.chip-refresh:hover { color: white; }
+
+/* ── ZOOM CONTROLS CUSTOM ── */
+:deep(.leaflet-control-zoom) {
+  border: none !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+  margin-right: 20px !important;
+  margin-bottom: 20px !important;
+}
+:deep(.leaflet-control-zoom-in), 
+:deep(.leaflet-control-zoom-out) {
+  background-color: #0f172a !important; /* Cor da sidebar */
+  color: white !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  width: 32px !important;
+  height: 32px !important;
+  line-height: 32px !important;
+  font-size: 16px !important;
+}
+:deep(.leaflet-control-zoom-in:hover), 
+:deep(.leaflet-control-zoom-out:hover) {
+  background-color: #1e293b !important;
+}
+:deep(.leaflet-control-zoom-in) { border-radius: 8px 8px 0 0 !important; }
+:deep(.leaflet-control-zoom-out) { border-radius: 0 0 8px 8px !important; }
 
 .sidebar-arrow {
   position: absolute;
@@ -477,7 +505,7 @@ onUnmounted(() => {
   z-index: 1100;
   width: 26px;
   height: 52px;
-  background: #0f172a; /* Cor igual à sidebar */
+  background: #0f172a; 
   border-radius: 8px 0 0 8px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; color: white;
@@ -490,7 +518,7 @@ onUnmounted(() => {
 .sidebar {
   position: absolute;
   top: 0; right: 0; width: 340px; height: 100%;
-  background: #0f172a; /* Cor da barra esquerda */
+  background: #0f172a; 
   z-index: 1050; 
   box-shadow: -4px 0 28px rgba(0,0,0,0.3);
   display: flex; flex-direction: column;

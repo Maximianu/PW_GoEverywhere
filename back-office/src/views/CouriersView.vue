@@ -35,12 +35,12 @@ const loadCouriers = async () => {
       dbDisponivel: item.Disponivel !== undefined ? item.Disponivel : true,
       initials: item.Nome ? item.Nome.substring(0, 2).toUpperCase() : '??',
       name: item.Nome || 'Estafeta Sem Nome',
-      performance: Math.floor(Math.random() * 20) + 80, // Aleatório entre 80 e 100 já que não há no DB
+      performance: Math.floor(Math.random() * 20) + 80,
       status: item.Disponivel ? 'Disponível' : 'Ativo'
     }))
   } catch (error) {
     console.error('Erro ao buscar estafetas do Strapi:', error)
-    couriers.value = mockData.couriers // fallback se o Strapi falhar
+    couriers.value = mockData.couriers
   }
 }
 
@@ -70,9 +70,7 @@ const submitCourier = async () => {
       
     const response = await fetch(url, {
       method: isEdit ? 'PUT' : 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
     
@@ -96,28 +94,23 @@ const submitCourier = async () => {
   }
 }
 
-const stats = computed(() => {
-  return {
-    total: couriers.value.length,
-    available: couriers.value.filter(c => c.status === 'Disponível').length,
-    active: couriers.value.filter(c => c.status === 'Ativo').length
-  }
-})
+const stats = computed(() => ({
+  total: couriers.value.length,
+  available: couriers.value.filter(c => c.status === 'Disponível').length,
+  active: couriers.value.filter(c => c.status === 'Ativo').length
+}))
 
 const filteredCouriers = computed(() => {
   let list = couriers.value
   if (filter.value === 'ativos') list = couriers.value.filter(c => c.status === 'Ativo')
   else if (filter.value === 'disponiveis') list = couriers.value.filter(c => c.status === 'Disponível')
-  
   if (searchQuery.value) {
     list = list.filter(c => c.name.toLowerCase().includes(searchQuery.value.toLowerCase()))
   }
   return list
 })
 
-const setFilter = (val) => {
-  filter.value = val
-}
+const setFilter = (val) => { filter.value = val }
 
 const openAddDrawer = () => {
   editingCourierId.value = null
@@ -146,12 +139,8 @@ const closeDrawer = () => {
 
 const deleteCourier = async (courier) => {
   if (!confirm(`Tem a certeza que deseja eliminar o estafeta ${courier.name}?`)) return
-  
   try {
-    const response = await fetch(`http://localhost:1338/api/estafetas/${courier.dbId}`, {
-      method: 'DELETE'
-    })
-    
+    const response = await fetch(`http://localhost:1338/api/estafetas/${courier.dbId}`, { method: 'DELETE' })
     if (response.ok) {
       await loadCouriers()
     } else {
@@ -172,16 +161,22 @@ const deleteCourier = async (courier) => {
 
 <template>
   <div class="p-8 pb-20 max-w-[1400px] mx-auto space-y-10 animate-in fade-in duration-700 relative">
-    <!-- Lua decorativa -->
-    <div class="moon-backdrop moon-backdrop-estafetas"></div>
-    
-    <!-- Header -->
+
+    <!-- Header — igual ao GoEverywhere, com botão à direita -->
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10">
-      <div class="space-y-2">
-        <h1 class="text-3xl font-bold text-white tracking-tight">Estafetas</h1>
-        <p class="text-gray-400 font-medium tracking-wide">Faça a gestão e a monitorização do desempenho dos estafetas.</p>
+      <div>
+        <h1 class="text-4xl font-black text-white mb-2 tracking-tighter italic opacity-90 uppercase">
+          Estafetas
+        </h1>
+        <div class="flex items-center gap-2 opacity-60">
+          <div class="h-[1px] w-5 bg-blue-500"></div>
+          <p class="text-white text-[9px] font-mono uppercase tracking-[0.2em] whitespace-nowrap">
+            Gestão e monitorização dos estafetas
+          </p>
+          <div class="h-[1px] w-5 bg-blue-500"></div>
+        </div>
       </div>
-      <button 
+      <button
         @click="openAddDrawer"
         class="flex items-center gap-2 bg-primary text-black px-6 py-3.5 rounded-full font-bold shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:bg-[#33f5ff] transition-all hover:-translate-y-0.5"
       >
@@ -209,38 +204,17 @@ const deleteCourier = async (courier) => {
     <!-- Filters, Search & Table -->
     <div class="space-y-8">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 px-1">
-        <!-- Tabs -->
         <div class="flex gap-8 border-b border-[#233246] px-2 text-sm font-semibold w-full md:w-auto">
-          <button 
-            @click="setFilter('todos')"
-            class="pb-4 border-b-[3px] transition-colors duration-300"
-            :class="filter === 'todos' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'"
-          >Todos</button>
-          <button 
-            @click="setFilter('disponiveis')"
-            class="pb-4 border-b-[3px] transition-colors duration-300"
-            :class="filter === 'disponiveis' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'"
-          >Disponíveis ({{ stats.available }})</button>
-          <button 
-            @click="setFilter('ativos')"
-            class="pb-4 border-b-[3px] transition-colors duration-300"
-            :class="filter === 'ativos' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'"
-          >Ativos</button>
+          <button @click="setFilter('todos')" class="pb-4 border-b-[3px] transition-colors duration-300" :class="filter === 'todos' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'">Todos</button>
+          <button @click="setFilter('disponiveis')" class="pb-4 border-b-[3px] transition-colors duration-300" :class="filter === 'disponiveis' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'">Disponíveis ({{ stats.available }})</button>
+          <button @click="setFilter('ativos')" class="pb-4 border-b-[3px] transition-colors duration-300" :class="filter === 'ativos' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'">Ativos</button>
         </div>
-
-        <!-- Search -->
         <div class="relative w-full md:w-72">
           <Search :size="16" class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-          <input 
-            v-model="searchQuery"
-            type="text" 
-            placeholder="Procurar estafeta..." 
-            class="w-full bg-[#111926] border border-[#233246] rounded-full py-2.5 pl-12 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-primary/50 focus:shadow-[0_0_10px_rgba(0,242,255,0.15)] transition-all"
-          >
+          <input v-model="searchQuery" type="text" placeholder="Procurar estafeta..." class="w-full bg-[#111926] border border-[#233246] rounded-full py-2.5 pl-12 pr-4 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-primary/50 focus:shadow-[0_0_10px_rgba(0,242,255,0.15)] transition-all">
         </div>
       </div>
 
-      <!-- Table Section -->
       <div class="bg-surface border border-[#233246] rounded-[2rem] overflow-hidden shadow-2xl">
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse min-w-[800px]">
@@ -296,12 +270,8 @@ const deleteCourier = async (courier) => {
                 </td>
                 <td class="p-6 text-center">
                   <div class="flex items-center justify-center gap-2">
-                    <button @click="openEditDrawer(courier)" class="text-primary hover:text-white font-semibold text-xs transition-colors border border-primary/30 px-3 py-1.5 rounded-full hover:bg-primary/10">
-                      Editar
-                    </button>
-                    <button @click="deleteCourier(courier)" class="text-red-500 hover:text-white font-semibold text-xs transition-colors border border-red-500/30 px-3 py-1.5 rounded-full hover:bg-red-500/10">
-                      Eliminar
-                    </button>
+                    <button @click="openEditDrawer(courier)" class="text-primary hover:text-white font-semibold text-xs transition-colors border border-primary/30 px-3 py-1.5 rounded-full hover:bg-primary/10">Editar</button>
+                    <button @click="deleteCourier(courier)" class="text-red-500 hover:text-white font-semibold text-xs transition-colors border border-red-500/30 px-3 py-1.5 rounded-full hover:bg-red-500/10">Eliminar</button>
                   </div>
                 </td>
               </tr>
@@ -311,73 +281,50 @@ const deleteCourier = async (courier) => {
       </div>
     </div>
 
-    <!-- Drawer Overlay & Add Courier Drawer -->
+    <!-- Drawer -->
     <Teleport to="body">
-      <Transition
-        enterActiveClass="transition-opacity duration-300"
-        leaveActiveClass="transition-opacity duration-300"
-      >
-        <div 
-          v-if="isAddCourierOpen" 
-          class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
-          @click="closeDrawer"
-        ></div>
+      <Transition enterActiveClass="transition-opacity duration-300" leaveActiveClass="transition-opacity duration-300">
+        <div v-if="isAddCourierOpen" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40" @click="closeDrawer"></div>
       </Transition>
-
-      <Transition
-        enterActiveClass="transition-transform duration-300"
-        leaveActiveClass="transition-transform duration-300"
-        enterFromClass="translate-x-full"
-        leaveToClass="translate-x-full"
-      >
-        <div 
-          v-if="isAddCourierOpen"
-          class="fixed top-0 right-0 h-full w-96 bg-[#141b27] border-l border-[#1f2937] z-50 flex flex-col shadow-2xl"
-        >
+      <Transition enterActiveClass="transition-transform duration-300" leaveActiveClass="transition-transform duration-300" enterFromClass="translate-x-full" leaveToClass="translate-x-full">
+        <div v-if="isAddCourierOpen" class="fixed top-0 right-0 h-full w-96 bg-[#141b27] border-l border-[#1f2937] z-50 flex flex-col shadow-2xl">
           <div class="flex items-center justify-between p-6 border-b border-[#1f2937]">
-            <h3 class="text-xl font-bold text-white">
-              {{ editingCourierId ? 'Editar Estafeta' : 'Adicionar Estafeta' }}
-            </h3>
+            <h3 class="text-xl font-bold text-white">{{ editingCourierId ? 'Editar Estafeta' : 'Adicionar Estafeta' }}</h3>
             <button @click="closeDrawer" class="text-gray-400 hover:text-white transition-colors">
               <X :size="24" />
             </button>
           </div>
-
           <div class="flex-1 overflow-y-auto p-6 space-y-6">
-            <div class="space-y-2 relative">
+            <div class="space-y-2">
               <label class="text-xs font-bold text-primary uppercase tracking-widest pl-1">Nome Completo</label>
               <div class="relative">
                 <User :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
                 <input v-model="newCourier.Nome" type="text" placeholder="e.g. Marcus Thorne" class="w-full bg-[#0c1219] border border-[#2a3b4f] rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-primary transition-all placeholder:text-gray-600">
               </div>
             </div>
-
-            <div class="space-y-2 relative">
+            <div class="space-y-2">
               <label class="text-xs font-bold text-primary uppercase tracking-widest pl-1">Email</label>
               <div class="relative">
                 <Mail :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
                 <input v-model="newCourier.Email" type="email" placeholder="estafeta@goeverywhere.pt" class="w-full bg-[#0c1219] border border-[#2a3b4f] rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-primary transition-all placeholder:text-gray-600">
               </div>
             </div>
-
-            <div class="space-y-2 relative">
+            <div class="space-y-2">
               <label class="text-xs font-bold text-primary uppercase tracking-widest pl-1">Telemóvel</label>
               <div class="relative">
                 <Phone :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
                 <input v-model="newCourier.Telemovel" type="number" placeholder="912345678" class="w-full bg-[#0c1219] border border-[#2a3b4f] rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-primary transition-all placeholder:text-gray-600">
               </div>
             </div>
-
             <div class="grid grid-cols-2 gap-4">
-              <div class="space-y-2 relative">
+              <div class="space-y-2">
                 <label class="text-xs font-bold text-primary uppercase tracking-widest pl-1">Idade</label>
                 <div class="relative">
                   <Calendar :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
                   <input v-model="newCourier.Idade" type="number" placeholder="25" class="w-full bg-[#0c1219] border border-[#2a3b4f] rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-primary transition-all placeholder:text-gray-600">
                 </div>
               </div>
-              
-              <div class="space-y-2 relative">
+              <div class="space-y-2">
                 <label class="text-xs font-bold text-primary uppercase tracking-widest pl-1">Área</label>
                 <div class="relative">
                   <MapPin :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
@@ -389,8 +336,7 @@ const deleteCourier = async (courier) => {
                 </div>
               </div>
             </div>
-            
-            <div class="space-y-3 relative pt-2">
+            <div class="space-y-3 pt-2">
               <label class="flex items-center gap-3 cursor-pointer">
                 <div class="relative flex items-center justify-center">
                   <input v-model="newCourier.Disponivel" type="checkbox" class="peer sr-only">
@@ -401,19 +347,12 @@ const deleteCourier = async (courier) => {
               </label>
             </div>
           </div>
-
           <div class="p-6 border-t border-[#1f2937] space-y-3">
-            <button 
-              @click="submitCourier"
-              :disabled="isSubmitting"
-              class="w-full bg-primary text-black font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(0,242,255,0.2)] hover:bg-[#33f5ff] transition-all hover:-translate-y-0.5 tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
-            >
+            <button @click="submitCourier" :disabled="isSubmitting" class="w-full bg-primary text-black font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(0,242,255,0.2)] hover:bg-[#33f5ff] transition-all hover:-translate-y-0.5 tracking-wide disabled:opacity-50 disabled:cursor-not-allowed">
               <span v-if="isSubmitting">A Guardar...</span>
               <span v-else>Confirmar</span>
             </button>
-            <button class="w-full bg-[#0c1219] text-white font-medium py-3 rounded-lg border border-[#2a3b4f] hover:bg-[#1a2332] transition-colors tracking-wide" @click="closeDrawer">
-              Cancelar
-            </button>
+            <button class="w-full bg-[#0c1219] text-white font-medium py-3 rounded-lg border border-[#2a3b4f] hover:bg-[#1a2332] transition-colors tracking-wide" @click="closeDrawer">Cancelar</button>
           </div>
         </div>
       </Transition>
