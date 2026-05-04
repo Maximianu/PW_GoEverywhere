@@ -44,12 +44,11 @@ watch(filteredCouriers, () => {
   updateMapMarkers()
 }, { deep: true })
 
-// Observar a abertura/fecho da sidebar para recalcular o tamanho do mapa
 watch(showSidebar, () => {
   if (map) {
     setTimeout(() => {
       map.invalidateSize({ animate: true })
-    }, 300) // Tempo da transição CSS da sidebar
+    }, 300)
   }
 })
 
@@ -126,7 +125,7 @@ const getInitials = (nome) => {
 }
 
 const createCustomMarker = (courier) => {
-  const color = courier.disponivel ? '#16a34a' : '#1e3a8a'
+  const color = courier.disponivel ? '#16a34a' : '#3b82f6'
   const initials = getInitials(courier.nome)
   return L.divIcon({
     html: `
@@ -149,7 +148,7 @@ const createCustomMarker = (courier) => {
 }
 
 const buildPopup = (c) => {
-  const color = c.disponivel ? '#16a34a' : '#1e3a8a'
+  const color = c.disponivel ? '#16a34a' : '#3b82f6'
   const label = c.disponivel ? 'Disponível' : 'Ocupado'
   const initials = getInitials(c.nome)
   return `
@@ -209,7 +208,6 @@ const updateMapMarkers = () => {
 const fitMarkers = () => {
   const all = Object.values(markerMap)
   if (map && all.length > 0) {
-    // Ajusta o enquadramento considerando o espaço da sidebar se ela estiver aberta
     const paddingOptions = showSidebar.value ? [40, 380] : [80, 80]
     map.fitBounds(new L.featureGroup(all).getBounds(), { padding: paddingOptions })
   }
@@ -217,18 +215,10 @@ const fitMarkers = () => {
 
 const focusOnCourier = (courier) => {
   if (!map || !markerMap[String(courier.id)]) return
-  
   const latlng = [courier.latitude, courier.longitude]
-  
-  // Se a sidebar estiver aberta, definimos um padding para o centro visual
-  // O Leaflet vai "empurrar" o marcador para a esquerda do centro real do mapa
-  const options = {
-    animate: true,
-    duration: 0.8
-  }
+  const options = { animate: true, duration: 0.8 }
 
   if (showSidebar.value) {
-    // paddingTopLeft: [x, y] -> reserva 340px (largura sidebar) + margem à direita
     map.flyTo(latlng, 14, {
       ...options,
       paddingTopLeft: [0, 0],
@@ -237,7 +227,6 @@ const focusOnCourier = (courier) => {
   } else {
     map.flyTo(latlng, 14, options)
   }
-
   markerMap[String(courier.id)].openPopup()
 }
 
@@ -302,8 +291,8 @@ onUnmounted(() => {
 
         <div class="filter-pills">
           <button :class="['pill', filterDisponivel === 'todos' ? 'active' : '']" @click="filterDisponivel = 'todos'">Todos</button>
-          <button :class="['pill', filterDisponivel === 'disponivel' ? 'active-white' : '']" @click="filterDisponivel = 'disponivel'">Disponível</button>
-          <button :class="['pill', filterDisponivel === 'ocupado' ? 'active-white' : '']" @click="filterDisponivel = 'ocupado'">Ocupado</button>
+          <button :class="['pill', filterDisponivel === 'disponivel' ? 'active-dark' : '']" @click="filterDisponivel = 'disponivel'">Disponível</button>
+          <button :class="['pill', filterDisponivel === 'ocupado' ? 'active-dark' : '']" @click="filterDisponivel = 'ocupado'">Ocupado</button>
         </div>
       </div>
 
@@ -347,7 +336,7 @@ onUnmounted(() => {
               class="courier-card"
               @click="focusOnCourier(courier)"
             >
-              <div class="avatar" :style="{ background: courier.disponivel ? '#16a34a' : '#1e3a8a' }">
+              <div class="avatar" :style="{ background: courier.disponivel ? '#16a34a' : '#3b82f6' }">
                 {{ getInitials(courier.nome) }}
               </div>
               <div class="card-body">
@@ -383,13 +372,12 @@ onUnmounted(() => {
   position: relative;
   width: 100%;
   height: 100%;
-  overflow: hidden; /* Evita scroll indesejado durante transições */
+  overflow: hidden;
 }
 
 .map-container {
   width: 100%;
   height: 100%;
-  transition: width 0.3s ease; /* Suaviza a mudança de tamanho se quiseres redimensionar o mapa */
 }
 
 /* ── OVERLAY TOP LEFT ── */
@@ -461,7 +449,7 @@ onUnmounted(() => {
 }
 
 .pill.active { background: #0f172a; color: white; }
-.pill.active-white { background: white; color: #1e293b; border: 1px solid #e2e8f0; }
+.pill.active-dark { background: #1e293b; color: white; border: 1px solid #334155; }
 
 .status-chip {
   position: absolute;
@@ -489,46 +477,84 @@ onUnmounted(() => {
   z-index: 1100;
   width: 26px;
   height: 52px;
-  background: white;
+  background: #0f172a; /* Cor igual à sidebar */
   border-radius: 8px 0 0 8px;
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer; color: #64748b;
-  box-shadow: -3px 0 12px rgba(0,0,0,0.08);
+  cursor: pointer; color: white;
+  box-shadow: -3px 0 12px rgba(0,0,0,0.2);
   transition: right 0.3s ease;
 }
 .sidebar-arrow.arrow-open { right: 340px; }
 
+/* ── SIDEBAR DARK THEME ── */
 .sidebar {
   position: absolute;
   top: 0; right: 0; width: 340px; height: 100%;
-  background: white; z-index: 1050; box-shadow: -4px 0 28px rgba(0,0,0,0.1);
+  background: #0f172a; /* Cor da barra esquerda */
+  z-index: 1050; 
+  box-shadow: -4px 0 28px rgba(0,0,0,0.3);
   display: flex; flex-direction: column;
 }
 
 .slide-right-enter-active, .slide-right-leave-active { transition: transform 0.3s ease; }
 .slide-right-enter-from, .slide-right-leave-to { transform: translateX(100%); }
 
-.sidebar-header { padding: 20px; border-bottom: 1px solid #f1f5f9; }
-.results-count { display: block; font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 10px; }
+.sidebar-header { 
+  padding: 20px; 
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+}
+
+.results-count { 
+  display: block; 
+  font-size: 14px; 
+  font-weight: 700; 
+  color: white; 
+  margin-bottom: 10px; 
+}
+
 .stats-row { display: flex; gap: 8px; }
 .stat-chip { padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
 .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
 .green-dot { background: #16a34a; }
-.blue-dot { background: #1e3a8a; }
-.stat-chip.green { background: #f0fdf4; color: #16a34a; }
-.stat-chip.blue { background: #eff6ff; color: #1e3a8a; }
+.blue-dot { background: #3b82f6; }
+
+.stat-chip.green { background: rgba(22, 163, 74, 0.2); color: #4ade80; }
+.stat-chip.blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
 
 .courier-list { flex: 1; overflow-y: auto; padding: 10px 0; }
-.courier-card { display: flex; gap: 12px; padding: 14px 20px; cursor: pointer; border-bottom: 1px solid #f8fafc; }
-.courier-card:hover { background: #f8fafc; }
-.avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 11px; flex-shrink: 0; }
+
+.courier-card { 
+  display: flex; 
+  gap: 12px; 
+  padding: 14px 20px; 
+  cursor: pointer; 
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+  transition: background 0.2s;
+}
+.courier-card:hover { background: rgba(255, 255, 255, 0.05); }
+
+.avatar { 
+  width: 36px; 
+  height: 36px; 
+  border-radius: 50%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  color: white; 
+  font-weight: 700; 
+  font-size: 11px; 
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .card-body { flex: 1; }
 .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
-.card-name { font-size: 14px; font-weight: 700; color: #0f172a; }
-.card-sub { font-size: 12px; color: #64748b; }
+.card-name { font-size: 14px; font-weight: 700; color: white; }
+.card-sub { font-size: 12px; color: #94a3b8; }
+
 .status-badge { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 999px; }
-.badge-green { background: #dcfce7; color: #16a34a; }
-.badge-blue { background: #dbeafe; color: #1e3a8a; }
+.badge-green { background: #16a34a; color: white; }
+.badge-blue { background: #1e3a8a; color: white; }
 
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
