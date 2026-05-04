@@ -9,7 +9,7 @@ const customers = ref([])
 
 const loadCustomers = async () => {
   try {
-    const res = await fetch('http://localhost:1338/api/clientes')
+    const res = await fetch('http://localhost:1338/api/clientes?populate=*')
     const json = await res.json()
     customers.value = json.data.map(item => ({
       id: item.documentId || item.id,
@@ -19,6 +19,7 @@ const loadCustomers = async () => {
       email: item.Email || 'n/a',
       initials: ((item.PrimeiroNome ? item.PrimeiroNome[0] : '') + (item.UltimoNome ? item.UltimoNome[0] : '')).toUpperCase() || '??',
       pedidos: item.pedido_missions?.length || 0,
+      pedidosList: item.pedido_missions || [],
       dataCriacao: new Date(item.createdAt).toLocaleDateString('pt-PT')
     }))
   } catch (error) {
@@ -185,6 +186,27 @@ const filteredCustomers = computed(() => {
               <div class="bg-[#0c1219] p-4 rounded-xl border border-[#2a3b4f] flex justify-between items-center">
                 <span class="text-gray-400 font-medium">Data de Registo</span>
                 <span class="text-white font-medium flex items-center gap-2"><Calendar :size="16" class="text-gray-500"/> {{ selectedCustomer.dataCriacao }}</span>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <h5 class="text-xs font-bold text-primary uppercase tracking-widest border-b border-[#1f2937] pb-2">Histórico de Pedidos</h5>
+              <div v-if="selectedCustomer.pedidosList && selectedCustomer.pedidosList.length > 0" class="space-y-3">
+                <div v-for="pedido in selectedCustomer.pedidosList" :key="pedido.id" class="bg-[#0c1219] p-4 rounded-xl border border-[#2a3b4f] flex flex-col gap-2">
+                  <div class="flex justify-between items-start">
+                    <span class="text-white font-semibold flex items-center gap-2"><MapPin :size="14" class="text-gray-400" /> {{ pedido.Destino || 'N/A' }}</span>
+                    <span class="text-xs font-bold px-2 py-1 rounded-full border bg-opacity-20 whitespace-nowrap" :class="pedido.Estado === 'Entregue' ? 'text-green-400 border-green-500/30 bg-green-500/10' : (pedido.Estado === 'Cancelado' ? 'text-red-400 border-red-500/30 bg-red-500/10' : 'text-blue-400 border-blue-500/30 bg-blue-500/10')">
+                      {{ pedido.Estado || 'Pendente' }}
+                    </span>
+                  </div>
+                  <div class="flex justify-between items-center text-xs text-gray-400">
+                    <span class="font-mono">ID: {{ (pedido.documentId || pedido.id).toString().substring(0,8) }}</span>
+                    <span>{{ new Date(pedido.createdAt).toLocaleDateString('pt-PT') }}</span>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="text-center py-6 bg-[#0c1219] rounded-xl border border-[#2a3b4f]">
+                <p class="text-gray-500 text-sm">Nenhum pedido efetuado.</p>
               </div>
             </div>
           </div>

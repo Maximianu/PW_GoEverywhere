@@ -16,8 +16,8 @@ const loadOrders = async () => {
     
     orders.value = json.data.map(item => ({
       id: item.documentId || item.id,
-      client: item.Cliente || 'Sem Cliente',
-      initials: item.Cliente ? item.Cliente.substring(0, 2).toUpperCase() : '??',
+      client: item.cliente ? `${item.cliente.PrimeiroNome || ''} ${item.cliente.UltimoNome || ''}`.trim() : (item.Cliente || 'Sem Cliente'),
+      initials: item.cliente ? ((item.cliente.PrimeiroNome ? item.cliente.PrimeiroNome[0] : '') + (item.cliente.UltimoNome ? item.cliente.UltimoNome[0] : '')).toUpperCase() || '??' : (item.Cliente ? item.Cliente.substring(0, 2).toUpperCase() : '??'),
       destination: item.Destino || 'Não Definido',
       date: new Date(item.createdAt || Date.now()).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }),
       time: new Date(item.createdAt || Date.now()).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }),

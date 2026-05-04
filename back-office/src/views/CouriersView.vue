@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { mockData } from '../mockData'
-import { Search, ChevronLeft, ChevronRight, Plus, X, User, Phone, Calendar, CheckCircle, MapPin } from 'lucide-vue-next'
+import { Search, ChevronLeft, ChevronRight, Plus, X, User, Phone, Calendar, CheckCircle, MapPin, Mail } from 'lucide-vue-next'
 
 const filter = ref('todos')
 const searchQuery = ref('')
@@ -12,6 +12,7 @@ const couriers = ref([])
 
 const newCourier = ref({
   Nome: '',
+  Email: '',
   Telemovel: '',
   Idade: '',
   AreaDeAtuacao: 'Braga',
@@ -27,6 +28,7 @@ const loadCouriers = async () => {
       id: `C-${item.documentId ? item.documentId.substring(0,4) : item.id}`,
       dbId: item.documentId || item.id,
       dbNome: item.Nome || '',
+      dbEmail: item.Email || '',
       dbTelemovel: item.Telemovel || '',
       dbIdade: item.Idade || '',
       dbAreaDeAtuacao: item.AreaDeAtuacao || 'Braga',
@@ -54,6 +56,7 @@ const submitCourier = async () => {
     const payload = {
       data: {
         Nome: newCourier.value.Nome,
+        Email: newCourier.value.Email,
         Telemovel: newCourier.value.Telemovel ? parseInt(newCourier.value.Telemovel) : null,
         Idade: newCourier.value.Idade ? parseInt(newCourier.value.Idade) : null,
         AreaDeAtuacao: newCourier.value.AreaDeAtuacao,
@@ -118,7 +121,7 @@ const setFilter = (val) => {
 
 const openAddDrawer = () => {
   editingCourierId.value = null
-  newCourier.value = { Nome: '', Telemovel: '', Idade: '', AreaDeAtuacao: 'Braga', Disponivel: true }
+  newCourier.value = { Nome: '', Email: '', Telemovel: '', Idade: '', AreaDeAtuacao: 'Braga', Disponivel: true }
   isAddCourierOpen.value = true
 }
 
@@ -126,6 +129,7 @@ const openEditDrawer = (courier) => {
   editingCourierId.value = courier.dbId
   newCourier.value = {
     Nome: courier.dbNome,
+    Email: courier.dbEmail,
     Telemovel: courier.dbTelemovel,
     Idade: courier.dbIdade,
     AreaDeAtuacao: courier.dbAreaDeAtuacao,
@@ -137,7 +141,7 @@ const openEditDrawer = (courier) => {
 const closeDrawer = () => {
   isAddCourierOpen.value = false
   editingCourierId.value = null
-  newCourier.value = { Nome: '', Telemovel: '', Idade: '', AreaDeAtuacao: 'Braga', Disponivel: true }
+  newCourier.value = { Nome: '', Email: '', Telemovel: '', Idade: '', AreaDeAtuacao: 'Braga', Disponivel: true }
 }
 
 const deleteCourier = async (courier) => {
@@ -193,7 +197,7 @@ const deleteCourier = async (courier) => {
         <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.total }}</div>
       </div>
       <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
-        <div class="text-primary font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-[#233246] pb-3">ESTAFETAS DISPONÍVEIS</div>
+        <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-[#233246] pb-3">ESTAFETAS DISPONÍVEIS</div>
         <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.available }}</div>
       </div>
       <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
@@ -251,7 +255,11 @@ const deleteCourier = async (courier) => {
             </thead>
             <tbody class="divide-y divide-[#233246]">
               <tr v-for="courier in filteredCouriers" :key="courier.id" class="hover:bg-[#1a2636] transition-colors group">
-                <td class="p-6 text-gray-400 font-mono text-sm text-center">{{ courier.id }}</td>
+                <td class="p-6 text-center">
+                  <span class="font-mono text-xs font-bold text-gray-400 bg-[#111926] border border-[#233246] px-2 py-1 rounded">
+                    {{ courier.id }}
+                  </span>
+                </td>
                 <td class="p-6">
                   <div class="flex items-center gap-4">
                     <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0 shadow-inner"
@@ -281,17 +289,17 @@ const deleteCourier = async (courier) => {
                   </div>
                 </td>
                 <td class="p-6">
-                  <div class="flex items-center gap-2.5 text-sm text-gray-300 bg-[#111926] w-fit px-3 py-1.5 rounded-full border border-[#233246]">
-                    <span class="w-2 h-2 rounded-full" :class="courier.status === 'Disponível' ? 'bg-success shadow-[0_0_8px_rgba(16,185,129,0.9)]' : 'bg-gray-500'"></span>
+                  <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide border" :class="courier.status === 'Disponível' ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-blue-500/20 text-blue-300 border-blue-500/30'">
+                    <span class="w-1.5 h-1.5 rounded-full" :class="courier.status === 'Disponível' ? 'bg-green-400' : 'bg-blue-400'"></span>
                     {{ courier.status }}
                   </div>
                 </td>
                 <td class="p-6 text-center">
-                  <div class="flex items-center justify-center gap-4">
-                    <button @click="openEditDrawer(courier)" class="text-primary hover:text-[#33f5ff] font-bold text-sm tracking-wide transition-colors">
+                  <div class="flex items-center justify-center gap-2">
+                    <button @click="openEditDrawer(courier)" class="text-primary hover:text-white font-semibold text-xs transition-colors border border-primary/30 px-3 py-1.5 rounded-full hover:bg-primary/10">
                       Editar
                     </button>
-                    <button @click="deleteCourier(courier)" class="text-red-500 hover:text-red-400 font-bold text-sm tracking-wide transition-colors">
+                    <button @click="deleteCourier(courier)" class="text-red-500 hover:text-white font-semibold text-xs transition-colors border border-red-500/30 px-3 py-1.5 rounded-full hover:bg-red-500/10">
                       Eliminar
                     </button>
                   </div>
@@ -300,114 +308,115 @@ const deleteCourier = async (courier) => {
             </tbody>
           </table>
         </div>
-        <!-- Pagination -->
-        <div class="border-t border-[#233246] p-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-[#111926]">
-          <span class="text-sm text-gray-400">
-            <strong class="text-white">1-{{ filteredCouriers.length }}</strong> de {{ filteredCouriers.length }} resultados
-          </span>
-          <div class="flex gap-2">
-            <button class="w-9 h-9 flex items-center justify-center rounded-full border border-[#233246] text-gray-400 hover:text-white hover:border-gray-500 hover:bg-[#1a2636] transition-colors bg-[#080d14]">
-              <ChevronLeft :size="16" />
-            </button>
-            <button class="w-9 h-9 flex items-center justify-center rounded-full bg-primary text-black font-bold shadow-[0_0_10px_rgba(0,242,255,0.4)]">1</button>
-            <button class="w-9 h-9 flex items-center justify-center rounded-full border border-[#233246] text-gray-400 hover:text-white hover:border-gray-500 hover:bg-[#1a2636] transition-colors bg-[#0c121e]">2</button>
-            <button class="w-9 h-9 flex items-center justify-center rounded-full border border-[#233246] text-gray-400 hover:text-white hover:border-gray-500 hover:bg-[#1a2636] transition-colors bg-[#0c121e]">3</button>
-            <span class="px-1 text-gray-500 flex items-center justify-center">...</span>
-            <button class="w-9 h-9 flex items-center justify-center rounded-full border border-[#233246] text-gray-400 hover:text-white hover:border-gray-500 hover:bg-[#1a2636] transition-colors bg-[#0c121e]">6</button>
-            <button class="w-9 h-9 flex items-center justify-center rounded-full border border-[#233246] text-gray-400 hover:text-white hover:border-gray-500 hover:bg-[#1a2636] transition-colors bg-[#080d14]">
-              <ChevronRight :size="16" />
-            </button>
-          </div>
-        </div>
       </div>
     </div>
 
-    <!-- Drawer Overlay -->
-    <div 
-      v-if="isAddCourierOpen" 
-      class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 transition-opacity"
-      @click="closeDrawer"
-    ></div>
+    <!-- Drawer Overlay & Add Courier Drawer -->
+    <Teleport to="body">
+      <Transition
+        enterActiveClass="transition-opacity duration-300"
+        leaveActiveClass="transition-opacity duration-300"
+      >
+        <div 
+          v-if="isAddCourierOpen" 
+          class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
+          @click="closeDrawer"
+        ></div>
+      </Transition>
 
-    <!-- Add Courier Drawer -->
-    <div 
-      class="fixed top-0 right-0 h-full w-full sm:w-[450px] bg-[#0c121e] border-l border-[#233246] z-50 transform transition-transform duration-500 ease-in-out shadow-2xl flex flex-col"
-      :class="isAddCourierOpen ? 'translate-x-0' : 'translate-x-full'"
-    >
-      <div class="px-8 py-10 border-b border-[#233246] flex justify-between items-start bg-surface/50">
-        <div>
-          <h2 class="text-2xl font-bold text-white tracking-tight">{{ editingCourierId ? 'Editar Estafeta' : 'Adicionar Estafeta' }}</h2>
-          <p class="text-sm text-gray-400 mt-2 tracking-wide block">{{ editingCourierId ? 'Altere os dados do estafeta' : 'Registe os dados do novo estafeta' }}</p>
-        </div>
-        <button @click="closeDrawer" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-[#233246] transition-colors -mt-2 -mr-2">
-          <X :size="24" />
-        </button>
-      </div>
-
-      <div class="p-8 flex-1 overflow-y-auto space-y-7">
-        <div class="space-y-3 relative">
-          <label class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Nome Completo</label>
-          <div class="relative">
-            <User :size="18" class="absolute left-5 top-1/2 -translate-y-1/2 text-primary" />
-            <input v-model="newCourier.Nome" type="text" placeholder="e.g. Marcus Thorne" class="w-full bg-[#111926] border border-[#233246] rounded-2xl py-4 pl-14 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all placeholder:text-gray-600">
-          </div>
-        </div>
-
-        <div class="space-y-3 relative">
-          <label class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Telemóvel</label>
-          <div class="relative">
-            <Phone :size="18" class="absolute left-5 top-1/2 -translate-y-1/2 text-primary" />
-            <input v-model="newCourier.Telemovel" type="number" placeholder="912345678" class="w-full bg-[#111926] border border-[#233246] rounded-2xl py-4 pl-14 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all placeholder:text-gray-600">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-5">
-          <div class="space-y-3 relative">
-            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Idade</label>
-            <div class="relative">
-              <Calendar :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
-              <input v-model="newCourier.Idade" type="number" placeholder="25" class="w-full bg-[#111926] border border-[#233246] rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all placeholder:text-gray-600">
-            </div>
-          </div>
-          
-          <div class="space-y-3 relative">
-            <label class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Área de Atuação</label>
-            <div class="relative">
-              <MapPin :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
-              <select v-model="newCourier.AreaDeAtuacao" class="w-full bg-[#111926] border border-[#233246] rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all appearance-none cursor-pointer">
-                <option value="Braga">Braga</option>
-                <option value="Porto">Porto</option>
-                <option value="Guimaraes">Guimarães</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        
-        <div class="space-y-3 relative pt-2">
-          <label class="flex items-center gap-3 cursor-pointer">
-            <div class="relative flex items-center justify-center">
-              <input v-model="newCourier.Disponivel" type="checkbox" class="peer sr-only">
-              <div class="w-6 h-6 border-2 border-[#233246] rounded-lg peer-checked:bg-primary peer-checked:border-primary transition-all"></div>
-              <CheckCircle :size="14" class="absolute text-black opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth="3" />
-            </div>
-            <span class="text-sm font-semibold text-gray-300">Disponível Imediatamente</span>
-          </label>
-        </div>
-      </div>
-
-      <div class="p-8 border-t border-[#233246] space-y-4 bg-surface/50">
-        <button 
-          @click="submitCourier"
-          :disabled="isSubmitting"
-          class="w-full bg-primary text-black font-bold py-4 rounded-full shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:bg-[#33f5ff] transition-all hover:-translate-y-0.5 tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+      <Transition
+        enterActiveClass="transition-transform duration-300"
+        leaveActiveClass="transition-transform duration-300"
+        enterFromClass="translate-x-full"
+        leaveToClass="translate-x-full"
+      >
+        <div 
+          v-if="isAddCourierOpen"
+          class="fixed top-0 right-0 h-full w-96 bg-[#141b27] border-l border-[#1f2937] z-50 flex flex-col shadow-2xl"
         >
-          <span v-if="isSubmitting">A Guardar...</span>
-          <span v-else>Confirmar</span>
-        </button>
-        <button class="w-full bg-transparent text-white font-medium py-4 rounded-full border border-muted hover:bg-muted/50 hover:border-gray-400 transition-colors tracking-wide" @click="closeDrawer">
-          Cancelar
-        </button>
-      </div>
-    </div>
+          <div class="flex items-center justify-between p-6 border-b border-[#1f2937]">
+            <h3 class="text-xl font-bold text-white">
+              {{ editingCourierId ? 'Editar Estafeta' : 'Adicionar Estafeta' }}
+            </h3>
+            <button @click="closeDrawer" class="text-gray-400 hover:text-white transition-colors">
+              <X :size="24" />
+            </button>
+          </div>
+
+          <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <div class="space-y-2 relative">
+              <label class="text-xs font-bold text-primary uppercase tracking-widest pl-1">Nome Completo</label>
+              <div class="relative">
+                <User :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
+                <input v-model="newCourier.Nome" type="text" placeholder="e.g. Marcus Thorne" class="w-full bg-[#0c1219] border border-[#2a3b4f] rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-primary transition-all placeholder:text-gray-600">
+              </div>
+            </div>
+
+            <div class="space-y-2 relative">
+              <label class="text-xs font-bold text-primary uppercase tracking-widest pl-1">Email</label>
+              <div class="relative">
+                <Mail :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
+                <input v-model="newCourier.Email" type="email" placeholder="estafeta@goeverywhere.pt" class="w-full bg-[#0c1219] border border-[#2a3b4f] rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-primary transition-all placeholder:text-gray-600">
+              </div>
+            </div>
+
+            <div class="space-y-2 relative">
+              <label class="text-xs font-bold text-primary uppercase tracking-widest pl-1">Telemóvel</label>
+              <div class="relative">
+                <Phone :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
+                <input v-model="newCourier.Telemovel" type="number" placeholder="912345678" class="w-full bg-[#0c1219] border border-[#2a3b4f] rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-primary transition-all placeholder:text-gray-600">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-2 relative">
+                <label class="text-xs font-bold text-primary uppercase tracking-widest pl-1">Idade</label>
+                <div class="relative">
+                  <Calendar :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
+                  <input v-model="newCourier.Idade" type="number" placeholder="25" class="w-full bg-[#0c1219] border border-[#2a3b4f] rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-primary transition-all placeholder:text-gray-600">
+                </div>
+              </div>
+              
+              <div class="space-y-2 relative">
+                <label class="text-xs font-bold text-primary uppercase tracking-widest pl-1">Área</label>
+                <div class="relative">
+                  <MapPin :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
+                  <select v-model="newCourier.AreaDeAtuacao" class="w-full bg-[#0c1219] border border-[#2a3b4f] rounded-xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-primary transition-all appearance-none cursor-pointer">
+                    <option value="Braga">Braga</option>
+                    <option value="Porto">Porto</option>
+                    <option value="Guimaraes">Guimarães</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <div class="space-y-3 relative pt-2">
+              <label class="flex items-center gap-3 cursor-pointer">
+                <div class="relative flex items-center justify-center">
+                  <input v-model="newCourier.Disponivel" type="checkbox" class="peer sr-only">
+                  <div class="w-5 h-5 border-2 border-[#2a3b4f] rounded bg-[#0c1219] peer-checked:bg-primary peer-checked:border-primary transition-all"></div>
+                  <CheckCircle :size="14" class="absolute text-black opacity-0 peer-checked:opacity-100 transition-opacity" strokeWidth="3" />
+                </div>
+                <span class="text-sm font-semibold text-gray-300">Disponível Imediatamente</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="p-6 border-t border-[#1f2937] space-y-3">
+            <button 
+              @click="submitCourier"
+              :disabled="isSubmitting"
+              class="w-full bg-primary text-black font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(0,242,255,0.2)] hover:bg-[#33f5ff] transition-all hover:-translate-y-0.5 tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span v-if="isSubmitting">A Guardar...</span>
+              <span v-else>Confirmar</span>
+            </button>
+            <button class="w-full bg-[#0c1219] text-white font-medium py-3 rounded-lg border border-[#2a3b4f] hover:bg-[#1a2332] transition-colors tracking-wide" @click="closeDrawer">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
