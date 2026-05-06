@@ -11,14 +11,6 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "Destino": {
-      "type": "enumeration",
-      "enum": [
-        "Lua",
-        "Marte ",
-        "Jupiter"
-      ]
-    },
     "Prioridade": {
       "type": "integer"
     },
@@ -45,6 +37,11 @@
       "relation": "manyToOne",
       "target": "api::cliente.cliente",
       "inversedBy": "pedido_missions"
+    },
+    "kit": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::kit.kit"
     }
   }
 }

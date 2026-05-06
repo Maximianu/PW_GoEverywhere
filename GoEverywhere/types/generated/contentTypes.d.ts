@@ -568,6 +568,35 @@ export interface ApiAuthorAuthor extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiBilheteBilhete extends Struct.CollectionTypeSchema {
+  collectionName: 'bilhetes';
+  info: {
+    displayName: 'Bilhete';
+    pluralName: 'bilhetes';
+    singularName: 'bilhete';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    cliente: Schema.Attribute.Relation<'oneToOne', 'api::cliente.cliente'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::bilhete.bilhete'
+    > &
+      Schema.Attribute.Private;
+    missao: Schema.Attribute.Relation<'oneToOne', 'api::missao.missao'>;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
   collectionName: 'categories';
   info: {
@@ -621,7 +650,6 @@ export interface ApiClienteCliente extends Struct.CollectionTypeSchema {
       'api::cliente.cliente'
     > &
       Schema.Attribute.Private;
-    missaos: Schema.Attribute.Relation<'manyToMany', 'api::missao.missao'>;
     pedido_missions: Schema.Attribute.Relation<
       'oneToMany',
       'api::pedido-mission.pedido-mission'
@@ -752,6 +780,7 @@ export interface ApiKitKit extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    imagemDoKit: Schema.Attribute.Media<'images'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::kit.kit'> &
       Schema.Attribute.Private;
@@ -776,12 +805,10 @@ export interface ApiMissaoMissao extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
-    clientes: Schema.Attribute.Relation<'manyToMany', 'api::cliente.cliente'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     Data: Schema.Attribute.Date;
-    Destino: Schema.Attribute.Enumeration<['Lua', 'Marte', 'Jupiter']>;
     Hora_Chegada: Schema.Attribute.Time;
     Hora_Partida: Schema.Attribute.Time;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -790,10 +817,28 @@ export interface ApiMissaoMissao extends Struct.CollectionTypeSchema {
       'api::missao.missao'
     > &
       Schema.Attribute.Private;
+    Lota: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<5>;
+    Planeta: Schema.Attribute.Enumeration<['Terra', 'Lua', 'Marte']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Terra'>;
+    Preco: Schema.Attribute.BigInteger &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'50000'>;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    X: Schema.Attribute.Float &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<0>;
+    Y: Schema.Attribute.Float &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<0>;
+    Z: Schema.Attribute.Float &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<0>;
   };
 }
 
@@ -813,11 +858,11 @@ export interface ApiPedidoMissionPedidoMission
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    Destino: Schema.Attribute.Enumeration<['Lua', 'Marte ', 'Jupiter']>;
     Estado: Schema.Attribute.Enumeration<
       ['Pendente', 'Aprovado', 'Rejeitado', 'Transito', 'Concluido']
     >;
     estafeta: Schema.Attribute.Relation<'oneToOne', 'api::estafeta.estafeta'>;
+    kit: Schema.Attribute.Relation<'oneToOne', 'api::kit.kit'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     LocalEntrega: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
@@ -1348,6 +1393,7 @@ declare module '@strapi/strapi' {
       'api::about.about': ApiAboutAbout;
       'api::article.article': ApiArticleArticle;
       'api::author.author': ApiAuthorAuthor;
+      'api::bilhete.bilhete': ApiBilheteBilhete;
       'api::category.category': ApiCategoryCategory;
       'api::cliente.cliente': ApiClienteCliente;
       'api::destino.destino': ApiDestinoDestino;

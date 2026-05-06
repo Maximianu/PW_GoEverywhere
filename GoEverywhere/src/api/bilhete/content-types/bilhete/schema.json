@@ -1,0 +1,25 @@
+{
+  "kind": "collectionType",
+  "collectionName": "bilhetes",
+  "info": {
+    "singularName": "bilhete",
+    "pluralName": "bilhetes",
+    "displayName": "Bilhete"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "cliente": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::cliente.cliente"
+    },
+    "missao": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::missao.missao"
+    }
+  }
+}
