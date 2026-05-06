@@ -36,7 +36,7 @@
   width: 100%;
   min-height: 100vh;
   /* O padding-top garante que o título não fique por baixo da Navbar */
-  padding-top: 140px !important; 
+  padding-top: 8.75rem !important; 
   display: flex;
   justify-content: center;
 }
@@ -44,44 +44,44 @@
 /* 2. O painel que centraliza o conteúdo */
 .panel {
   width: 100%;
-  max-width: 1100px; /* Largura ideal para leitura */
+  max-width: 68.75rem; /* Largura ideal para leitura */
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 1.5rem;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 32px;
+  margin-bottom: 2rem;
 }
 
 .headline {
   font-size: 2.8rem;
-  margin: 8px 0 0 0;
+  margin: 0.5rem 0 0 0;
   color: #e1fdff;
 }
 
 .header-actions {
   display: flex;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 /* 3. A lista de missões */
 .list-card {
   background: rgba(24, 28, 34, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.75rem;
+  backdrop-filter: blur(0.625rem);
 }
 
 .list-row {
   display: grid;
   /* Define colunas fixas para que tudo fique alinhado verticalmente */
-  grid-template-columns: 2fr 2fr 1fr 60px;
+  grid-template-columns: 2fr 2fr 1fr 3.75rem;
   align-items: center;
-  padding: 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1.5rem;
+  border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.05);
 }
 
 .list-row:last-child {
@@ -91,7 +91,7 @@
 .mission-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .mission-info strong {
@@ -100,8 +100,8 @@
 }
 
 .label-pill {
-  padding: 6px 12px;
-  border-radius: 20px;
+  padding: 0.375rem 0.75rem;
+  border-radius: 1.25rem;
   font-size: 0.85rem;
   background: rgba(0, 242, 255, 0.1);
   color: #00f2ff;
