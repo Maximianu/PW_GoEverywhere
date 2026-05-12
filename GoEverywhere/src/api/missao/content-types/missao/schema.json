@@ -54,6 +54,12 @@
       "type": "biginteger",
       "required": true,
       "default": "50000"
+    },
+    "bilhetes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::bilhete.bilhete",
+      "mappedBy": "missao2"
     }
   }
 }

@@ -107,43 +107,6 @@ export interface AdminApiTokenPermission extends Struct.CollectionTypeSchema {
   };
 }
 
-export interface AdminAuditLog extends Struct.CollectionTypeSchema {
-  collectionName: 'strapi_audit_logs';
-  info: {
-    displayName: 'Audit Log';
-    pluralName: 'audit-logs';
-    singularName: 'audit-log';
-  };
-  options: {
-    draftAndPublish: false;
-    timestamps: false;
-  };
-  pluginOptions: {
-    'content-manager': {
-      visible: false;
-    };
-    'content-type-builder': {
-      visible: false;
-    };
-  };
-  attributes: {
-    action: Schema.Attribute.String & Schema.Attribute.Required;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    date: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'admin::audit-log'> &
-      Schema.Attribute.Private;
-    payload: Schema.Attribute.JSON;
-    publishedAt: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    user: Schema.Attribute.Relation<'oneToOne', 'admin::user'>;
-  };
-}
-
 export interface AdminPermission extends Struct.CollectionTypeSchema {
   collectionName: 'admin_permissions';
   info: {
@@ -580,6 +543,7 @@ export interface ApiBilheteBilhete extends Struct.CollectionTypeSchema {
   };
   attributes: {
     cliente: Schema.Attribute.Relation<'oneToOne', 'api::cliente.cliente'>;
+    cliente2: Schema.Attribute.Relation<'manyToOne', 'api::cliente.cliente'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -590,6 +554,11 @@ export interface ApiBilheteBilhete extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     missao: Schema.Attribute.Relation<'oneToOne', 'api::missao.missao'>;
+    missao2: Schema.Attribute.Relation<'manyToOne', 'api::missao.missao'>;
+    pedido: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::pedido-mission.pedido-mission'
+    >;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -640,6 +609,7 @@ export interface ApiClienteCliente extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    bilhetes: Schema.Attribute.Relation<'oneToMany', 'api::bilhete.bilhete'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -650,10 +620,6 @@ export interface ApiClienteCliente extends Struct.CollectionTypeSchema {
       'api::cliente.cliente'
     > &
       Schema.Attribute.Private;
-    pedido_missions: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::pedido-mission.pedido-mission'
-    >;
     PrimeiroNome: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     UltimoNome: Schema.Attribute.String;
@@ -725,6 +691,10 @@ export interface ApiEstafetaEstafeta extends Struct.CollectionTypeSchema {
     Longitude: Schema.Attribute.Decimal;
     Nome: Schema.Attribute.String;
     Password: Schema.Attribute.Password;
+    pedidos: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::pedido-mission.pedido-mission'
+    >;
     PIN: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     Telemovel: Schema.Attribute.Integer;
@@ -805,6 +775,7 @@ export interface ApiMissaoMissao extends Struct.CollectionTypeSchema {
     draftAndPublish: true;
   };
   attributes: {
+    bilhetes: Schema.Attribute.Relation<'oneToMany', 'api::bilhete.bilhete'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -854,7 +825,7 @@ export interface ApiPedidoMissionPedidoMission
     draftAndPublish: true;
   };
   attributes: {
-    cliente: Schema.Attribute.Relation<'manyToOne', 'api::cliente.cliente'>;
+    bilhete: Schema.Attribute.Relation<'oneToOne', 'api::bilhete.bilhete'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -862,6 +833,7 @@ export interface ApiPedidoMissionPedidoMission
       ['Pendente', 'Aprovado', 'Rejeitado', 'Transito', 'Concluido']
     >;
     estafeta: Schema.Attribute.Relation<'oneToOne', 'api::estafeta.estafeta'>;
+    estafeta2: Schema.Attribute.Relation<'manyToOne', 'api::estafeta.estafeta'>;
     kit: Schema.Attribute.Relation<'oneToOne', 'api::kit.kit'>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     LocalEntrega: Schema.Attribute.String;
@@ -1383,7 +1355,6 @@ declare module '@strapi/strapi' {
     export interface ContentTypeSchemas {
       'admin::api-token': AdminApiToken;
       'admin::api-token-permission': AdminApiTokenPermission;
-      'admin::audit-log': AdminAuditLog;
       'admin::permission': AdminPermission;
       'admin::role': AdminRole;
       'admin::session': AdminSession;

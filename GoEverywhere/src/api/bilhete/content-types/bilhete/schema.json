@@ -20,6 +20,24 @@
       "type": "relation",
       "relation": "oneToOne",
       "target": "api::missao.missao"
+    },
+    "pedido": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::pedido-mission.pedido-mission",
+      "inversedBy": "bilhete"
+    },
+    "cliente2": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::cliente.cliente",
+      "inversedBy": "bilhetes"
+    },
+    "missao2": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::missao.missao",
+      "inversedBy": "bilhetes"
     }
   }
 }

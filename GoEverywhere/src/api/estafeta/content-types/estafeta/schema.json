@@ -46,6 +46,12 @@
     },
     "Longitude": {
       "type": "decimal"
+    },
+    "pedidos": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::pedido-mission.pedido-mission",
+      "mappedBy": "estafeta2"
     }
   }
 }

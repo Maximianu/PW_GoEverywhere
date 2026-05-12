@@ -32,16 +32,22 @@
       "relation": "oneToOne",
       "target": "api::estafeta.estafeta"
     },
-    "cliente": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::cliente.cliente",
-      "inversedBy": "pedido_missions"
-    },
     "kit": {
       "type": "relation",
       "relation": "oneToOne",
       "target": "api::kit.kit"
+    },
+    "bilhete": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::bilhete.bilhete",
+      "mappedBy": "pedido"
+    },
+    "estafeta2": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::estafeta.estafeta",
+      "inversedBy": "pedidos"
     }
   }
 }
