@@ -12,7 +12,7 @@ const regionStats = ref([])
 
 onMounted(async () => {
   try {
-    const resCouriers = await fetch('http://localhost:1338/api/estafetas?filters[Disponivel][$eq]=true')
+    const resCouriers = await fetch('http://127.0.0.1:1338/api/estafetas?filters[Disponivel][$eq]=true')
     if (resCouriers.ok) {
       const jsonCouriers = await resCouriers.json()
       stats.value.availableCouriers = jsonCouriers.meta?.pagination?.total ?? jsonCouriers.data?.length ?? 0
@@ -22,7 +22,7 @@ onMounted(async () => {
   }
 
   try {
-    const resOrders = await fetch('http://localhost:1338/api/pedido-missions?pagination[limit]=1000')
+    const resOrders = await fetch('http://127.0.0.1:1338/api/pedido-missions?pagination[limit]=1000')
     if (resOrders.ok) {
       const jsonOrders = await resOrders.json()
       const dataLength = jsonOrders.data?.length ?? 0

@@ -14,7 +14,7 @@ const isSubmitting = ref(false)
 
 const loadOrders = async () => {
   try {
-    const res = await fetch('http://localhost:1338/api/pedido-missions?populate=*')
+    const res = await fetch('http://127.0.0.1:1338/api/pedido-missions?populate=*')
     const json = await res.json()
     
     orders.value = json.data.map(item => ({
@@ -39,7 +39,7 @@ const loadOrders = async () => {
 
 const loadCouriers = async () => {
   try {
-    const res = await fetch('http://localhost:1338/api/estafetas?filters[Disponivel][$eq]=true')
+    const res = await fetch('http://127.0.0.1:1338/api/estafetas?filters[Disponivel][$eq]=true')
     const json = await res.json()
     availableCouriers.value = json.data
   } catch (error) {
@@ -54,7 +54,7 @@ onMounted(() => {
 
 const updateOrderStatus = async (order, newStatus) => {
   try {
-    const response = await fetch(`http://localhost:1338/api/pedido-missions/${order.id}`, {
+    const response = await fetch(`http://127.0.0.1:1338/api/pedido-missions/${order.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: { Estado: newStatus } })
@@ -87,7 +87,7 @@ const confirmAssign = async () => {
   if (!selectedCourierId.value) return
   isSubmitting.value = true
   try {
-    const response = await fetch(`http://localhost:1338/api/pedido-missions/${orderToAssign.value.id}`, {
+    const response = await fetch(`http://127.0.0.1:1338/api/pedido-missions/${orderToAssign.value.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: { estafeta: selectedCourierId.value, Estado: 'Transito' } })

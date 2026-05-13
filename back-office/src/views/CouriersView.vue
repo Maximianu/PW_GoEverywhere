@@ -22,7 +22,7 @@ const isSubmitting = ref(false)
 
 const loadCouriers = async () => {
   try {
-    const res = await fetch('http://localhost:1338/api/estafetas')
+    const res = await fetch('http://127.0.0.1:1338/api/estafetas')
     const json = await res.json()
     couriers.value = json.data.map(item => ({
       id: `C-${item.documentId ? item.documentId.substring(0,4) : item.id}`,
@@ -65,8 +65,8 @@ const submitCourier = async () => {
     }
     const isEdit = !!editingCourierId.value
     const url = isEdit 
-      ? `http://localhost:1338/api/estafetas/${editingCourierId.value}`
-      : 'http://localhost:1338/api/estafetas'
+      ? `http://127.0.0.1:1338/api/estafetas/${editingCourierId.value}`
+      : 'http://127.0.0.1:1338/api/estafetas'
       
     const response = await fetch(url, {
       method: isEdit ? 'PUT' : 'POST',
@@ -140,7 +140,7 @@ const closeDrawer = () => {
 const deleteCourier = async (courier) => {
   if (!confirm(`Tem a certeza que deseja eliminar o estafeta ${courier.name}?`)) return
   try {
-    const response = await fetch(`http://localhost:1338/api/estafetas/${courier.dbId}`, { method: 'DELETE' })
+    const response = await fetch(`http://127.0.0.1:1338/api/estafetas/${courier.dbId}`, { method: 'DELETE' })
     if (response.ok) {
       await loadCouriers()
     } else {
