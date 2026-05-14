@@ -20,17 +20,11 @@
     "Email": {
       "type": "email"
     },
-    "pedido_missions": {
+    "bilhetes": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::pedido-mission.pedido-mission",
-      "mappedBy": "cliente"
-    },
-    "missaos": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::missao.missao",
-      "inversedBy": "clientes"
+      "target": "api::bilhete.bilhete",
+      "mappedBy": "cliente2"
     }
   }
 }

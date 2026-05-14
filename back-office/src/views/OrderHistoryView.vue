@@ -11,7 +11,7 @@ const selectedOrder = ref(null)
 
 const loadOrders = async () => {
   try {
-    const res = await fetch('http://localhost:1338/api/pedido-missions?populate=*&pagination[limit]=500')
+    const res = await fetch('http://127.0.0.1:1338/api/pedido-missions?populate=*&pagination[limit]=500')
     const json = await res.json()
     
     orders.value = json.data.map(item => ({

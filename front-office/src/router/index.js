@@ -10,6 +10,20 @@ import ReviewView from '../views/ReviewView.vue'
 import AccountView from '../views/AccountView.vue'
 
 import { auth } from '../services/firebase'
+import { onAuthStateChanged } from 'firebase/auth'
+
+let authReadyPromise = null
+function waitForAuthState() {
+  if (!authReadyPromise) {
+    authReadyPromise = new Promise((resolve) => {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        unsubscribe()
+        resolve(user)
+      })
+    })
+  }
+  return authReadyPromise
+}
 
 const routes = [
   { path: '/', name: 'home', component: HomeView },
@@ -17,7 +31,7 @@ const routes = [
   { path: '/account', name: 'account', component: AccountView, meta: { requiresAuth: true } },
   { path: '/book', name: 'booking', component: BookingView, meta: { requiresAuth: true } },
   { path: '/kit', name: 'kit', component: KitView, meta: { requiresAuth: true } },
-  { path: '/checkout', name: 'checkout', component: PaymentView, meta: { requiresAuth: true } },
+  { path: '/checkout', alias: '/payment', name: 'checkout', component: PaymentView, meta: { requiresAuth: true } },
   { path: '/missions', name: 'missions', component: MissionsView, meta: { requiresAuth: true } },
   { path: '/missions/:id', name: 'mission-detail', component: MissionDetailView, meta: { requiresAuth: true } },
   { path: '/review', name: 'review', component: ReviewView, meta: { requiresAuth: true } }
@@ -29,15 +43,14 @@ const router = createRouter({
 })
 
 // Navigation guard
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
-  const isAuthenticated = auth.currentUser !== null;
+  const user = auth.currentUser || await waitForAuthState();
 
-  if (requiresAuth && !isAuthenticated) {
-    next('/login');
-  } else {
-    next();
+  if (requiresAuth && !user) {
+    return next('/login');
   }
+  return next();
 });
 
 export default router

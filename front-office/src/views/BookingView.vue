@@ -1,6 +1,6 @@
 <template>
   <div class="booking-container">
-    <main class="page-shell" style="padding: 0; padding-top: 120px !important;">
+    <main class="page-shell" style="padding: 0; padding-top: 7.5rem !important;">
       <!-- Hero Section -->
       <div class="booking-hero">
         <h1 class="hero-heading">Configure A Sua Viagem</h1>
@@ -29,9 +29,7 @@
                 :class="{ 'destination-card--selected': isSelected(destino) }"
                 @click="selectDestino(destino)"
               >
-                <div class="card-icon">
-                  <img v-if="getIcon(destino)" :src="getIcon(destino)" alt="icon" />
-                </div>
+                
                 <div class="card-duration" :class="{ 'card-duration--active': isSelected(destino) }">
                   {{ getDuracao(destino) }}
                 </div>
@@ -176,14 +174,6 @@ watch(() => bookingStore.destinos, (newVal) => {
   console.log('Destinos changed:', newVal)
 }, { immediate: true })
 
-// Ícones para cada destino
-const iconMap = {
-  'Orbita da Terra': 'https://www.figma.com/api/mcp/asset/e76392f3-960c-4222-bdab-e5f8933623a0',
-  'Base Lunar': 'https://www.figma.com/api/mcp/asset/dbf42d3c-49f3-4348-832f-3f01931c1bd4',
-  'Colonia de Marte': 'https://www.figma.com/api/mcp/asset/b910c677-ef0d-4992-a9d8-e734514eb3f3',
-  'Aneis de Saturno': 'https://www.figma.com/api/mcp/asset/cf6939ee-faa9-467c-8e88-075255ec5644'
-}
-
 // Data formatada
 const formattedDate = computed(() => {
   const date = new Date()
@@ -200,7 +190,7 @@ function isSelected(destino) {
 
 // Selecionar destino
 const selectDestino = (destino) => {
-  bookingStore.destinoSelecionado = destino
+  bookingStore.selecionarDestino(destino)
 }
 
 // Obter nome do destino
@@ -221,11 +211,7 @@ function getDuracao(destino) {
   return `${dias} DAY${dias > 1 ? 'S' : ''}`
 }
 
-// Obter ícone do destino
-function getIcon(destino) {
-  const nome = getNomeDestino(destino)
-  return iconMap[nome] || iconMap['Orbita da Terra']
-}
+
 
 // Carregar destinos ao montar
 onMounted(() => {
@@ -247,25 +233,25 @@ onMounted(() => {
 
 /* Hero Section */
 .booking-hero {
-  padding: 48px 24px 32px;
+  padding: 3rem 1.5rem 2rem;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .hero-heading {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 32px;
+  font-size: 2rem;
   font-weight: 700;
   color: #e1fdff;
-  letter-spacing: -1px;
+  letter-spacing: -0.0625rem;
   margin: 0;
   line-height: 1.2;
 }
 
 .hero-subtitle {
   font-family: 'Manrope', sans-serif;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #b9cacb;
   max-width: 100%;
   margin: 0;
@@ -275,32 +261,32 @@ onMounted(() => {
 /* Main Grid */
 .booking-grid {
   display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 24px;
-  padding: 0 24px 48px;
+  grid-template-columns: 1fr 20rem;
+  gap: 1.5rem;
+  padding: 0 1.5rem 3rem;
   align-items: start;
 }
 
 .booking-main {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 2rem;
 }
 
 /* Section Titles */
 .section-title {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 500;
   color: #00f2ff;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  margin: 0 0 20px 0;
+  letter-spacing: 0.125rem;
+  margin: 0 0 1.25rem 0;
 }
 
 .parameters-list {
   list-style: decimal;
-  padding-left: 24px;
+  padding-left: 1.5rem;
   margin: 0;
 }
 
@@ -308,20 +294,20 @@ onMounted(() => {
 .destination-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .destination-card {
   position: relative;
-  height: 120px;
+  height: 7.5rem;
   background: rgba(24, 28, 34, 0.6);
-  border: 1px solid rgba(58, 73, 75, 0.1);
-  border-radius: 8px;
-  padding: 16px;
+  border: 0.0625rem solid rgba(58, 73, 75, 0.1);
+  border-radius: 0.5rem;
+  padding: 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
   overflow: hidden;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(0.625rem);
 }
 
 .destination-card:hover {
@@ -329,16 +315,16 @@ onMounted(() => {
 }
 
 .destination-card--selected {
-  border: 2px solid #00f2ff;
-  box-shadow: 0 0 20px rgba(0, 242, 255, 0.15);
+  border: 0.125rem solid #00f2ff;
+  box-shadow: 0 0 1.25rem rgba(0, 242, 255, 0.15);
 }
 
 .card-icon {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  width: 16px;
-  height: 16px;
+  top: 1rem;
+  left: 1rem;
+  width: 1rem;
+  height: 1rem;
 }
 
 .card-icon img {
@@ -349,13 +335,13 @@ onMounted(() => {
 
 .card-duration {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 1rem;
+  right: 1rem;
   background: rgba(0, 242, 255, 0.1);
-  padding: 2px 6px;
-  border-radius: 2px;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.125rem;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 10px;
+  font-size: 0.625rem;
   color: #00f2ff;
 }
 
@@ -365,11 +351,11 @@ onMounted(() => {
 
 .card-title {
   position: absolute;
-  bottom: 48px;
-  left: 16px;
-  right: 16px;
+  bottom: 3rem;
+  left: 1rem;
+  right: 1rem;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 400;
   color: #e0e2eb;
   margin: 0;
@@ -385,31 +371,31 @@ onMounted(() => {
 /* Parameters Section */
 .parameters-section {
   background: #181c22;
-  border-left: 4px solid #00f2ff;
-  border-radius: 8px;
-  padding: 24px;
+  border-left: 0.25rem solid #00f2ff;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
 }
 
 .parameters-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-top: 20px;
+  gap: 1.25rem;
+  margin-top: 1.25rem;
 }
 
 .parameter-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .parameter-label {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 400;
   color: #849495;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.0625rem;
 }
 
 .parameter-input {
@@ -417,19 +403,19 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   background: #31353c;
-  border-radius: 4px;
-  padding: 10px 12px;
+  border-radius: 0.25rem;
+  padding: 0.625rem 0.75rem;
 }
 
 .input-date {
   font-family: 'Manrope', sans-serif;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #e0e2eb;
 }
 
 .input-icon {
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
   color: #849495;
 }
 
@@ -437,17 +423,17 @@ onMounted(() => {
 .passenger-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .passenger-btn {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   background: #31353c;
   border: none;
-  border-radius: 4px;
+  border-radius: 0.25rem;
   font-family: 'Manrope', sans-serif;
-  font-size: 16px;
+  font-size: 1rem;
   color: #e0e2eb;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -467,9 +453,9 @@ onMounted(() => {
 
 .passenger-count {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 16px;
+  font-size: 1rem;
   color: #e0e2eb;
-  min-width: 24px;
+  min-width: 1.5rem;
   text-align: center;
 }
 
@@ -477,42 +463,42 @@ onMounted(() => {
 .booking-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 1.25rem;
   position: sticky;
-  top: 24px;
+  top: 1.5rem;
 }
 
 /* Pricing Card */
 .pricing-card {
   background: rgba(24, 28, 34, 0.6);
-  border: 1px solid rgba(132, 148, 149, 0.15);
-  border-left: 1px solid;
-  border-top: 1px solid;
-  border-radius: 8px;
+  border: 0.0625rem solid rgba(132, 148, 149, 0.15);
+  border-left: 0.0625rem solid;
+  border-top: 0.0625rem solid;
+  border-radius: 0.5rem;
   overflow: hidden;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(0.625rem);
 }
 
 .pricing-header {
   background: #262a31;
-  padding: 16px;
+  padding: 1rem;
 }
 
 .pricing-title {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 400;
   color: #e0e2eb;
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 0.0938rem;
   margin: 0;
 }
 
 .pricing-body {
-  padding: 20px;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem;
 }
 
 .pricing-row {
@@ -523,19 +509,19 @@ onMounted(() => {
 
 .pricing-label {
   font-family: 'Manrope', sans-serif;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #b9cacb;
 }
 
 .pricing-value {
   font-family: 'Manrope', sans-serif;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #e0e2eb;
 }
 
 .pricing-total {
-  border-top: 1px solid rgba(58, 73, 75, 0.2);
-  padding-top: 16px;
+  border-top: 0.0625rem solid rgba(58, 73, 75, 0.2);
+  padding-top: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -543,24 +529,24 @@ onMounted(() => {
 
 .total-label {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 8px;
+  font-size: 0.5rem;
   font-weight: 400;
   color: #849495;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.0625rem;
 }
 
 .total-value {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #00f2ff;
-  text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+  text-shadow: 0 0 0.625rem rgba(0, 242, 255, 0.5);
 }
 
 .total-currency {
-  font-size: 14px;
-  margin-left: 2px;
+  font-size: 0.875rem;
+  margin-left: 0.125rem;
 }
 
 /* CTA Button */
@@ -568,16 +554,16 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 0.5rem;
   background: #00f2ff;
-  padding: 16px;
-  border-radius: 8px;
+  padding: 1rem;
+  border-radius: 0.5rem;
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 700;
   color: #002022;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 0.125rem;
   text-decoration: none;
   transition: all 0.2s ease;
 }
@@ -587,30 +573,30 @@ onMounted(() => {
 }
 
 .cta-button svg {
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 /* Technical Readout */
 .technical-readout {
-  border: 1px solid rgba(58, 73, 75, 0.1);
-  border-radius: 8px;
-  padding: 16px;
+  border: 0.0625rem solid rgba(58, 73, 75, 0.1);
+  border-radius: 0.5rem;
+  padding: 1rem;
 }
 
 .readout-lines {
   display: flex;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .readout-line {
   flex: 1;
-  height: 3px;
+  height: 0.1875rem;
   background: rgba(0, 242, 255, 0.2);
   position: relative;
 }
 
-.readout-line::after {
+.readout-line:first-child::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -618,8 +604,10 @@ onMounted(() => {
 }
 
 .readout-spacer {
-  height: 48px;
+  height: 3rem;
 }
+
+
 
 /* Loading & Empty States */
 .loading-state,
@@ -627,17 +615,17 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 120px;
+  min-height: 7.5rem;
   background: rgba(24, 28, 34, 0.6);
-  border: 1px solid rgba(58, 73, 75, 0.1);
-  border-radius: 8px;
+  border: 0.0625rem solid rgba(58, 73, 75, 0.1);
+  border-radius: 0.5rem;
   color: #849495;
   font-family: 'Manrope', sans-serif;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 /* Responsive */
-@media (max-width: 1200px) {
+@media (max-width: 75rem) {
   .booking-grid {
     grid-template-columns: 1fr;
   }
@@ -647,9 +635,9 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .hero-heading {
-    font-size: 36px;
+    font-size: 2.25rem;
   }
   
   .destination-grid {

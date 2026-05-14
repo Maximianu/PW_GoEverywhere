@@ -27,6 +27,13 @@
     },
     "Preco": {
       "type": "decimal"
+    },
+    "imagemDoKit": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
     }
   }
 }

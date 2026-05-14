@@ -11,6 +11,10 @@ export const useBookingStore = defineStore('booking', () => {
   const destinoSelecionado = ref(null)
   const numeroPassageiros = ref(1)
   const dataLancamento = ref('')
+  const selectedKit = ref(localStorage.getItem('selectedKit') || 'normal')
+  const clienteId = ref(localStorage.getItem('clienteId') || null)
+  const clienteData = ref(localStorage.getItem('clienteData') ? JSON.parse(localStorage.getItem('clienteData')) : null)
+  const clienteLoading = ref(false)
 
   // URLs do Strapi
   const STRAPI_URL = 'http://localhost:1338'
@@ -38,6 +42,53 @@ export const useBookingStore = defineStore('booking', () => {
 
       const data = await response.json()
       destinos.value = data.data || []
+      
+      // Se não há destinos do Strapi, usar dados de fallback
+      if (destinos.value.length === 0) {
+        console.log('Nenhum destino encontrado no Strapi, carregando fallbacks...')
+        destinos.value = [
+          {
+            id: 1,
+            attributes: {
+              Tipo: 'Orbita da Terra',
+              Dias: 3,
+              Combustivel: 350000,
+              LifeSupport: 25000,
+              Seguro: 5000
+            }
+          },
+          {
+            id: 2,
+            attributes: {
+              Tipo: 'Base Lunar',
+              Dias: 12,
+              Combustivel: 1250000,
+              LifeSupport: 35000,
+              Seguro: 12500
+            }
+          },
+          {
+            id: 3,
+            attributes: {
+              Tipo: 'Colonia de Marte',
+              Dias: 210,
+              Combustivel: 4500000,
+              LifeSupport: 85000,
+              Seguro: 45000
+            }
+          },
+          {
+            id: 4,
+            attributes: {
+              Tipo: 'Aneis de Saturno',
+              Dias: 1095,
+              Combustivel: 12000000,
+              LifeSupport: 150000,
+              Seguro: 120000
+            }
+          }
+        ]
+      }
       console.log('Destinos carregados do Strapi:', destinos.value)
 
       // Selecionar primeiro destino por defeito se nenhum selecionado
@@ -54,7 +105,7 @@ export const useBookingStore = defineStore('booking', () => {
         {
           id: 1,
           attributes: {
-            Tipo: 'Orbita da Terra fallback',
+            Tipo: 'Orbita da Terra',
             Dias: 3,
             Combustivel: 350000,
             LifeSupport: 25000,
@@ -64,7 +115,7 @@ export const useBookingStore = defineStore('booking', () => {
         {
           id: 2,
           attributes: {
-            Tipo: 'Base Lunar fallback',
+            Tipo: 'Base Lunar',
             Dias: 12,
             Combustivel: 1250000,
             LifeSupport: 35000,
@@ -74,7 +125,7 @@ export const useBookingStore = defineStore('booking', () => {
         {
           id: 3,
           attributes: {
-            Tipo: 'Colonia de Marte fallback',
+            Tipo: 'Colonia de Marte',
             Dias: 210,
             Combustivel: 4500000,
             LifeSupport: 85000,
@@ -84,7 +135,7 @@ export const useBookingStore = defineStore('booking', () => {
         {
           id: 4,
           attributes: {
-            Tipo: 'Aneis de Saturno fallback',
+            Tipo: 'Aneis de Saturno',
             Dias: 1095,
             Combustivel: 12000000,
             LifeSupport: 150000,
@@ -104,6 +155,63 @@ export const useBookingStore = defineStore('booking', () => {
   // Selecionar destino
   function selecionarDestino(destino) {
     destinoSelecionado.value = destino
+  }
+
+  // Definir kit selecionado
+  function setSelectedKit(kitId) {
+    selectedKit.value = kitId
+    localStorage.setItem('selectedKit', kitId)
+  }
+
+  // Definir cliente ID
+  function setClienteId(id) {
+    clienteId.value = id
+    localStorage.setItem('clienteId', id)
+  }
+
+  function setClienteData(data) {
+    clienteData.value = data
+    localStorage.setItem('clienteData', JSON.stringify(data))
+  }
+
+  // Buscar cliente pelo email e definir o ID e clienteData
+  async function fetchClienteByEmail(email) {
+    clienteLoading.value = true
+    try {
+      const encodedEmail = encodeURIComponent(email)
+      const filterUrl = `${STRAPI_URL}/api/clientes?filters[Email][$eq]=${encodedEmail}`
+
+      const response = await fetch(filterUrl, {
+        method: 'GET',
+        headers
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar cliente: ${response.status}`)
+      }
+
+      const data = await response.json()
+      if (data.data && data.data.length > 0) {
+        const foundCliente = data.data[0]
+        const attributes = foundCliente.attributes || {}
+        const cliente = {
+          id: foundCliente.id,
+          nome: attributes.PrimeiroNome || attributes.nome || '',
+          sobrenome: attributes.UltimoNome || attributes.sobrenome || '',
+          email: attributes.Email || attributes.email || ''
+        }
+
+        setClienteId(foundCliente.id)
+        setClienteData(cliente)
+        return cliente
+      }
+      return null
+    } catch (error) {
+      console.error('Erro ao buscar cliente pelo email:', error)
+      return null
+    } finally {
+      clienteLoading.value = false
+    }
   }
 
   // Atualizar número de passageiros
@@ -129,24 +237,50 @@ export const useBookingStore = defineStore('booking', () => {
   // Computed: Preços individuais
   const custoCombustivel = computed(() => {
     if (!destinoSelecionado.value) return 0
-    return destinoSelecionado.value.attributes?.Combustivel || 0
+    return destinoSelecionado.value.Combustivel || destinoSelecionado.value.attributes?.Combustivel || destinoSelecionado.value.combustivel || destinoSelecionado.value.attributes?.combustivel || 0
   })
 
   const custoLifeSupport = computed(() => {
     if (!destinoSelecionado.value) return 0
-    const dias = destinoSelecionado.value.attributes?.Dias || 0
-    const lifeSupportDia = destinoSelecionado.value.attributes?.LifeSupport || 0
+    const dias = destinoSelecionado.value.Dias || destinoSelecionado.value.attributes?.Dias || 0
+    const lifeSupportDia = destinoSelecionado.value.LifeSupport || destinoSelecionado.value.attributes?.LifeSupport || destinoSelecionado.value.lifeSupport || destinoSelecionado.value.attributes?.lifeSupport || 0
     return dias * lifeSupportDia
   })
 
   const custoSeguro = computed(() => {
     if (!destinoSelecionado.value) return 0
-    return destinoSelecionado.value.attributes?.Seguro || 0
+    return destinoSelecionado.value.Seguro || destinoSelecionado.value.attributes?.Seguro || destinoSelecionado.value.seguro || destinoSelecionado.value.attributes?.seguro || 0
   })
 
   const custoTrajetoria = computed(() => {
     if (!destinoSelecionado.value) return 0
     return custoCombustivel.value
+  })
+
+  const kitPrice = computed(() => {
+    switch (selectedKit.value) {
+      case 'basico':
+        return 1750
+      case 'vip':
+        return 3250
+      default:
+        return 2150
+    }
+  })
+
+  const selectedKitLabel = computed(() => {
+    switch (selectedKit.value) {
+      case 'basico':
+        return 'BÁSICO'
+      case 'vip':
+        return 'VIP'
+      default:
+        return 'NORMAL'
+    }
+  })
+
+  const paymentTotal = computed(() => {
+    return custoTotal.value + kitPrice.value
   })
 
   // Computed: Total
@@ -159,12 +293,12 @@ export const useBookingStore = defineStore('booking', () => {
   // Computed: Nome do destino selecionado
   const nomeDestino = computed(() => {
     if (!destinoSelecionado.value) return ''
-    return destinoSelecionado.value.attributes?.Tipo || ''
+    return destinoSelecionado.value.Tipo || destinoSelecionado.value.attributes?.Tipo || ''
   })
 
   const diasDestino = computed(() => {
     if (!destinoSelecionado.value) return 0
-    return destinoSelecionado.value.attributes?.Dias || 0
+    return destinoSelecionado.value.Dias || destinoSelecionado.value.attributes?.Dias || 0
   })
 
   // Formatar preço para display
@@ -191,10 +325,17 @@ export const useBookingStore = defineStore('booking', () => {
     destinoSelecionado,
     numeroPassageiros,
     dataLancamento,
+    clienteId,
+    clienteData,
+    clienteLoading,
     
     // Ações
     fetchDestinos,
     selecionarDestino,
+    setSelectedKit,
+    setClienteId,
+    setClienteData,
+    fetchClienteByEmail,
     setPassageiros,
     incrementarPassageiros,
     decrementarPassageiros,
@@ -207,6 +348,10 @@ export const useBookingStore = defineStore('booking', () => {
     custoSeguro,
     custoTrajetoria,
     custoTotal,
+    kitPrice,
+    selectedKit,
+    selectedKitLabel,
+    paymentTotal,
     nomeDestino,
     diasDestino,
     formatPrice

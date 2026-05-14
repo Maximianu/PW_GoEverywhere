@@ -11,7 +11,7 @@
 
         <p class="subtitle">Your feedback ensures the safety and efficiency of future deep-space operations.</p>
 
-        <div class="grid grid-2" style="gap: 28px; margin-top: 28px;">
+        <div class="grid grid-2" style="gap: 1.75rem; margin-top: 1.75rem;">
           <div class="panel ghost">
             <div class="section-header">
               <div>
@@ -19,16 +19,16 @@
               </div>
             </div>
             <p class="card-text">Avalie a integridade dos seus sistemas e ferramentas de bordo.</p>
-            <div style="margin-top: 18px;">
+            <div style="margin-top: 1.125rem;">
               <p class="label">Technical Rating</p>
-              <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px;">
-                <span class="badge" style="padding: 10px 0;">★</span>
-                <span class="badge" style="padding: 10px 0;">★</span>
-                <span class="badge" style="padding: 10px 0;">★</span>
-                <span class="badge" style="padding: 10px 0;">★</span>
-                <span class="badge" style="padding: 10px 0; background: rgba(255,255,255,0.04); color: #9fcbdc;">★</span>
+              <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-top: 0.625rem;">
+                <span class="badge" style="padding: 0.625rem 0;">★</span>
+                <span class="badge" style="padding: 0.625rem 0;">★</span>
+                <span class="badge" style="padding: 0.625rem 0;">★</span>
+                <span class="badge" style="padding: 0.625rem 0;">★</span>
+                <span class="badge" style="padding: 0.625rem 0; background: rgba(255,255,255,0.04); color: #9fcbdc;">★</span>
               </div>
-              <textarea rows="5" placeholder="Detalhe anomalias, pressões, térmica ou conforto..." style="width:100%; margin-top:18px; border-radius:18px; border:1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #eef7ff; padding: 18px;"></textarea>
+              <textarea rows="5" placeholder="Detalhe anomalias, pressões, térmica ou conforto..." style="width:100%; margin-top:1.125rem; border-radius:1.125rem; border:0.0625rem solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #eef7ff; padding: 1.125rem;"></textarea>
             </div>
           </div>
 
@@ -39,21 +39,21 @@
               </div>
             </div>
             <p class="card-text">Refletia sobre a dinâmica de voo, navegação e suporte logístico.</p>
-            <div style="margin-top: 18px;">
+            <div style="margin-top: 1.125rem;">
               <p class="label">Logistics Performance</p>
-              <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 10px;">
-                <span class="badge" style="padding: 10px 0;">★</span>
-                <span class="badge" style="padding: 10px 0;">★</span>
-                <span class="badge" style="padding: 10px 0;">★</span>
-                <span class="badge" style="padding: 10px 0;">★</span>
-                <span class="badge" style="padding: 10px 0;">★</span>
+              <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; margin-top: 0.625rem;">
+                <span class="badge" style="padding: 0.625rem 0;">★</span>
+                <span class="badge" style="padding: 0.625rem 0;">★</span>
+                <span class="badge" style="padding: 0.625rem 0;">★</span>
+                <span class="badge" style="padding: 0.625rem 0;">★</span>
+                <span class="badge" style="padding: 0.625rem 0;">★</span>
               </div>
-              <textarea rows="5" placeholder="Avalie a suavidade dos controles, g-força, e comunicação..." style="width:100%; margin-top:18px; border-radius:18px; border:1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #eef7ff; padding: 18px;"></textarea>
+              <textarea rows="5" placeholder="Avalie a suavidade dos controles, g-força, e comunicação..." style="width:100%; margin-top:1.125rem; border-radius:1.125rem; border:0.0625rem solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: #eef7ff; padding: 1.125rem;"></textarea>
             </div>
           </div>
         </div>
 
-        <button class="btn btn-primary" style="margin-top: 28px;">Submeter Avaliação →</button>
+        <button class="btn btn-primary" style="margin-top: 1.75rem;">Submeter Avaliação →</button>
       </section>
     </main>
   </div>
