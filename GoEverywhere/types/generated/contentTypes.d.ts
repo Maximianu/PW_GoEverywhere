@@ -791,6 +791,7 @@ export interface ApiMissaoMissao extends Struct.CollectionTypeSchema {
     Lota: Schema.Attribute.Integer &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<5>;
+    Nome: Schema.Attribute.String;
     Planeta: Schema.Attribute.Enumeration<['Terra', 'Lua', 'Marte']> &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'Terra'>;

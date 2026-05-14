@@ -11,6 +11,9 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "Nome": {
+      "type": "string"
+    },
     "Data": {
       "type": "date"
     },

@@ -42,36 +42,154 @@ const selectCarga = (value) => {
 const showMissionModal = ref(false)
 const missionPlanet = ref('')
 const missionForm = ref({
-  nome: '',
-  destino: '',
-  lotacao: '',
-  tipo: '',
-  prioridade: '',
-  dataPartida: '',
-  carga: '',
-  notas: ''
+  Nome: '',
+  Planeta: '',
+  Lota: '',
+  Data: '',
+  Hora_Partida: '',
+  Hora_Chegada: '',
+  Preco: '',
+  X: 0,
+  Y: 0,
+  Z: 0
 })
 
 const openMission = (planet = '') => {
   missionPlanet.value = planet
   missionForm.value = {
-    nome: '',
-    destino: planet,
-    lotacao: '',
-    tipo: '',
-    prioridade: '',
-    dataPartida: '',
-    carga: '',
-    notas: ''
+    Nome: '',
+    Planeta: planet || 'Terra',
+    Lota: '',
+    Data: '',
+    Hora_Partida: '',
+    Hora_Chegada: '',
+    Preco: '',
+    X: 0,
+    Y: 0,
+    Z: 0
   }
   showMissionModal.value = true
   selectedPoint.value = null
 }
 
-const submitMission = () => {
-  // Ligar ao backend aqui
-  showMissionModal.value = false
+const isSubmitting = ref(false)
+
+const submitMission = async () => {
+  isSubmitting.value = true
+  try {
+    const payload = { data: { ...missionForm.value } }
+    
+    // Parse lota and preco to numbers if needed
+    if (payload.data.Lota) payload.data.Lota = parseInt(payload.data.Lota)
+    if (payload.data.Preco) payload.data.Preco = parseInt(payload.data.Preco)
+    if (payload.data.X) payload.data.X = parseFloat(payload.data.X)
+    if (payload.data.Y) payload.data.Y = parseFloat(payload.data.Y)
+    if (payload.data.Z) payload.data.Z = parseFloat(payload.data.Z)
+
+    const response = await fetch('http://127.0.0.1:1338/api/missaos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+
+    if (response.ok) {
+      showMissionModal.value = false
+      await loadMissions()
+    } else {
+      const err = await response.json()
+      alert('Falha ao criar a missão: ' + (err.error?.message || 'Erro desconhecido'))
+    }
+  } catch (error) {
+    console.error(error)
+    alert('Erro ao ligar ao servidor.')
+  } finally {
+    isSubmitting.value = false
+  }
 }
+
+// ── Estado de Missões Carregadas ─────────────────────────────────────────────
+const allMissions = ref([])
+const showMissionsDrawer = ref(false)
+const isLoadingMissions = ref(false)
+
+const openMissionsDrawer = () => {
+  showMissionsDrawer.value = true
+  loadMissions()
+}
+
+const loadMissions = async () => {
+  isLoadingMissions.value = true
+  try {
+    const res = await fetch('http://127.0.0.1:1338/api/missaos?populate[bilhetes][populate]=cliente')
+    const json = await res.json()
+    allMissions.value = json.data || []
+    renderDynamicMissions(allMissions.value)
+  } catch (error) {
+    console.error('Erro ao buscar missões do Strapi:', error)
+  } finally {
+    isLoadingMissions.value = false
+  }
+}
+
+const dynamicPoints = ref([])
+const dynamicMissionMeshes = []
+
+const renderDynamicMissions = (missions) => {
+  if (!moon || !earth || !mars) {
+    // Retry later if planets aren't loaded yet
+    setTimeout(() => renderDynamicMissions(missions), 500)
+    return
+  }
+
+  // Remove old dynamic pins
+  dynamicMissionMeshes.forEach(mesh => {
+    if (mesh.parent) mesh.parent.remove(mesh)
+    const idx = points.indexOf(mesh.children[0])
+    if (idx > -1) points.splice(idx, 1)
+  })
+  dynamicMissionMeshes.length = 0
+  dynamicPoints.value = []
+
+  missions.forEach(m => {
+    if (!m.X && !m.Y && !m.Z) return // Skip if all 0
+
+    let targetPlanet, radius
+    if (m.Planeta === 'Lua') { targetPlanet = moon; radius = 100 }
+    else if (m.Planeta === 'Terra') { targetPlanet = earth; radius = 145 }
+    else if (m.Planeta === 'Marte') { targetPlanet = mars; radius = 55 }
+    else return
+
+    const v = new window.THREE.Vector3(m.X, m.Y, m.Z).normalize()
+    if (v.lengthSq() === 0) return
+
+    const pin = createPinMesh(0x00f2ff) // Use cyan color for missions
+    if (targetPlanet === earth) pin.scale.set(1.2, 1.2, 1.2)
+    else if (targetPlanet === mars) pin.scale.set(0.7, 0.7, 0.7)
+
+    pin.position.copy(v.clone().multiplyScalar(radius))
+    pin.quaternion.setFromUnitVectors(new window.THREE.Vector3(0, 1, 0), v)
+
+    const pointData = {
+      id: 'dyn_' + (m.documentId || m.id),
+      name: m.Nome || 'Sem Nome',
+      description: `Data: ${m.Data} | Hora Partida: ${m.Hora_Partida} | Lotação: ${m.Lota} pax | Preço: ${m.Preco}€`,
+      date: m.Data,
+      color: 0x00f2ff,
+      isDynamic: true,
+      planet: m.Planeta
+    }
+
+    pin.children[0].userData = pointData
+    targetPlanet.add(pin)
+    points.push(pin.children[0])
+    dynamicMissionMeshes.push(pin)
+    dynamicPoints.value.push(pointData)
+  })
+
+  nextTick(updateLabels)
+}
+
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 let scene, camera, renderer, moon, earth, mars, raycaster, mouse, stars, warpLines
@@ -863,13 +981,21 @@ const updateLabels = () => {
       const isMoonPoint = moonPoints.some(mp => mp.id === p.userData.id)
       const isMarsPoint = marsPoints.some(mp => mp.id === p.userData.id)
       const isEarthPoint = earthPoints.some(ep => ep.id === p.userData.id)
+      
+      const isDynamicPoint = p.userData.isDynamic
+      const isDynamicOnActive = isDynamicPoint && (
+        (activeMainPlanet === moon && p.userData.planet === 'Lua') ||
+        (activeMainPlanet === mars && p.userData.planet === 'Marte') ||
+        (activeMainPlanet === earth && p.userData.planet === 'Terra')
+      )
 
       const shouldShow =
         !isWarping &&
         (
           (activeMainPlanet === moon && isMoonPoint) ||
           (activeMainPlanet === mars && isMarsPoint) ||
-          (activeMainPlanet === earth && isEarthPoint)
+          (activeMainPlanet === earth && isEarthPoint) ||
+          isDynamicOnActive
         )
 
       el.style.transform = `translate(10px, -50%) translate(${x}px, ${y}px)`
@@ -1045,6 +1171,7 @@ const animate = () => {
 }
 
 onMounted(() => {
+  loadMissions()
   const check = setInterval(() => {
     if (window.THREE && window.THREE.GLTFLoader) {
       clearInterval(check)
@@ -1069,7 +1196,7 @@ onBeforeUnmount(() => {
 
     <div ref="labelsContainer" class="absolute inset-0 pointer-events-none z-10">
       <div
-        v-for="point in [...moonPoints, ...marsPoints, ...earthPoints]"
+        v-for="point in [...moonPoints, ...marsPoints, ...earthPoints, ...dynamicPoints]"
         :key="point.id"
         :data-id="point.id"
         class="absolute left-0 top-0 transition-opacity duration-300"
@@ -1123,13 +1250,21 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
-    <div class="absolute bottom-8 left-8 z-20">
+    <div class="absolute bottom-8 left-8 z-20 flex gap-4">
       <button
         @click="openMission('')"
         class="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-blue-500 transition-all shadow-2xl active:scale-95"
       >
         <span class="text-base leading-none">+</span>
         Crie a sua Missão
+      </button>
+
+      <button
+        @click="openMissionsDrawer"
+        class="flex items-center gap-2 px-5 py-3 bg-white/10 text-white border border-white/20 rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-white/20 transition-all shadow-2xl active:scale-95 backdrop-blur-md"
+      >
+        <span class="text-base leading-none">📋</span>
+        Consultar Missões
       </button>
     </div>
 
@@ -1195,7 +1330,7 @@ onBeforeUnmount(() => {
               <div>
                 <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Nome da Missão</label>
                 <input
-                  v-model="missionForm.nome"
+                  v-model="missionForm.Nome"
                   type="text"
                   placeholder="Ex: Missão Lunar Alpha"
                   class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm placeholder-white/20 focus:outline-none focus:border-blue-500/60 transition-colors"
@@ -1205,72 +1340,30 @@ onBeforeUnmount(() => {
               <div class="grid grid-cols-2 gap-3">
                 <div>
                   <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Destino</label>
-                  <select v-model="missionForm.destino" class="select-white-arrow w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors">
+                  <select v-model="missionForm.Planeta" class="select-white-arrow w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors">
                     <option value="" disabled hidden class="bg-[#0d0d0f]"></option>
                     <option value="Lua" class="bg-[#0d0d0f]">Lua</option>
                     <option value="Marte" class="bg-[#0d0d0f]">Marte</option>
                     <option value="Terra" class="bg-[#0d0d0f]">Órbita Terrestre</option>
                   </select>
                 </div>
-
                 <div>
-                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Tipo de Missão</label>
-                  <select v-model="missionForm.tipo" class="select-white-arrow w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors">
-                    <option value="" disabled hidden class="bg-[#0d0d0f]"></option>
-                    <option value="normal" class="bg-[#0d0d0f]">Normal</option>
-                    <option value="vip" class="bg-[#0d0d0f]">VIP</option>
-                  </select>
+                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Lotação</label>
+                  <input
+                    v-model="missionForm.Lota"
+                    type="number"
+                    min="1"
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors"
+                  />
                 </div>
               </div>
 
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Lotação (tripulantes)</label>
-                  <div class="combo-field">
-                    <input
-                      v-model="missionForm.lotacao"
-                      type="number"
-                      min="1"
-                      step="1"
-                      class="combo-input w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors"
-                    />
-                    <button
-                      type="button"
-                      class="combo-arrow"
-                      @click="showLotacaoOptions = !showLotacaoOptions; showCargaOptions = false"
-                    ></button>
-
-                    <div v-if="showLotacaoOptions" class="combo-menu">
-                      <button
-                        v-for="lotacao in lotacaoOptions"
-                        :key="lotacao"
-                        type="button"
-                        class="combo-option"
-                        @click="selectLotacao(lotacao)"
-                      >
-                        {{ lotacao }}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Prioridade</label>
-                  <select v-model="missionForm.prioridade" class="select-white-arrow w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors">
-                    <option value="" disabled hidden class="bg-[#0d0d0f]"></option>
-                    <option value="baixa" class="bg-[#0d0d0f]">Baixa</option>
-                    <option value="media" class="bg-[#0d0d0f]">Média</option>
-                    <option value="alta" class="bg-[#0d0d0f]">Alta</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-3">
-                <div>
-                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Data de Partida</label>
+                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Data</label>
                   <div class="date-field">
                     <input
-                      v-model="missionForm.dataPartida"
+                      v-model="missionForm.Data"
                       type="date"
                       :min="todayDate"
                       class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 pr-10 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors date-white"
@@ -1278,45 +1371,51 @@ onBeforeUnmount(() => {
                     <Calendar class="calendar-icon" :size="17" />
                   </div>
                 </div>
-
                 <div>
-                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Carga (kg)</label>
-                  <div class="combo-field">
-                    <input
-                      v-model="missionForm.carga"
-                      type="number"
-                      min="0"
-                      step="1"
-                      class="combo-input w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors"
-                    />
-                    <button
-                      type="button"
-                      class="combo-arrow"
-                      @click="showCargaOptions = !showCargaOptions; showLotacaoOptions = false"
-                    ></button>
-
-                    <div v-if="showCargaOptions" class="combo-menu">
-                      <button
-                        v-for="carga in cargaOptions"
-                        :key="carga"
-                        type="button"
-                        class="combo-option"
-                        @click="selectCarga(carga)"
-                      >
-                        {{ carga }}
-                      </button>
-                    </div>
-                  </div>
+                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Preço (€)</label>
+                  <input
+                    v-model="missionForm.Preco"
+                    type="number"
+                    min="0"
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors"
+                  />
                 </div>
               </div>
 
-              <div class="flex-1 flex flex-col min-h-[100px]">
-                <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Notas Adicionais</label>
-                <textarea
-                  v-model="missionForm.notas"
-                  placeholder="Observações, requisitos especiais..."
-                  class="flex-1 w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm placeholder-white/20 focus:outline-none focus:border-blue-500/60 transition-colors resize-none"
-                />
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Hora Partida</label>
+                  <input
+                    v-model="missionForm.Hora_Partida"
+                    type="time"
+                    step="1"
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors date-white"
+                  />
+                </div>
+                <div>
+                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Hora Chegada</label>
+                  <input
+                    v-model="missionForm.Hora_Chegada"
+                    type="time"
+                    step="1"
+                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors date-white"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Posição X</label>
+                  <input v-model="missionForm.X" type="number" step="0.1" class="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-2.5 text-white text-xs focus:outline-none focus:border-blue-500/60 transition-colors" />
+                </div>
+                <div>
+                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Posição Y</label>
+                  <input v-model="missionForm.Y" type="number" step="0.1" class="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-2.5 text-white text-xs focus:outline-none focus:border-blue-500/60 transition-colors" />
+                </div>
+                <div>
+                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Posição Z</label>
+                  <input v-model="missionForm.Z" type="number" step="0.1" class="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-2.5 text-white text-xs focus:outline-none focus:border-blue-500/60 transition-colors" />
+                </div>
               </div>
             </div>
 
@@ -1333,6 +1432,76 @@ onBeforeUnmount(() => {
               >
                 Lançar Missão
               </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <Teleport to="body">
+      <Transition
+        enterActiveClass="transition-transform duration-400 ease-out"
+        leaveActiveClass="transition-transform duration-300 ease-in"
+        enterFromClass="translate-x-full"
+        leaveToClass="translate-x-full"
+      >
+        <div
+          v-if="showMissionsDrawer"
+          class="fixed inset-y-0 right-0 z-50 flex"
+        >
+          <div class="fixed inset-0 -z-10" @click="showMissionsDrawer = false" />
+
+          <div class="relative w-[450px] bg-[#0d0d0f] border-l border-white/10 shadow-2xl flex flex-col h-full overflow-hidden">
+            <div class="flex items-center justify-between px-7 pt-5 pb-4 border-b border-white/10 shrink-0">
+              <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                <div>
+                  <p class="text-white/40 text-[9px] font-mono uppercase tracking-[0.2em]">Registos</p>
+                  <h2 class="text-lg font-black text-white uppercase tracking-tight">
+                    Missões & Clientes
+                  </h2>
+                </div>
+              </div>
+              <button @click="showMissionsDrawer = false" class="text-white/30 hover:text-white transition-colors text-xl leading-none">✕</button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto px-7 py-4 flex flex-col gap-4">
+              <div v-if="isLoadingMissions" class="text-white/50 text-xs text-center py-10">
+                A carregar missões...
+              </div>
+              <div v-else-if="allMissions.length === 0" class="text-white/50 text-xs text-center py-10">
+                Nenhuma missão encontrada.
+              </div>
+              <div v-else class="space-y-4">
+                <div v-for="m in allMissions" :key="m.documentId || m.id" class="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-colors">
+                  <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-sm font-bold text-white uppercase">{{ m.Nome || 'Sem Nome' }}</h3>
+                    <span class="text-[9px] bg-blue-600 px-2 py-0.5 rounded font-mono uppercase tracking-wider text-white">{{ m.Planeta }}</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 text-[10px] text-white/60 font-mono mb-3">
+                    <div>Data: <span class="text-white">{{ m.Data }}</span></div>
+                    <div>Preço: <span class="text-white">{{ m.Preco }}€</span></div>
+                    <div>Partida: <span class="text-white">{{ m.Hora_Partida }}</span></div>
+                    <div>Chegada: <span class="text-white">{{ m.Hora_Chegada }}</span></div>
+                    <div>Lotação: <span class="text-white">{{ m.Lota }} pax</span></div>
+                    <div>XYZ: <span class="text-white">{{ m.X }}, {{ m.Y }}, {{ m.Z }}</span></div>
+                  </div>
+                  
+                  <div class="mt-3 pt-3 border-t border-white/10">
+                    <h4 class="text-[9px] text-white/40 uppercase tracking-[0.2em] mb-2">Clientes Associados (Bilhetes)</h4>
+                    <div v-if="!m.bilhetes || m.bilhetes.length === 0" class="text-xs text-white/30 italic">
+                      Nenhum bilhete vendido ainda.
+                    </div>
+                    <ul v-else class="space-y-1">
+                      <li v-for="b in m.bilhetes" :key="b.documentId || b.id" class="text-xs text-white/80 flex items-center gap-2">
+                        <span class="w-1 h-1 bg-white/40 rounded-full"></span>
+                        <span v-if="b.cliente">{{ b.cliente.PrimeiroNome }} {{ b.cliente.UltimoNome }} <span class="text-white/40">({{ b.cliente.Email }})</span></span>
+                        <span v-else class="italic text-white/40">Cliente desconhecido</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
