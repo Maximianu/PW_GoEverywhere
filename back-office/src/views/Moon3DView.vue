@@ -1,13 +1,78 @@
+Sim. Para ficar como queres, a solução certa é: manter `Destino`, `Tipo` e `Prioridade` como `select`, e fazer `Lotação` e `Carga` como campos editáveis com uma setinha igual às outras, que abre sugestões rápidas. Assim podes escrever `658`, mas também carregar na setinha e escolher `250`, `500`, `750`, `1000`.
+
+Aqui tens o código completo com essa alteração aplicada:
+
+```vue
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { Settings, Home, MapPin } from 'lucide-vue-next'
+import { Settings, Home, MapPin, Calendar } from 'lucide-vue-next'
 
 const containerRef = ref(null)
 const router = useRouter()
 const selectedPoint = ref(null)
 const isLoading = ref(true)
 const labelsContainer = ref(null)
+
+const todayDate = computed(() => {
+  const hoje = new Date()
+  const ano = hoje.getFullYear()
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0')
+  const dia = String(hoje.getDate()).padStart(2, '0')
+  return `${ano}-${mes}-${dia}`
+})
+
+const cargaOptions = [500, 1000, 1500]
+const lotacaoOptions = [5, 10, 15, 20]
+
+const showLotacaoOptions = ref(false)
+const showCargaOptions = ref(false)
+
+const selectLotacao = (value) => {
+  missionForm.value.lotacao = value
+  showLotacaoOptions.value = false
+}
+
+const selectCarga = (value) => {
+  missionForm.value.carga = value
+  showCargaOptions.value = false
+}
+
+// ── Estado do modal de criação de missão ─────────────────────────────────────
+const showMissionModal = ref(false)
+const missionPlanet = ref('')
+const missionForm = ref({
+  nome: '',
+  destino: '',
+  lotacao: '',
+  tipo: '',
+  prioridade: '',
+  dataPartida: '',
+  carga: '',
+  notas: ''
+})
+
+const openMission = (planet = '') => {
+  missionPlanet.value = planet
+  missionForm.value = {
+    nome: '',
+    destino: planet,
+    lotacao: '',
+    tipo: '',
+    prioridade: '',
+    dataPartida: '',
+    carga: '',
+    notas: ''
+  }
+  showMissionModal.value = true
+  selectedPoint.value = null
+}
+
+const submitMission = () => {
+  // Ligar ao backend aqui
+  showMissionModal.value = false
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 let scene, camera, renderer, moon, earth, mars, raycaster, mouse, stars, warpLines
 let moonWrapper, earthWrapper, marsWrapper
@@ -42,10 +107,6 @@ const layouts = {
 const lerp = (a, b, t) => a + (b - a) * t
 const smoothStep = t => t * t * (3 - 2 * t)
 
-// ─── Interpolação com arco orbital ────────────────────────────────────────────
-// Arco perpendicular ao movimento no plano XZ — evita que planetas se atravessem.
-// A amplitude é fixa em unidades de cena (não proporcional à distância) para
-// que planetas que percorrem trajetos longos (como a lua) não saiam do ecrã.
 const lerpArc = (fromPos, toPos, t, swingUnits = 400) => {
   const lx = lerp(fromPos[0], toPos[0], t)
   const ly = lerp(fromPos[1], toPos[1], t)
@@ -57,9 +118,8 @@ const lerpArc = (fromPos, toPos, t, swingUnits = 400) => {
   const dz = toPos[2] - fromPos[2]
   const horizLen = Math.sqrt(dx * dx + dz * dz) || 1
 
-  // Perpendicular no plano XZ
   const perpX = -dz / horizLen
-  const perpZ =  dx / horizLen
+  const perpZ = dx / horizLen
 
   return [
     lx + perpX * swingUnits * arcPeak,
@@ -74,25 +134,21 @@ const applyInterpolatedLayout = (t) => {
   ;['moon', 'earth', 'mars'].forEach(pName => {
     const wrapper =
       pName === 'moon' ? moonWrapper
-      : pName === 'earth' ? earthWrapper
-      : marsWrapper
+        : pName === 'earth' ? earthWrapper
+          : marsWrapper
 
     const mesh =
       pName === 'moon' ? moon
-      : pName === 'earth' ? earth
-      : mars
+        : pName === 'earth' ? earth
+          : mars
 
     if (!wrapper || !mesh) return
 
     const from = warpSourceLayout[pName]
-    const to   = warpTargetLayout[pName]
+    const to = warpTargetLayout[pName]
 
-    // Qualquer planeta que passe pelo centro (pos 0,0,0) recebe arco forte
-    // para não colidir visualmente com o planeta principal.
-    // Os que se movem entre duas posições secundárias recebem arco suave.
     const fromIsCenter = from.pos[0] === 0 && from.pos[1] === 0 && from.pos[2] === 0
-    const toIsCenter   = to.pos[0]   === 0 && to.pos[1]   === 0 && to.pos[2]   === 0
-    // Unidades fixas de desvio: suficiente para evitar sobreposição, pequeno o suficiente para não sair de ecrã
+    const toIsCenter = to.pos[0] === 0 && to.pos[1] === 0 && to.pos[2] === 0
     const swing = (fromIsCenter || toIsCenter) ? 380 : 220
 
     const newPos = lerpArc(from.pos, to.pos, t, swing)
@@ -192,6 +248,16 @@ const moonPoints = [
     x: -80,
     y: 10,
     z: 40
+  },
+  {
+    id: 20,
+    name: '+ Criar Missão',
+    isMissionPoint: true,
+    planet: 'Lua',
+    color: 0xffffff,
+    x: 30,
+    y: -80,
+    z: 50
   }
 ]
 
@@ -235,8 +301,51 @@ const marsPoints = [
     x: -30,
     y: -50,
     z: 80
+  },
+  {
+    id: 21,
+    name: '+ Criar Missão',
+    isMissionPoint: true,
+    planet: 'Marte',
+    color: 0xffffff,
+    x: -40,
+    y: -70,
+    z: 40
   }
 ]
+
+const earthPoints = [
+  {
+    id: 11,
+    name: 'Órbita Baixa',
+    description: 'A órbita terrestre baixa (LEO) situa-se entre 200 e 2000 km de altitude. É onde circula a Estação Espacial Internacional, satélites de observação e as constelações de internet por satélite como a Starlink. A maioria das missões tripuladas opera nesta faixa, onde a Terra ainda ocupa grande parte do céu.',
+    date: 'Contínuo',
+    color: 0x00f2ff,
+    orbitRadius: 175,
+    orbitAngle: 0.3
+  },
+  {
+    id: 12,
+    name: 'Órbita Alta',
+    description: 'A órbita geoestacionária (GEO) fica a cerca de 35 786 km de altitude, onde os satélites orbitam à mesma velocidade que a rotação terrestre, parecendo fixos no céu. É usada para telecomunicações, meteorologia e transmissão televisiva. Daqui, um único satélite cobre quase 40% da superfície da Terra.',
+    date: 'Contínuo',
+    color: 0xffd93d,
+    orbitRadius: 220,
+    orbitAngle: Math.PI * 1.25
+  },
+  {
+    id: 22,
+    name: '+ Criar Missão',
+    isMissionPoint: true,
+    planet: 'Terra',
+    color: 0xffffff,
+    x: 60,
+    y: 80,
+    z: 60
+  }
+]
+
+const orbitRings = []
 
 const randomBetween = (min, max) => min + Math.random() * (max - min)
 
@@ -379,6 +488,19 @@ const initThreeJS = () => {
   window.addEventListener('mousemove', onMouseMove)
   container.addEventListener('click', onContainerClick)
   window.addEventListener('resize', onWindowResize)
+
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && isWarping) {
+      e.preventDefault()
+      applyInterpolatedLayout(1)
+      isWarping = false
+      warpProgress = 0
+      camera.fov = 45
+      if (warpLines) { warpLines.material.opacity = 0; warpLines.scale.z = 1 }
+      if (stars) stars.material.opacity = 1
+      camera.updateProjectionMatrix()
+    }
+  })
 
   let prevMouse = { x: 0, y: 0 }
 
@@ -547,20 +669,35 @@ const createWarpLines = () => {
 const createPinMesh = (color) => {
   const pinGroup = new window.THREE.Group()
 
-  const headGeo = new window.THREE.SphereGeometry(2, 12, 12)
+  const headGeo = new window.THREE.SphereGeometry(2, 16, 16)
   const headMat = new window.THREE.MeshBasicMaterial({ color })
   const head = new window.THREE.Mesh(headGeo, headMat)
-  head.position.y = 5
-
-  const needleGeo = new window.THREE.CylinderGeometry(0.2, 0.05, 5, 8)
-  const needleMat = new window.THREE.MeshBasicMaterial({ color: 0xdddddd })
-  const needle = new window.THREE.Mesh(needleGeo, needleMat)
-  needle.position.y = 2.5
 
   pinGroup.add(head)
-  pinGroup.add(needle)
 
   return pinGroup
+}
+
+const createOrbitRing = (radius, color) => {
+  const segments = 128
+  const geo = new window.THREE.BufferGeometry()
+  const verts = []
+
+  for (let i = 0; i <= segments; i++) {
+    const angle = (i / segments) * Math.PI * 2
+    verts.push(Math.cos(angle) * radius, Math.sin(angle) * radius, 0)
+  }
+
+  geo.setAttribute('position', new window.THREE.BufferAttribute(new Float32Array(verts), 3))
+
+  const mat = new window.THREE.LineBasicMaterial({
+    color,
+    transparent: true,
+    opacity: 0.6,
+    depthTest: true
+  })
+
+  return new window.THREE.Line(geo, mat)
 }
 
 const loadMoon = () => {
@@ -612,6 +749,48 @@ const loadPlanets = () => {
 
     earth.rotation.z = 23.5 * Math.PI / 180
 
+    earthPoints.forEach((p, i) => {
+      if (p.isMissionPoint) {
+        const v = new window.THREE.Vector3(p.x, p.y, p.z).normalize()
+        const pin = createPinMesh(p.color)
+        pin.scale.set(1.2, 1.2, 1.2)
+        pin.position.copy(v.clone().multiplyScalar(145))
+        pin.quaternion.setFromUnitVectors(new window.THREE.Vector3(0, 1, 0), v)
+        pin.children[0].userData = p
+        earth.add(pin)
+        points.push(pin.children[0])
+      } else {
+        const ringIndex = earthPoints.filter((ep, j) => j < i && !ep.isMissionPoint).length
+        const ring = createOrbitRing(p.orbitRadius, p.color)
+        ring.rotation.y = ringIndex === 0 ? Math.PI / 5 : -Math.PI / 7
+        ring.rotation.x = ringIndex === 0 ? Math.PI / 12 : -Math.PI / 10
+        earth.add(ring)
+        orbitRings.push(ring)
+
+        const angle = p.orbitAngle
+        const localPos = new window.THREE.Vector3(
+          Math.cos(angle) * p.orbitRadius,
+          Math.sin(angle) * p.orbitRadius,
+          0
+        )
+        const euler = new window.THREE.Euler(
+          ringIndex === 0 ? Math.PI / 12 : -Math.PI / 10,
+          ringIndex === 0 ? Math.PI / 5 : -Math.PI / 7,
+          0
+        )
+        localPos.applyEuler(euler)
+
+        const pin = createPinMesh(p.color)
+        pin.scale.set(1.4, 1.4, 1.4)
+        pin.position.copy(localPos)
+        const outDir = localPos.clone().normalize()
+        pin.quaternion.setFromUnitVectors(new window.THREE.Vector3(0, 1, 0), outDir)
+        pin.children[0].userData = p
+        earth.add(pin)
+        points.push(pin.children[0])
+      }
+    })
+
     earthWrapper = new window.THREE.Group()
     earthWrapper.add(earth)
 
@@ -640,7 +819,7 @@ const loadPlanets = () => {
       const v = new window.THREE.Vector3(p.x, p.y, p.z).normalize()
       const pin = createPinMesh(p.color)
 
-      pin.scale.set(0.6, 0.6, 0.6)
+      pin.scale.set(0.7, 0.7, 0.7)
       pin.position.copy(v.clone().multiplyScalar(55))
       pin.quaternion.setFromUnitVectors(new window.THREE.Vector3(0, 1, 0), v)
 
@@ -683,15 +862,17 @@ const updateLabels = () => {
 
       const isMoonPoint = moonPoints.some(mp => mp.id === p.userData.id)
       const isMarsPoint = marsPoints.some(mp => mp.id === p.userData.id)
+      const isEarthPoint = earthPoints.some(ep => ep.id === p.userData.id)
 
       const shouldShow =
         !isWarping &&
         (
           (activeMainPlanet === moon && isMoonPoint) ||
-          (activeMainPlanet === mars && isMarsPoint)
+          (activeMainPlanet === mars && isMarsPoint) ||
+          (activeMainPlanet === earth && isEarthPoint)
         )
 
-      el.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px)`
+      el.style.transform = `translate(10px, -50%) translate(${x}px, ${y}px)`
       el.style.opacity = (v.z > 1 || !shouldShow) ? '0' : '1'
       el.style.pointerEvents = (v.z > 1 || isDragging.value || !shouldShow) ? 'none' : 'auto'
     }
@@ -721,7 +902,12 @@ const onContainerClick = (e) => {
   const hits = raycaster.intersectObjects(points)
 
   if (hits.length > 0) {
-    selectedPoint.value = hits[0].object.userData
+    const pointData = hits[0].object.userData
+    if (pointData.isMissionPoint) {
+      openMission(pointData.planet)
+    } else {
+      selectedPoint.value = pointData
+    }
     return
   }
 
@@ -737,7 +923,12 @@ const onContainerClick = (e) => {
 }
 
 const selectFromLabel = (point) => {
-  if (!isDragging.value) selectedPoint.value = point
+  if (isDragging.value) return
+  if (point.isMissionPoint) {
+    openMission(point.planet)
+  } else {
+    selectedPoint.value = point
+  }
 }
 
 const onWindowResize = () => {
@@ -878,18 +1069,28 @@ onBeforeUnmount(() => {
 
     <div ref="labelsContainer" class="absolute inset-0 pointer-events-none z-10">
       <div
-        v-for="point in [...moonPoints, ...marsPoints]"
+        v-for="point in [...moonPoints, ...marsPoints, ...earthPoints]"
         :key="point.id"
         :data-id="point.id"
         class="absolute left-0 top-0 transition-opacity duration-300"
         :style="{ pointerEvents: isDragging ? 'none' : 'auto' }"
         @click="selectFromLabel(point)"
       >
-        <div class="flex items-center gap-2 bg-black/70 backdrop-blur-md px-3 py-1.5 border border-white/10 rounded-md hover:bg-white/20 hover:scale-110 transition-all cursor-pointer">
+        <div
+          v-if="!point.isMissionPoint"
+          class="flex items-center gap-2 bg-black/70 backdrop-blur-md px-3 py-1.5 border border-white/10 rounded-md hover:bg-white/20 hover:scale-110 transition-all cursor-pointer"
+        >
           <MapPin :size="14" :style="{ color: '#' + point.color.toString(16).padStart(6, '0') }" />
           <span class="text-white text-[11px] font-bold tracking-wider uppercase whitespace-nowrap">
             {{ point.name }}
           </span>
+        </div>
+
+        <div
+          v-else
+          class="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 border border-white/30 border-dashed rounded-md hover:bg-white/20 hover:scale-110 transition-all cursor-pointer"
+        >
+          <span class="text-white text-[11px] font-bold tracking-wider uppercase whitespace-nowrap">+ Criar Missão</span>
         </div>
       </div>
     </div>
@@ -922,6 +1123,16 @@ onBeforeUnmount(() => {
       </button>
     </div>
 
+    <div class="absolute bottom-8 left-8 z-20">
+      <button
+        @click="openMission('')"
+        class="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-blue-500 transition-all shadow-2xl active:scale-95"
+      >
+        <span class="text-base leading-none">+</span>
+        Crie a sua Missão
+      </button>
+    </div>
+
     <Teleport to="body">
       <Transition
         enterActiveClass="transition-all duration-400 ease-out"
@@ -939,32 +1150,191 @@ onBeforeUnmount(() => {
                 class="w-3 h-3 rounded-full"
                 :style="{ backgroundColor: '#' + selectedPoint.color.toString(16).padStart(6, '0') }"
               ></div>
-
-              <h3 class="text-2xl font-bold text-white uppercase">
-                {{ selectedPoint.name }}
-              </h3>
+              <h3 class="text-2xl font-bold text-white uppercase">{{ selectedPoint.name }}</h3>
             </div>
-
-            <button
-              @click="selectedPoint = null"
-              class="text-white/30 hover:text-white transition-colors text-xl"
-            >
-              ✕
-            </button>
+            <button @click="selectedPoint = null" class="text-white/30 hover:text-white transition-colors text-xl">✕</button>
           </div>
-
           <p class="text-cyan-400 text-xs mb-2 font-mono">{{ selectedPoint.date }}</p>
-
-          <p class="text-gray-400 text-sm mb-8 leading-relaxed text-justify">
-            {{ selectedPoint.description }}
-          </p>
-
+          <p class="text-gray-400 text-sm mb-8 leading-relaxed text-justify">{{ selectedPoint.description }}</p>
           <button
             @click="selectedPoint = null"
             class="w-full py-4 bg-white text-black rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-blue-600 hover:text-white transition-all shadow-lg active:scale-95"
           >
             Fechar Relatório
           </button>
+        </div>
+      </Transition>
+
+      <Transition
+        enterActiveClass="transition-transform duration-400 ease-out"
+        leaveActiveClass="transition-transform duration-300 ease-in"
+        enterFromClass="translate-x-full"
+        leaveToClass="translate-x-full"
+      >
+        <div
+          v-if="showMissionModal"
+          class="fixed inset-y-0 right-0 z-50 flex"
+        >
+          <div class="fixed inset-0 -z-10" @click="showMissionModal = false" />
+
+          <div class="relative w-[420px] bg-[#0d0d0f] border-l border-white/10 shadow-2xl flex flex-col h-full overflow-hidden">
+            <div class="flex items-center justify-between px-7 pt-5 pb-4 border-b border-white/10 shrink-0">
+              <div class="flex items-center gap-3">
+                <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                <div>
+                  <p class="text-white/40 text-[9px] font-mono uppercase tracking-[0.2em]">Nova Missão</p>
+                  <h2 class="text-lg font-black text-white uppercase tracking-tight">
+                    {{ missionPlanet ? `Destino: ${missionPlanet}` : 'Criar Missão' }}
+                  </h2>
+                </div>
+              </div>
+              <button @click="showMissionModal = false" class="text-white/30 hover:text-white transition-colors text-xl leading-none">✕</button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto px-7 py-4 flex flex-col gap-4">
+              <div>
+                <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Nome da Missão</label>
+                <input
+                  v-model="missionForm.nome"
+                  type="text"
+                  placeholder="Ex: Missão Lunar Alpha"
+                  class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm placeholder-white/20 focus:outline-none focus:border-blue-500/60 transition-colors"
+                />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Destino</label>
+                  <select v-model="missionForm.destino" class="select-white-arrow w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors">
+                    <option value="" disabled hidden class="bg-[#0d0d0f]"></option>
+                    <option value="Lua" class="bg-[#0d0d0f]">Lua</option>
+                    <option value="Marte" class="bg-[#0d0d0f]">Marte</option>
+                    <option value="Terra" class="bg-[#0d0d0f]">Órbita Terrestre</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Tipo de Missão</label>
+                  <select v-model="missionForm.tipo" class="select-white-arrow w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors">
+                    <option value="" disabled hidden class="bg-[#0d0d0f]"></option>
+                    <option value="normal" class="bg-[#0d0d0f]">Normal</option>
+                    <option value="vip" class="bg-[#0d0d0f]">VIP</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Lotação (tripulantes)</label>
+                  <div class="combo-field">
+                    <input
+                      v-model="missionForm.lotacao"
+                      type="number"
+                      min="1"
+                      step="1"
+                      class="combo-input w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors"
+                    />
+                    <button
+                      type="button"
+                      class="combo-arrow"
+                      @click="showLotacaoOptions = !showLotacaoOptions; showCargaOptions = false"
+                    ></button>
+
+                    <div v-if="showLotacaoOptions" class="combo-menu">
+                      <button
+                        v-for="lotacao in lotacaoOptions"
+                        :key="lotacao"
+                        type="button"
+                        class="combo-option"
+                        @click="selectLotacao(lotacao)"
+                      >
+                        {{ lotacao }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Prioridade</label>
+                  <select v-model="missionForm.prioridade" class="select-white-arrow w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors">
+                    <option value="" disabled hidden class="bg-[#0d0d0f]"></option>
+                    <option value="baixa" class="bg-[#0d0d0f]">Baixa</option>
+                    <option value="media" class="bg-[#0d0d0f]">Média</option>
+                    <option value="alta" class="bg-[#0d0d0f]">Alta</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Data de Partida</label>
+                  <div class="date-field">
+                    <input
+                      v-model="missionForm.dataPartida"
+                      type="date"
+                      :min="todayDate"
+                      class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 pr-10 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors date-white"
+                    />
+                    <Calendar class="calendar-icon" :size="17" />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Carga (kg)</label>
+                  <div class="combo-field">
+                    <input
+                      v-model="missionForm.carga"
+                      type="number"
+                      min="0"
+                      step="1"
+                      class="combo-input w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm focus:outline-none focus:border-blue-500/60 transition-colors"
+                    />
+                    <button
+                      type="button"
+                      class="combo-arrow"
+                      @click="showCargaOptions = !showCargaOptions; showLotacaoOptions = false"
+                    ></button>
+
+                    <div v-if="showCargaOptions" class="combo-menu">
+                      <button
+                        v-for="carga in cargaOptions"
+                        :key="carga"
+                        type="button"
+                        class="combo-option"
+                        @click="selectCarga(carga)"
+                      >
+                        {{ carga }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex-1 flex flex-col min-h-[100px]">
+                <label class="block text-white/40 text-[9px] font-mono uppercase tracking-[0.2em] mb-2">Notas Adicionais</label>
+                <textarea
+                  v-model="missionForm.notas"
+                  placeholder="Observações, requisitos especiais..."
+                  class="flex-1 w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm placeholder-white/20 focus:outline-none focus:border-blue-500/60 transition-colors resize-none"
+                />
+              </div>
+            </div>
+
+            <div class="px-7 py-4 border-t border-white/10 flex gap-3 shrink-0">
+              <button
+                @click="showMissionModal = false"
+                class="flex-1 py-2.5 bg-white/5 border border-white/10 text-white/60 rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all active:scale-95"
+              >
+                Cancelar
+              </button>
+              <button
+                @click="submitMission"
+                class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-blue-500 transition-all shadow-lg active:scale-95"
+              >
+                Lançar Missão
+              </button>
+            </div>
+          </div>
         </div>
       </Transition>
     </Teleport>
@@ -976,5 +1346,94 @@ onBeforeUnmount(() => {
   margin: 0;
   overflow: hidden;
   background: black;
+}
+
+.select-white-arrow {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  padding-right: 42px;
+}
+
+.date-field {
+  position: relative;
+}
+
+.date-white::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  cursor: pointer;
+}
+
+.calendar-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ffffff;
+  pointer-events: none;
+}
+
+.combo-field {
+  position: relative;
+}
+
+.combo-input {
+  padding-right: 42px;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.combo-input::-webkit-outer-spin-button,
+.combo-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.combo-arrow {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 42px;
+  height: calc(100% - 2px);
+  border: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 0 0.5rem 0.5rem 0;
+  background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 16px;
+  cursor: pointer;
+}
+
+.combo-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 80;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  background: #0d0d0f;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.45);
+}
+
+.combo-option {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  background: transparent;
+  color: white;
+  text-align: left;
+  font-size: 0.875rem;
+  transition: background-color 0.15s ease;
+}
+
+.combo-option:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 </style>
