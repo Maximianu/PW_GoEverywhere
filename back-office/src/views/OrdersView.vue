@@ -14,14 +14,16 @@ const isSubmitting = ref(false)
 
 const loadOrders = async () => {
   try {
-    const res = await fetch('http://127.0.0.1:1338/api/pedido-missions?populate=*')
+    const res = await fetch('http://127.0.0.1:1338/api/pedido-missions?populate[0]=bilhete.cliente&populate[1]=bilhete.cliente2&populate[2]=estafeta')
     const json = await res.json()
     
-    orders.value = json.data.map(item => ({
+    orders.value = json.data.map(item => {
+      const clienteObj = item.cliente || (item.bilhete && item.bilhete.cliente) || (item.bilhete && item.bilhete.cliente2) || null;
+      return {
       id: item.documentId || item.id,
-      client: item.cliente ? `${item.cliente.PrimeiroNome || ''} ${item.cliente.UltimoNome || ''}`.trim() : (item.Cliente || 'Sem Cliente'),
-      initials: item.cliente ? ((item.cliente.PrimeiroNome ? item.cliente.PrimeiroNome[0] : '') + (item.cliente.UltimoNome ? item.cliente.UltimoNome[0] : '')).toUpperCase() || '??' : (item.Cliente ? item.Cliente.substring(0, 2).toUpperCase() : '??'),
-      email: item.cliente ? (item.cliente.Email || 'n/a') : 'n/a',
+      client: clienteObj ? `${clienteObj.PrimeiroNome || ''} ${clienteObj.UltimoNome || ''}`.trim() : (item.Cliente || 'Sem Cliente'),
+      initials: clienteObj ? ((clienteObj.PrimeiroNome ? clienteObj.PrimeiroNome[0] : '') + (clienteObj.UltimoNome ? clienteObj.UltimoNome[0] : '')).toUpperCase() || '??' : (item.Cliente ? item.Cliente.substring(0, 2).toUpperCase() : '??'),
+      email: clienteObj ? (clienteObj.Email || 'n/a') : 'n/a',
       destination: item.Destino || 'Não Definido',
       date: new Date(item.createdAt || Date.now()).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }),
       createdAt: item.createdAt || Date.now(),
@@ -30,7 +32,8 @@ const loadOrders = async () => {
       status: item.Estado || 'Pendente',
       priority: item.Prioridade || 0,
       courier: item.estafeta || null
-    }))
+    }
+    })
   } catch (error) {
     console.error('Erro ao buscar pedidos do Strapi:', error)
     orders.value = mockData.orders
