@@ -63,6 +63,9 @@
       "relation": "oneToMany",
       "target": "api::bilhete.bilhete",
       "mappedBy": "missao2"
+    },
+    "Carga": {
+      "type": "biginteger"
     }
   }
 }

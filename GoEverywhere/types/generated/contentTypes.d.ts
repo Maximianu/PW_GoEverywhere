@@ -776,6 +776,7 @@ export interface ApiMissaoMissao extends Struct.CollectionTypeSchema {
   };
   attributes: {
     bilhetes: Schema.Attribute.Relation<'oneToMany', 'api::bilhete.bilhete'>;
+    Carga: Schema.Attribute.BigInteger;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
