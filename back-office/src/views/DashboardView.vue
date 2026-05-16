@@ -4,11 +4,11 @@ import { MapPin, ShoppingCart, Clock } from 'lucide-vue-next'
 
 const stats = ref({
   availableCouriers: 0,
-  totalOrders: 0,
-  avgDeliveryTime: '18.4h'
+  totalOrders: 0
 })
 
 const regionStats = ref([])
+const planetStats = ref([])
 
 onMounted(async () => {
   try {
@@ -22,29 +22,71 @@ onMounted(async () => {
   }
 
   try {
-    const resOrders = await fetch('http://127.0.0.1:1338/api/pedido-missions?pagination[limit]=1000')
+    const resOrders = await fetch('http://127.0.0.1:1338/api/pedido-missions?populate[0]=bilhete.cliente&populate[1]=bilhete.cliente2&populate[2]=estafeta&populate[3]=bilhete.missao&populate[4]=bilhete.missao2&pagination[limit]=1000')
     if (resOrders.ok) {
       const jsonOrders = await resOrders.json()
       const dataLength = jsonOrders.data?.length ?? 0
       stats.value.totalOrders = jsonOrders.meta?.pagination?.total ?? dataLength
       
       if (jsonOrders.data && dataLength > 0) {
-        const regionsMap = {}
+        const targetRegions = ['Braga', 'Porto', 'Guimarães', 'Barcelona']
+        const regionsMap = {
+           'Braga': 0,
+           'Porto': 0,
+           'Guimarães': 0,
+           'Barcelona': 0
+        }
+        const planetsMap = {}
+
         jsonOrders.data.forEach(order => {
-          const dest = order.Destino || 'Desconhecido'
-          regionsMap[dest] = (regionsMap[dest] || 0) + 1
+          const destStr = (order.Destino || order.LocalEntrega || '').toLowerCase()
+          const matchedRegion = targetRegions.find(r => destStr.includes(r.toLowerCase()))
+          if (matchedRegion) {
+             regionsMap[matchedRegion]++
+          }
+
+          const clienteObj = order.cliente || (order.bilhete && order.bilhete.cliente) || (order.bilhete && order.bilhete.cliente2) || null;
+          const missaoObj = (order.bilhete && order.bilhete.missao) || (order.bilhete && order.bilhete.missao2) || null;
+          
+          if (missaoObj && missaoObj.Planeta && clienteObj) {
+            const planeta = missaoObj.Planeta;
+            const clienteId = clienteObj.documentId || clienteObj.id;
+            if (!planetsMap[planeta]) {
+                planetsMap[planeta] = new Set();
+            }
+            if (clienteId) {
+                planetsMap[planeta].add(clienteId);
+            }
+          }
         })
         
-        regionStats.value = Object.keys(regionsMap).map(name => {
+        let totalTargetDeliveries = Object.values(regionsMap).reduce((a, b) => a + b, 0);
+
+        regionStats.value = targetRegions.map(name => {
           const count = regionsMap[name]
           return {
             name,
             count: count >= 1000 ? (count / 1000).toFixed(1) + 'k' : count.toString(),
-            percent: Math.round((count / dataLength) * 100)
+            percent: totalTargetDeliveries > 0 ? Math.round((count / totalTargetDeliveries) * 100) : 0
           }
         }).sort((a,b) => b.percent - a.percent)
+
+        let totalPlanetClients = 0;
+        const planetCounts = Object.keys(planetsMap).map(planeta => {
+            const count = planetsMap[planeta].size;
+            totalPlanetClients += count;
+            return { name: planeta, count: count }
+        });
+
+        planetStats.value = planetCounts.map(p => ({
+            name: p.name,
+            count: p.count >= 1000 ? (p.count / 1000).toFixed(1) + 'k' : p.count.toString(),
+            percent: totalPlanetClients > 0 ? Math.round((p.count / totalPlanetClients) * 100) : 0
+        })).sort((a,b) => b.percent - a.percent)
+
       } else {
         regionStats.value = []
+        planetStats.value = []
       }
     }
   } catch (error) {
@@ -71,7 +113,7 @@ onMounted(async () => {
     </header>
 
     <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
       <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
         <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">ESTAFETAS DISPONÍVEIS</div>
         <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.availableCouriers.toLocaleString() }}</div>
@@ -80,51 +122,92 @@ onMounted(async () => {
         <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">TOTAL DE PEDIDOS</div>
         <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.totalOrders.toLocaleString() }}</div>
       </div>
-      <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
-        <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">TEMPO MÉDIO DE ENTREGA</div>
-        <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.avgDeliveryTime }}</div>
-      </div>
     </div>
 
     <!-- Chart Section -->
-    <div class="card card-dashboard relative p-8 min-h-[400px] overflow-hidden group z-10">
-      <div class="absolute -right-20 -bottom-20 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-      
-      <div class="relative z-10">
-        <div class="flex items-center justify-between mb-8">
-          <div>
-            <h2 class="text-2xl font-bold text-white mb-2 line-accent">Entregas por Região</h2>
-            <p class="text-gray-400 text-sm">Distribuição geográfica das operações</p>
-          </div>
-          <div class="badge-glow">
-            {{ regionStats.length }} Regiões
-          </div>
-        </div>
-
-        <div class="divider-glass mb-8"></div>
-
-        <div v-if="regionStats.length > 0" class="space-y-6">
-          <div v-for="(region, index) in regionStats" :key="region.name" class="animate-in" :style="`animation-delay: ${index * 100}ms`">
-            <div class="flex items-end justify-between mb-3">
-              <div>
-                <p class="text-gray-200 font-semibold">{{ region.name }}</p>
-                <p class="text-xs text-gray-500 mt-0.5">{{ region.count }} entregas</p>
-              </div>
-              <div class="text-right">
-                <span class="text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{{ region.percent }}%</span>
-              </div>
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 relative z-10">
+      <div class="card card-dashboard relative p-8 min-h-[400px] overflow-hidden group">
+        <div class="absolute -right-20 -bottom-20 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+        
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-8">
+            <div>
+              <h2 class="text-2xl font-bold text-white mb-2 line-accent">Entregas por Região</h2>
+              <p class="text-gray-400 text-sm">Distribuição nas áreas de atuação</p>
             </div>
-            <div class="w-full bg-white/5 rounded-full h-3 overflow-hidden border border-white/10 backdrop-blur-sm">
-              <div 
-                class="h-full rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 transition-all duration-1000 ease-out shadow-glow-cyan"
-                :style="{ width: region.percent + '%', animation: `slideIn 0.8s ease-out ${index * 100}ms both` }"
-              ></div>
+            <div class="badge-glow">
+              {{ regionStats.length }} Regiões
             </div>
           </div>
-        </div>
 
-        <div v-else class="flex items-center justify-center h-40 text-gray-400">
-          <p>Sem dados de regiões disponíveis</p>
+          <div class="divider-glass mb-8"></div>
+
+          <div v-if="regionStats.length > 0" class="space-y-6">
+            <div v-for="(region, index) in regionStats" :key="region.name" class="animate-in" :style="`animation-delay: ${index * 100}ms`">
+              <div class="flex items-end justify-between mb-3">
+                <div>
+                  <p class="text-gray-200 font-semibold">{{ region.name }}</p>
+                  <p class="text-xs text-gray-500 mt-0.5">{{ region.count }} entregas</p>
+                </div>
+                <div class="text-right">
+                  <span class="text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{{ region.percent }}%</span>
+                </div>
+              </div>
+              <div class="w-full bg-white/5 rounded-full h-3 overflow-hidden border border-white/10 backdrop-blur-sm">
+                <div 
+                  class="h-full rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 transition-all duration-1000 ease-out shadow-glow-cyan"
+                  :style="{ width: region.percent + '%', animation: `slideIn 0.8s ease-out ${index * 100}ms both` }"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="flex items-center justify-center h-40 text-gray-400">
+            <p>Sem dados de regiões disponíveis</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Planetas Section -->
+      <div class="card card-dashboard relative p-8 min-h-[400px] overflow-hidden group">
+        <div class="absolute -right-20 -bottom-20 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+        
+        <div class="relative z-10">
+          <div class="flex items-center justify-between mb-8">
+            <div>
+              <h2 class="text-2xl font-bold text-white mb-2 line-accent">Clientes por Planeta</h2>
+              <p class="text-gray-400 text-sm">Distribuição de clientes em missões</p>
+            </div>
+            <div class="badge-glow">
+              {{ planetStats.length }} Planetas
+            </div>
+          </div>
+
+          <div class="divider-glass mb-8"></div>
+
+          <div v-if="planetStats.length > 0" class="space-y-6">
+            <div v-for="(planet, index) in planetStats" :key="planet.name" class="animate-in" :style="`animation-delay: ${index * 100}ms`">
+              <div class="flex items-end justify-between mb-3">
+                <div>
+                  <p class="text-gray-200 font-semibold">{{ planet.name }}</p>
+                  <p class="text-xs text-gray-500 mt-0.5">{{ planet.count }} clientes</p>
+                </div>
+                <div class="text-right">
+                  <span class="text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{{ planet.percent }}%</span>
+                </div>
+              </div>
+              <div class="w-full bg-white/5 rounded-full h-3 overflow-hidden border border-white/10 backdrop-blur-sm">
+                <div 
+                  class="h-full rounded-full bg-gradient-to-r from-cyan-500 via-blue-500 to-cyan-500 transition-all duration-1000 ease-out shadow-glow-cyan"
+                  :style="{ width: planet.percent + '%', animation: `slideIn 0.8s ease-out ${index * 100}ms both` }"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="flex items-center justify-center h-40 text-gray-400">
+            <p>Sem dados de planetas disponíveis</p>
+          </div>
         </div>
       </div>
     </div>
