@@ -1621,6 +1621,10 @@ onBeforeUnmount(() => {
                     </div>
                   </div>
 
+                  <div class="text-[10px] text-white/60 font-mono mb-2">
+                    Planeta: <span class="text-white">{{ m.Planeta }}</span>
+                  </div>
+
                   <div class="grid grid-cols-2 gap-2 text-[10px] text-white/60 font-mono mb-3">
                     <div>Data: <span class="text-white">{{ m.Data }}</span></div>
                     <div>Preço: <span class="text-white">{{ formatNumber(m.Preco) }} €</span></div>
