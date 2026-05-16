@@ -146,6 +146,22 @@ const selectCarga = (value) => {
   showCargaOptions.value = false
 }
 
+const formatNumber = (value) => {
+  const number = Number(value || 0)
+  return number.toLocaleString('pt-PT')
+}
+
+const goToMissionPlanet = (mission) => {
+  const layoutByPlanet = {
+    Lua: 'moon',
+    Marte: 'mars',
+    Terra: 'earth'
+  }
+
+  const targetLayout = layoutByPlanet[mission.Planeta]
+  if (targetLayout) startWarp(targetLayout)
+}
+
 const adjustPosition = (axis, amount) => {
   const current = Number(missionForm.value[axis]) || 0
   missionForm.value[axis] = current + amount
@@ -295,7 +311,7 @@ const renderDynamicMissions = (missions) => {
     const pointData = {
       id: 'dyn_' + (m.documentId || m.id),
       name: m.Nome || 'Sem Nome',
-      description: `Data: ${m.Data} | Hora Partida: ${m.Hora_Partida} | Lotação: ${m.Lota} pessoas | Preço: ${m.Preco}€`,
+      description: `Data: ${m.Data} | Hora Partida: ${m.Hora_Partida} | Lotação: ${m.Lota} pessoas | Preço: ${formatNumber(m.Preco)} €`,
       date: m.Data,
       color: missionColor,
       isDynamic: true,
@@ -1588,14 +1604,15 @@ onBeforeUnmount(() => {
                 <div
                   v-for="m in allMissions"
                   :key="m.documentId || m.id"
-                  class="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-colors"
+                  class="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-colors cursor-pointer"
+                  @click="goToMissionPlanet(m)"
                 >
                   <div class="flex justify-between items-start mb-2">
                     <h3 class="text-sm font-bold text-white uppercase">{{ m.Nome || 'Sem Nome' }}</h3>
                     <div class="flex items-center gap-2">
                       <span class="text-[9px] bg-blue-600 px-2 py-0.5 rounded font-mono uppercase tracking-wider text-white">{{ m.Planeta }}</span>
                       <button
-                        @click="deleteMission(m)"
+                        @click.stop="deleteMission(m)"
                         class="text-red-500 hover:text-red-400 transition-colors ml-1 flex items-center justify-center"
                         title="Apagar missão"
                       >
@@ -1606,7 +1623,7 @@ onBeforeUnmount(() => {
 
                   <div class="grid grid-cols-2 gap-2 text-[10px] text-white/60 font-mono mb-3">
                     <div>Data: <span class="text-white">{{ m.Data }}</span></div>
-                    <div>Preço: <span class="text-white">{{ m.Preco }}€</span></div>
+                    <div>Preço: <span class="text-white">{{ formatNumber(m.Preco) }} €</span></div>
                     <div>Partida: <span class="text-white">{{ m.Hora_Partida }}</span></div>
                     <div>Carga: <span class="text-white">{{ m.Carga }} kg</span></div>
                     <div>Lotação: <span class="text-white">{{ m.Lota }} pessoas</span></div>
