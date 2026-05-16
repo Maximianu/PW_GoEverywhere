@@ -26,11 +26,17 @@ const planetaOptions = [
 const lotacaoOptions = [5, 10, 15, 20]
 const precoOptions = [100000, 200000, 400000]
 const cargaOptions = [500, 1000, 1500]
+const hourOptions = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
+const minuteOptions = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
+const secondOptions = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
 
 const showPlanetaOptions = ref(false)
 const showLotacaoOptions = ref(false)
 const showPrecoOptions = ref(false)
 const showCargaOptions = ref(false)
+const showTimePicker = ref(false)
+const dateInputRef = ref(null)
+const isDatePickerOpen = ref(false)
 
 const showMissionModal = ref(false)
 const missionPlanet = ref('')
@@ -52,11 +58,73 @@ const closeComboOptions = () => {
   showLotacaoOptions.value = false
   showPrecoOptions.value = false
   showCargaOptions.value = false
+  showTimePicker.value = false
+  closeDatePicker()
+}
+
+const closeFieldOptions = (except = '') => {
+  showPlanetaOptions.value = except === 'planeta' ? showPlanetaOptions.value : false
+  showLotacaoOptions.value = except === 'lotacao' ? showLotacaoOptions.value : false
+  showPrecoOptions.value = except === 'preco' ? showPrecoOptions.value : false
+  showCargaOptions.value = except === 'carga' ? showCargaOptions.value : false
+  showTimePicker.value = except === 'time' ? showTimePicker.value : false
+  if (except !== 'date') closeDatePicker()
+}
+
+function closeDatePicker () {
+  isDatePickerOpen.value = false
+  dateInputRef.value?.blur()
+}
+
+const toggleDatePicker = async () => {
+  const wasOpen = isDatePickerOpen.value
+  closeFieldOptions('date')
+
+  if (wasOpen) {
+    closeDatePicker()
+    return
+  }
+
+  isDatePickerOpen.value = true
+  await nextTick()
+
+  if (typeof dateInputRef.value?.showPicker === 'function') {
+    dateInputRef.value.showPicker()
+  } else {
+    dateInputRef.value?.focus()
+  }
+}
+
+const toggleTimePicker = () => {
+  showTimePicker.value = !showTimePicker.value
+  closeFieldOptions('time')
+}
+
+const selectedHour = computed(() => (missionForm.value.Hora_Partida || '').split(':')[0] || '')
+const selectedMinute = computed(() => (missionForm.value.Hora_Partida || '').split(':')[1] || '')
+const selectedSecond = computed(() => (missionForm.value.Hora_Partida || '').split(':')[2] || '')
+
+const selectTimePart = (part, value) => {
+  const hour = part === 'hour' ? value : (selectedHour.value || '09')
+  const minute = part === 'minute' ? value : (selectedMinute.value || '00')
+  const second = part === 'second' ? value : (selectedSecond.value || '00')
+  missionForm.value.Hora_Partida = `${hour}:${minute}:${second}`
 }
 
 const selectPlaneta = (value) => {
   missionForm.value.Planeta = value
+  missionPlanet.value = getPlanetaLabel(value) || value
   showPlanetaOptions.value = false
+  closeFieldOptions()
+
+  const layoutByPlanet = {
+    Lua: 'moon',
+    Marte: 'mars',
+    Terra: 'earth'
+  }
+
+  const targetLayout = layoutByPlanet[value]
+  if (targetLayout) startWarp(targetLayout)
 }
 
 const getPlanetaLabel = (value) => {
@@ -216,7 +284,8 @@ const renderDynamicMissions = (missions) => {
     const v = new window.THREE.Vector3(m.X, m.Y, m.Z).normalize()
     if (v.lengthSq() === 0) return
 
-    const pin = createPinMesh(0x00f2ff)
+    const missionColor = 0xff3dcb
+    const pin = createPinMesh(missionColor)
     if (targetPlanet === earth) pin.scale.set(1.2, 1.2, 1.2)
     else if (targetPlanet === mars) pin.scale.set(0.7, 0.7, 0.7)
 
@@ -228,7 +297,7 @@ const renderDynamicMissions = (missions) => {
       name: m.Nome || 'Sem Nome',
       description: `Data: ${m.Data} | Hora Partida: ${m.Hora_Partida} | Lotação: ${m.Lota} pessoas | Preço: ${m.Preco}€`,
       date: m.Data,
-      color: 0x00f2ff,
+      color: missionColor,
       isDynamic: true,
       planet: m.Planeta
     }
@@ -357,20 +426,20 @@ const MODEL_SCALE = {
 }
 
 const moonPoints = [
-  { id: 1, name: 'Apollo 11', description: 'Missão histórica da NASA à Lua.', date: 'Julho 1969', color: 0x00f2ff, x: 50, y: 20, z: 80 },
-  { id: 2, name: 'Apollo 12', description: 'Segunda aterragem tripulada na Lua.', date: 'Novembro 1969', color: 0xff6b6b, x: -60, y: -30, z: 70 },
-  { id: 3, name: 'Apollo 15', description: 'Missão Apollo com exploração científica avançada.', date: 'Julho 1971', color: 0xffd93d, x: -20, y: 70, z: 60 },
-  { id: 4, name: "Chang'e 4", description: 'Primeira aterragem suave no lado oculto da Lua.', date: 'Janeiro 2019', color: 0x6bcf7f, x: 80, y: -60, z: -20 },
-  { id: 5, name: 'Artemis I', description: 'Voo inaugural não tripulado do programa Artemis.', date: 'Novembro 2022', color: 0xa78bfa, x: 10, y: 90, z: 20 },
-  { id: 10, name: 'Artemis II', description: 'Missão tripulada em torno da Lua.', date: 'Novembro 2025', color: 0x38b6ff, x: -80, y: 10, z: 40 },
+  { id: 1, name: 'Apollo 11', description: 'A histórica missão da NASA que levou os primeiros seres humanos à superfície lunar. Neil Armstrong e Buzz Aldrin exploraram o Mar da Tranquilidade enquanto Michael Collins os aguardava em órbita. Este marco monumental ocorreu no auge da Corrida Espacial, mudando para sempre a nossa compreensão sobre os limites da exploração espacial e demonstrando a incrível capacidade da engenharia humana.', date: 'Julho 1969', color: 0x00f2ff, x: 50, y: 20, z: 80 },
+  { id: 2, name: 'Apollo 12', description: 'A segunda aterragem tripulada, que se destacou pela sua enorme precisão. A tripulação aterrou a uma curta distância da sonda Surveyor 3, no Oceano das Tormentas, permitindo-lhes recuperar peças que estavam expostas ao ambiente lunar há anos. O voo enfrentou momentos de tensão após ser atingido por um raio durante a descolagem, mas a missão foi um sucesso estrondoso.', date: 'Novembro 1969', color: 0xff6b6b, x: -60, y: -30, z: 70 },
+  { id: 3, name: 'Apollo 15', description: 'A primeira das missões "J" da Apollo, desenhada para uma permanência mais prolongada e exploração científica mais profunda. Introduziu o icónico Lunar Roving Vehicle (LRV), permitindo aos astronautas percorrer distâncias inéditas na zona de Hadley-Apennine. A missão recolheu amostras vitais de rocha, incluindo a famosa Rocha do Génesis, revolucionando os estudos lunares.', date: 'Julho 1971', color: 0xffd93d, x: -20, y: 70, z: 60 },
+  { id: 4, name: "Chang'e 4", description: 'Uma missão pioneira da agência espacial chinesa, tornando-se a primeira sonda a efetuar uma alunagem suave no lado oculto da Lua. Pousou na cratera Von Kármán, transmitindo dados através de um satélite de retransmissão estrategicamente posicionado. Esta missão abriu as portas a estudos de radioastronomia num ambiente livre de interferências terrestres.', date: 'Janeiro 2019', color: 0x6bcf7f, x: 80, y: -60, z: -20 },
+  { id: 5, name: 'Artemis I', description: 'O voo inaugural sem tripulação do monumental foguetão SLS e da nave Orion. Viajou até à Lua e colocou-se em órbita retrógrada, atestando a segurança e o desempenho de todos os sistemas críticos. Este passo crucial foi desenhado para testar as capacidades de reentrada na atmosfera terrestre a alta velocidade, certificando as bases para o futuro retorno humano.', date: 'Novembro 2022', color: 0xa78bfa, x: 10, y: 90, z: 20 },
+  { id: 10, name: 'Artemis II', description: 'A primeira missão tripulada do programa Artemis. Quatro astronautas farão uma viagem à volta da Lua, testando os sistemas de suporte de vida e navegação em espaço profundo da nave Orion. Esta missão histórica não só assinala o regresso da humanidade às redondezas lunares desde a era Apollo, mas também prepara as fundações cruciais para futuras missões a Marte.', date: 'Novembro 2025', color: 0x38b6ff, x: -80, y: 10, z: 40 },
   { id: 20, name: '+ Criar Missão', isMissionPoint: true, planet: 'Lua', color: 0xffffff, x: 30, y: -80, z: 50 }
 ]
 
 const marsPoints = [
-  { id: 6, name: 'Perseverance', description: 'Rover avançado em Marte.', date: 'Fevereiro 2021', color: 0xff4500, x: 60, y: 50, z: 50 },
-  { id: 7, name: 'Curiosity', description: 'Rover de exploração marciana.', date: 'Agosto 2012', color: 0x00ff00, x: 80, y: -30, z: 30 },
-  { id: 8, name: 'Viking 1', description: 'Primeira sonda americana a aterrar em Marte.', date: 'Julho 1976', color: 0xffd700, x: -60, y: 60, z: 40 },
-  { id: 9, name: 'Opportunity', description: 'Rover marciano de longa duração.', date: 'Janeiro 2004', color: 0x00f2ff, x: -30, y: -50, z: 80 },
+  { id: 6, name: 'Perseverance', description: 'Um rover altamente avançado desenhado para investigar astrobiologia e procurar vestígios de vida microbiana antiga. Aterrou na Cratera Jezero, onde outrora existiu um lago e um delta de rio. Em conjunto com o helicóptero Ingenuity, tem recolhido e armazenado amostras vitais de rochas marcianas que deverão ser trazidas de volta à Terra em missões futuras.', date: 'Fevereiro 2021', color: 0xff4500, x: 60, y: 50, z: 50 },
+  { id: 7, name: 'Curiosity', description: 'Aterrou de forma espetacular com a ajuda de um "sky crane" na Cratera Gale. O seu principal objetivo é estudar o clima e a geologia, determinando se a região alguma vez ofereceu condições favoráveis à vida microbiana. Equipado com um poderoso laboratório móvel a laser e vários sensores, alterou fundamentalmente o nosso conhecimento sobre o passado húmido de Marte.', date: 'Agosto 2012', color: 0x00ff00, x: 80, y: -30, z: 30 },
+  { id: 8, name: 'Viking 1', description: 'A primeira parte da missão Viking e a primeira sonda americana a realizar uma aterragem suave no planeta vermelho. Tocou o solo em Chryse Planitia e tirou as primeiras fotos panorâmicas a cores da superfície marciana. O lander e o orbiter executaram diversas experiências biológicas que ainda hoje são analisadas e geram debate sobre os seus resultados controversos.', date: 'Julho 1976', color: 0xffd700, x: -60, y: 60, z: 40 },
+  { id: 9, name: 'Opportunity', description: 'Um dos rovers gémeos da missão MER, aterrou no Meridiani Planum e revelou provas conclusivas de que a água líquida já fluiu em Marte. Originalmente concebido para uma missão de apenas 90 dias, o pequeno e robusto veículo surpreendeu a todos ao permanecer ativo por incríveis 15 anos. Explorou diversas crateras até se silenciar devido a uma colossal tempestade de poeira global.', date: 'Janeiro 2004', color: 0x00f2ff, x: -30, y: -50, z: 80 },
   { id: 21, name: '+ Criar Missão', isMissionPoint: true, planet: 'Marte', color: 0xffffff, x: -40, y: -70, z: 40 }
 ]
 
@@ -378,7 +447,7 @@ const earthPoints = [
   {
     id: 11,
     name: 'Órbita Baixa',
-    description: 'Órbita terrestre baixa.',
+    description: 'A órbita terrestre baixa (LEO) situa-se entre 200 e 2000 km de altitude. É onde circula a Estação Espacial Internacional, satélites de observação e as constelações de internet por satélite como a Starlink. A maioria das missões tripuladas opera nesta faixa, onde a Terra ainda ocupa grande parte do céu.',
     date: 'Contínuo',
     color: 0x00f2ff,
     orbitRadius: 175,
@@ -387,7 +456,7 @@ const earthPoints = [
   {
     id: 12,
     name: 'Órbita Alta',
-    description: 'Órbita geoestacionária.',
+    description: 'A órbita geoestacionária (GEO) fica a cerca de 35 786 km de altitude, onde os satélites orbitam à mesma velocidade que a rotação terrestre, parecendo fixos no céu. É usada para telecomunicações, meteorologia e transmissão televisiva. Daqui, um único satélite cobre quase 40% da superfície da Terra.',
     date: 'Contínuo',
     color: 0xffd93d,
     orbitRadius: 220,
@@ -537,9 +606,21 @@ const initThreeJS = () => {
   let prevMouse = { x: 0, y: 0 }
 
   container.addEventListener('mousedown', (e) => {
+    dragStartPosition = { x: e.clientX, y: e.clientY }
+
+    const rect = container.getBoundingClientRect()
+    mouse.x = ((e.clientX - rect.left) / container.clientWidth) * 2 - 1
+    mouse.y = -((e.clientY - rect.top) / container.clientHeight) * 2 + 1
+    raycaster.setFromCamera(mouse, camera)
+
+    const planetHits = activeMainPlanet
+      ? raycaster.intersectObject(activeMainPlanet, true)
+      : []
+
+    if (planetHits.length === 0) return
+
     isDragging.value = true
     prevMouse = { x: e.clientX, y: e.clientY }
-    dragStartPosition = { x: e.clientX, y: e.clientY }
   })
 
   window.addEventListener('mousemove', (e) => {
@@ -1176,10 +1257,9 @@ onBeforeUnmount(() => {
         enterFromClass="translate-x-full"
         leaveToClass="translate-x-full"
       >
-        <div v-if="showMissionModal" class="fixed inset-y-0 right-0 z-50 flex">
-          <div class="fixed inset-0 -z-10" @click="showMissionModal = false" />
+        <div v-if="showMissionModal" class="fixed inset-y-0 right-0 z-50 flex pointer-events-none">
 
-          <div class="relative w-[420px] bg-[#0d0d0f] border-l border-white/10 shadow-2xl flex flex-col h-full" style="overflow: visible;">
+          <div class="relative w-[420px] bg-[#0d0d0f] border-l border-white/10 shadow-2xl flex flex-col h-full pointer-events-auto" style="overflow: visible;">
             <div class="flex items-center justify-between px-7 pt-5 pb-4 border-b border-white/10 shrink-0">
               <div class="flex items-center gap-3">
                 <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
@@ -1201,6 +1281,7 @@ onBeforeUnmount(() => {
                   type="text"
                   placeholder="Ex: Missão Lunar Alpha"
                   class="field-control"
+                  @focus="closeFieldOptions()"
                 />
               </div>
 
@@ -1211,7 +1292,7 @@ onBeforeUnmount(() => {
                     <button
                       type="button"
                       class="combo-display field-control"
-                      @click="showPlanetaOptions = !showPlanetaOptions; showLotacaoOptions = false; showPrecoOptions = false; showCargaOptions = false"
+                      @click="showPlanetaOptions = !showPlanetaOptions; closeFieldOptions('planeta')"
                     >
                       <span>{{ getPlanetaLabel(missionForm.Planeta) }}</span>
                       <span class="combo-arrow-static"></span>
@@ -1239,11 +1320,12 @@ onBeforeUnmount(() => {
                       type="number"
                       min="1"
                       class="combo-input field-control"
+                      @focus="closeFieldOptions()"
                     />
                     <button
                       type="button"
                       class="combo-arrow"
-                      @click="showLotacaoOptions = !showLotacaoOptions; showPlanetaOptions = false; showPrecoOptions = false; showCargaOptions = false"
+                      @click="showLotacaoOptions = !showLotacaoOptions; closeFieldOptions('lotacao')"
                     />
                     <div v-if="showLotacaoOptions" class="combo-menu">
                       <button
@@ -1264,12 +1346,17 @@ onBeforeUnmount(() => {
                   <label class="field-label">Data</label>
                   <div class="date-field">
                     <input
+                      ref="dateInputRef"
                       v-model="missionForm.Data"
                       type="date"
                       :min="todayDate"
                       class="field-control date-white"
+                      @focus="isDatePickerOpen = true; closeFieldOptions('date')"
+                      @blur="isDatePickerOpen = false"
                     />
-                    <Calendar class="calendar-icon" :size="17" />
+                    <button type="button" class="calendar-icon calendar-icon-button" @mousedown.prevent @click="toggleDatePicker">
+                      <Calendar :size="17" />
+                    </button>
                   </div>
                 </div>
 
@@ -1281,11 +1368,12 @@ onBeforeUnmount(() => {
                       type="number"
                       min="0"
                       class="combo-input field-control"
+                      @focus="closeFieldOptions()"
                     />
                     <button
                       type="button"
                       class="combo-arrow"
-                      @click="showPrecoOptions = !showPrecoOptions; showPlanetaOptions = false; showLotacaoOptions = false; showCargaOptions = false"
+                      @click="showPrecoOptions = !showPrecoOptions; closeFieldOptions('preco')"
                     />
                     <div v-if="showPrecoOptions" class="combo-menu">
                       <button
@@ -1305,13 +1393,64 @@ onBeforeUnmount(() => {
                 <div>
                   <label class="field-label">Hora Partida</label>
                   <div class="date-field">
-                    <input
-                      v-model="missionForm.Hora_Partida"
-                      type="time"
-                      step="1"
-                      class="field-control date-white"
-                    />
-                    <Clock class="calendar-icon" :size="17" />
+                    <button type="button" class="picker-display field-control" @click="toggleTimePicker">
+                      <span :class="missionForm.Hora_Partida ? 'text-white' : 'text-white/30'">
+                        {{ missionForm.Hora_Partida || 'Escolher hora' }}
+                      </span>
+                      <span class="picker-icon">
+                        <Clock :size="17" />
+                      </span>
+                    </button>
+
+                    <div v-if="showTimePicker" class="time-menu">
+                      <div class="time-scroll-column">
+                        <p class="time-menu-label">Hora</p>
+                        <div class="time-scroll">
+                          <button
+                            v-for="hour in hourOptions"
+                            :key="hour"
+                            type="button"
+                            class="time-option"
+                            :class="{ 'time-option-selected': selectedHour === hour }"
+                            @click="selectTimePart('hour', hour)"
+                          >
+                            {{ hour }}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="time-scroll-column">
+                        <p class="time-menu-label">Minutos</p>
+                        <div class="time-scroll">
+                          <button
+                            v-for="minute in minuteOptions"
+                            :key="minute"
+                            type="button"
+                            class="time-option"
+                            :class="{ 'time-option-selected': selectedMinute === minute }"
+                            @click="selectTimePart('minute', minute)"
+                          >
+                            {{ minute }}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div class="time-scroll-column">
+                        <p class="time-menu-label">Segundos</p>
+                        <div class="time-scroll">
+                          <button
+                            v-for="second in secondOptions"
+                            :key="second"
+                            type="button"
+                            class="time-option"
+                            :class="{ 'time-option-selected': selectedSecond === second }"
+                            @click="selectTimePart('second', second)"
+                          >
+                            {{ second }}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1323,11 +1462,12 @@ onBeforeUnmount(() => {
                       type="number"
                       min="0"
                       class="combo-input field-control"
+                      @focus="closeFieldOptions()"
                     />
                     <button
                       type="button"
                       class="combo-arrow"
-                      @click="showCargaOptions = !showCargaOptions; showPlanetaOptions = false; showLotacaoOptions = false; showPrecoOptions = false"
+                      @click="showCargaOptions = !showCargaOptions; closeFieldOptions('carga')"
                     />
                     <div v-if="showCargaOptions" class="combo-menu">
                       <button
@@ -1347,7 +1487,7 @@ onBeforeUnmount(() => {
                 <div>
                   <label class="field-label">Posição X</label>
                   <div class="position-field">
-                    <input v-model="missionForm.X" type="number" step="10" class="position-input" />
+                    <input v-model="missionForm.X" type="number" step="10" class="position-input" @focus="closeFieldOptions()" />
                     <div class="position-controls">
                       <button type="button" class="position-btn" @click="adjustPosition('X', 10)">
                         <ChevronUp :size="13" />
@@ -1362,7 +1502,7 @@ onBeforeUnmount(() => {
                 <div>
                   <label class="field-label">Posição Y</label>
                   <div class="position-field">
-                    <input v-model="missionForm.Y" type="number" step="10" class="position-input" />
+                    <input v-model="missionForm.Y" type="number" step="10" class="position-input" @focus="closeFieldOptions()" />
                     <div class="position-controls">
                       <button type="button" class="position-btn" @click="adjustPosition('Y', 10)">
                         <ChevronUp :size="13" />
@@ -1377,7 +1517,7 @@ onBeforeUnmount(() => {
                 <div>
                   <label class="field-label">Posição Z</label>
                   <div class="position-field">
-                    <input v-model="missionForm.Z" type="number" step="10" class="position-input" />
+                    <input v-model="missionForm.Z" type="number" step="10" class="position-input" @focus="closeFieldOptions()" />
                     <div class="position-controls">
                       <button type="button" class="position-btn" @click="adjustPosition('Z', 10)">
                         <ChevronUp :size="13" />
@@ -1581,6 +1721,126 @@ onBeforeUnmount(() => {
   color: #ffffff;
   pointer-events: none;
   z-index: 0;
+}
+
+.calendar-icon-button {
+  right: 0;
+  width: 42px;
+  height: 100%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.calendar-icon-button:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.picker-display {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.picker-display:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.picker-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  margin: -0.25rem -0.55rem -0.25rem 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.time-menu {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 9999;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
+  background: #0d0d0f;
+  box-shadow: 0 20px 55px rgba(0, 0, 0, 0.55);
+}
+
+.time-option-selected {
+  background: #2563eb;
+  color: white;
+}
+
+.time-menu {
+  width: 320px;
+  padding: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.time-menu-label {
+  margin-bottom: 0.45rem;
+  color: rgba(255, 255, 255, 0.42);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.time-scroll-column {
+  min-width: 0;
+}
+
+.time-scroll {
+  max-height: 170px;
+  display: grid;
+  gap: 0.3rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.time-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.time-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+}
+
+.time-scroll::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.65);
+  border-radius: 999px;
+}
+
+.time-option {
+  height: 30px;
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.74rem;
+  font-weight: 800;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.time-option:hover {
+  background: rgba(59, 130, 246, 0.45);
+  color: white;
+  transform: translateY(-1px);
 }
 
 .combo-input {
