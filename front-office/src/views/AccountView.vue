@@ -1,15 +1,39 @@
 <template>
-  <div class="side-layout">
-    <main class="page-shell" style="padding: 0;">
-      <section class="panel" style="max-width: 720px; margin: 0 auto;">
+  <main class="page-shell" style="padding: 7.5rem 0 0;">
+    <section class="panel" style="max-width: 45rem; margin: 0 auto;">
         <div class="section-header">
           <div>
             <p class="small-note">Conta</p>
-            <h1 class="headline" style="font-size: 2.85rem;">Gerenciar Conta</h1>
+            <h1 class="headline" style="font-size: 2.85rem;">Gerir Conta</h1>
           </div>
         </div>
 
         <p class="subtitle">Atualize suas informações de conta.</p>
+
+        <div class="account-details-card">
+          <template v-if="bookingStore.clienteLoading">
+            <p>Loading...</p>
+          </template>
+
+          <template v-else-if="bookingStore.clienteData">
+            <div class="detail-row">
+              <strong>Primeiro Nome: </strong>
+              <span>{{ userStore.clienteData.primeiroNome }}</span>
+            </div>
+            <div class="detail-row">
+              <strong>Último Nome: </strong>
+              <span>{{ userStore.clienteData.ultimoNome }}</span>
+            </div>
+            <div class="detail-row">
+              <strong>Email: </strong>
+              <span>{{ userStore.clienteData.email }}</span>
+            </div>
+          </template>
+
+          <template v-else>
+            <p>Dados do cliente não encontrados. Faça login novamente se necessário.</p>
+          </template>
+        </div>
 
         <div class="input-group">
           <label>
@@ -18,7 +42,7 @@
           </label>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin: 24px 0;">
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: flex-start; align-items: center; margin: 1.5rem 0;">
           <button @click="updateAccount" class="btn btn-primary">Atualizar Conta</button>
           <button @click="logout" class="btn btn-secondary">Logout</button>
         </div>
@@ -26,19 +50,19 @@
         <p v-if="message" class="subtitle" :style="{ color: messageType === 'error' ? 'red' : 'green' }">{{ message }}</p>
       </section>
     </main>
-  </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { auth } from '../services/firebase'
-import { updateEmail, updatePassword, signOut } from "firebase/auth";
+import { updatePassword, signOut } from "firebase/auth";
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/UserStore'
+import { useBookingStore } from '../stores/BookingStore'
 
 const router = useRouter()
 const userStore = useUserStore()
-const newEmail = ref('')
+const bookingStore = useBookingStore()
 const newPassword = ref('')
 const message = ref('')
 const messageType = ref('')

@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "kits",
+  "info": {
+    "singularName": "kit",
+    "pluralName": "kits",
+    "displayName": "Kit"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Modelo": {
+      "type": "string"
+    },
+    "Tamanho": {
+      "type": "enumeration",
+      "enum": [
+        "XS",
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ]
+    },
+    "Preco": {
+      "type": "decimal"
+    },
+    "imagemDoKit": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    }
+  }
+}

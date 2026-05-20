@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { mockData } from '../mockData'
-import { MapPin, CheckCircle2, XCircle, UserPlus, ChevronLeft, ChevronRight, X } from 'lucide-vue-next'
+import { MapPin, CheckCircle2, XCircle, UserPlus, ChevronLeft, ChevronRight, X, Clock } from 'lucide-vue-next'
 
 const filter = ref('todos')
 
@@ -12,29 +12,18 @@ const orderToAssign = ref(null)
 const selectedCourierId = ref('')
 const isSubmitting = ref(false)
 
-const isDetailsOpen = ref(false)
-const selectedOrder = ref(null)
-
-const openDetailsDrawer = (order) => {
-  selectedOrder.value = order
-  isDetailsOpen.value = true
-}
-
-const closeDetailsDrawer = () => {
-  isDetailsOpen.value = false
-  selectedOrder.value = null
-}
-
 const loadOrders = async () => {
   try {
-    const res = await fetch('http://localhost:1338/api/pedido-missions?populate=*')
+    const res = await fetch('http://127.0.0.1:1338/api/pedido-missions?populate[0]=bilhete.cliente&populate[1]=bilhete.cliente2&populate[2]=estafeta')
     const json = await res.json()
     
-    orders.value = json.data.map(item => ({
+    orders.value = json.data.map(item => {
+      const clienteObj = item.cliente || (item.bilhete && item.bilhete.cliente) || (item.bilhete && item.bilhete.cliente2) || null;
+      return {
       id: item.documentId || item.id,
-      client: item.cliente ? `${item.cliente.PrimeiroNome || ''} ${item.cliente.UltimoNome || ''}`.trim() : (item.Cliente || 'Sem Cliente'),
-      initials: item.cliente ? ((item.cliente.PrimeiroNome ? item.cliente.PrimeiroNome[0] : '') + (item.cliente.UltimoNome ? item.cliente.UltimoNome[0] : '')).toUpperCase() || '??' : (item.Cliente ? item.Cliente.substring(0, 2).toUpperCase() : '??'),
-      email: item.cliente ? (item.cliente.Email || 'n/a') : 'n/a',
+      client: clienteObj ? `${clienteObj.PrimeiroNome || ''} ${clienteObj.UltimoNome || ''}`.trim() : (item.Cliente || 'Sem Cliente'),
+      initials: clienteObj ? ((clienteObj.PrimeiroNome ? clienteObj.PrimeiroNome[0] : '') + (clienteObj.UltimoNome ? clienteObj.UltimoNome[0] : '')).toUpperCase() || '??' : (item.Cliente ? item.Cliente.substring(0, 2).toUpperCase() : '??'),
+      email: clienteObj ? (clienteObj.Email || 'n/a') : 'n/a',
       destination: item.Destino || 'Não Definido',
       date: new Date(item.createdAt || Date.now()).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' }),
       createdAt: item.createdAt || Date.now(),
@@ -43,16 +32,17 @@ const loadOrders = async () => {
       status: item.Estado || 'Pendente',
       priority: item.Prioridade || 0,
       courier: item.estafeta || null
-    }))
+    }
+    })
   } catch (error) {
     console.error('Erro ao buscar pedidos do Strapi:', error)
-    orders.value = mockData.orders // fallback caso o Strapi não esteja acessível
+    orders.value = mockData.orders
   }
 }
 
 const loadCouriers = async () => {
   try {
-    const res = await fetch('http://localhost:1338/api/estafetas?filters[Disponivel][$eq]=true')
+    const res = await fetch('http://127.0.0.1:1338/api/estafetas?filters[Disponivel][$eq]=true')
     const json = await res.json()
     availableCouriers.value = json.data
   } catch (error) {
@@ -67,15 +57,15 @@ onMounted(() => {
 
 const updateOrderStatus = async (order, newStatus) => {
   try {
-    const response = await fetch(`http://localhost:1338/api/pedido-missions/${order.id}`, {
+    const response = await fetch(`http://127.0.0.1:1338/api/pedido-missions/${order.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: { Estado: newStatus } })
     })
-    if(response.ok) {
+    if (response.ok) {
       await loadOrders()
     } else {
-      if(response.status === 403) alert('Erro 403: Permissão negada! Ative a permissão "update" para Pedido(Mission) na Role Public do Strapi.')
+      if (response.status === 403) alert('Erro 403: Permissão negada! Ative a permissão "update" para Pedido(Mission) na Role Public do Strapi.')
       else alert('Falha ao atualizar o estado.')
     }
   } catch (error) {
@@ -100,7 +90,7 @@ const confirmAssign = async () => {
   if (!selectedCourierId.value) return
   isSubmitting.value = true
   try {
-    const response = await fetch(`http://localhost:1338/api/pedido-missions/${orderToAssign.value.id}`, {
+    const response = await fetch(`http://127.0.0.1:1338/api/pedido-missions/${orderToAssign.value.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: { estafeta: selectedCourierId.value, Estado: 'Transito' } })
@@ -110,7 +100,7 @@ const confirmAssign = async () => {
       await loadOrders()
       closeAssignDrawer()
     } else {
-      if(response.status === 403) alert('Erro 403: Permissão negada! Ative a permissão "update" para Pedido(Mission) no Strapi.')
+      if (response.status === 403) alert('Erro 403: Permissão negada! Ative a permissão "update" para Pedido(Mission) no Strapi.')
       else alert('Falha ao atribuir estafeta.')
     }
   } catch(error) {
@@ -122,17 +112,17 @@ const confirmAssign = async () => {
 
 const stats = computed(() => {
   return {
-    total: orders.value.length,
-    pending: orders.value.filter(o => o.status === 'Pendente').length,
-    approvedToday: orders.value.filter(o => o.status === 'Aprovado').length
+    total: orders.value.filter(o => o.status === 'Pendente' || o.status === 'Aprovado').length,
+    pending: orders.value.filter(o => o.status === 'Pendente').length
   }
 })
 
 const filteredOrders = computed(() => {
-  if (filter.value === 'todos') return orders.value
-  if (filter.value === 'pendentes') return orders.value.filter(o => o.status === 'Pendente')
-  if (filter.value === 'aprovados') return orders.value.filter(o => o.status === 'Aprovado')
-  return orders.value
+  const activeOrders = orders.value.filter(o => o.status === 'Pendente' || o.status === 'Aprovado')
+  if (filter.value === 'todos') return activeOrders
+  if (filter.value === 'pendentes') return activeOrders.filter(o => o.status === 'Pendente')
+  if (filter.value === 'aprovados') return activeOrders.filter(o => o.status === 'Aprovado')
+  return activeOrders
 })
 
 const setFilter = (val) => {
@@ -142,25 +132,30 @@ const setFilter = (val) => {
 
 <template>
   <div class="p-8 pb-20 max-w-[1400px] mx-auto space-y-10 animate-in fade-in duration-700 relative">
-    <!-- Header -->
-    <header class="space-y-2 relative z-10">
-      <h1 class="text-3xl font-bold text-white tracking-tight">Pedidos</h1>
-      <p class="text-gray-400 font-medium tracking-wide">Veja, aprove e atribua estafetas aos pedidos dos clientes.</p>
+
+    <!-- Header — igual ao GoEverywhere -->
+    <header class="flex flex-col items-start relative z-10">
+      <h1 class="text-4xl font-black text-white mb-2 tracking-tighter italic opacity-90 uppercase">
+        Pedidos
+      </h1>
+      <div class="flex items-center gap-2 opacity-60">
+        <div class="h-[1px] w-5 bg-blue-500"></div>
+        <p class="text-white text-[9px] font-mono uppercase tracking-[0.2em] whitespace-nowrap">
+          Veja, aprove e atribua estafetas aos pedidos
+        </p>
+        <div class="h-[1px] w-5 bg-blue-500"></div>
+      </div>
     </header>
 
     <!-- Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
       <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
-        <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">TOTAL DE PEDIDOS</div>
+        <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">A AGUARDAR AÇÃO</div>
         <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.total }}</div>
       </div>
       <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
-        <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">PEDIDOS PENDENTES</div>
+        <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">POR APROVAR (PENDENTES)</div>
         <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.pending }}</div>
-      </div>
-      <div class="bg-surface rounded-3xl p-6 border border-[#233246] relative overflow-hidden group">
-        <div class="text-gray-300 font-bold mb-3 uppercase text-xs tracking-widest relative z-10 border-b border-muted/50 pb-3">APROVADOS HOJE</div>
-        <div class="text-5xl font-black text-white relative z-10 p-2">{{ stats.approvedToday }}</div>
       </div>
     </div>
 
@@ -172,17 +167,17 @@ const setFilter = (val) => {
           @click="setFilter('todos')"
           class="pb-4 border-b-[3px] transition-colors duration-300"
           :class="filter === 'todos' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'"
-        >Todos</button>
+        >A Aguardar Ação ({{ stats.total }})</button>
         <button 
           @click="setFilter('pendentes')"
           class="pb-4 border-b-[3px] transition-colors duration-300"
           :class="filter === 'pendentes' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'"
-        >Pendentes ({{ stats.pending }})</button>
+        >Por Aprovar ({{ stats.pending }})</button>
         <button 
           @click="setFilter('aprovados')"
           class="pb-4 border-b-[3px] transition-colors duration-300"
           :class="filter === 'aprovados' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'"
-        >Aprovados</button>
+        >Por Atribuir ({{ stats.total - stats.pending }})</button>
       </div>
 
       <!-- Table Section -->
@@ -191,6 +186,7 @@ const setFilter = (val) => {
           <table class="w-full text-left border-collapse min-w-[900px]">
             <thead>
               <tr class="border-b border-[#233246] text-gray-400 text-xs uppercase tracking-widest font-semibold bg-[#111926]">
+                <th class="p-6 font-semibold w-24 text-center">ID</th>
                 <th class="p-6 font-semibold w-1/3">Cliente</th>
                 <th class="p-6 font-semibold w-1/4">Destino</th>
                 <th class="p-6 font-semibold w-1/6">Data</th>
@@ -199,7 +195,12 @@ const setFilter = (val) => {
               </tr>
             </thead>
             <tbody class="divide-y divide-[#233246]">
-              <tr v-for="order in filteredOrders" :key="order.id" class="hover:bg-[#1a2636] transition-colors group cursor-pointer" @click="openDetailsDrawer(order)">
+              <tr v-for="order in filteredOrders" :key="order.id" class="hover:bg-[#1a2636] transition-colors group">
+                <td class="p-6 text-center">
+                  <span class="font-mono text-xs font-bold text-gray-400 bg-[#111926] border border-[#233246] px-2 py-1 rounded">
+                    {{ order.id.substring(0, 8) }}
+                  </span>
+                </td>
                 <td class="p-6">
                   <div class="flex items-center gap-4">
                     <div class="w-10 h-10 rounded-full bg-[#1e2e42] flex items-center justify-center text-sm font-bold text-primary shrink-0 shadow-inner">
@@ -226,12 +227,13 @@ const setFilter = (val) => {
                   </div>
                 </td>
                 <td class="p-6">
-                  <span 
-                    class="px-3 py-1.5 rounded-full text-xs font-bold tracking-wide border"
-                    :class="order.status === 'Pendente' ? 'bg-warning/5 text-warning border-warning/10' : 'bg-success/5 text-success border-success/10'"
-                  >
-                    {{ order.status }}
-                  </span>
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide border" :class="order.status === 'Pendente' ? 'bg-gray-500/20 text-gray-300 border-gray-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'">
+                      <Clock v-if="order.status === 'Pendente'" :size="14" class="shrink-0" />
+                      <CheckCircle2 v-else :size="14" class="shrink-0" />
+                      {{ order.status }}
+                    </span>
+                  </div>
                 </td>
                 <td class="p-6">
                   <div class="flex items-center gap-3">
@@ -262,196 +264,75 @@ const setFilter = (val) => {
             </tbody>
           </table>
         </div>
-        <!-- Pagination footer  -->
-        <div class="border-t border-[#233246] p-6 flex flex-col md:flex-row items-center justify-between gap-4 bg-[#111926]">
-          <span class="text-sm text-gray-400">
-            <strong class="text-white">1-{{ filteredOrders.length }}</strong> de {{ filteredOrders.length }} resultados
-          </span>
-          <div class="flex gap-2">
-            <button class="w-9 h-9 flex items-center justify-center rounded-full border border-[#233246] text-gray-400 hover:text-white hover:border-gray-500 hover:bg-[#1a2636] transition-colors bg-[#080d14]">
-              <ChevronLeft :size="16" />
-            </button>
-            <button class="w-9 h-9 flex items-center justify-center rounded-full bg-primary text-black font-bold shadow-[0_0_10px_rgba(0,242,255,0.4)]">1</button>
-            <button class="w-9 h-9 flex items-center justify-center rounded-full border border-[#233246] text-gray-400 hover:text-white hover:border-gray-500 hover:bg-[#1a2636] transition-colors bg-[#0c121e]">2</button>
-            <button class="w-9 h-9 flex items-center justify-center rounded-full border border-[#233246] text-gray-400 hover:text-white hover:border-gray-500 hover:bg-[#1a2636] transition-colors bg-[#0c121e]">3</button>
-            <span class="px-1 text-gray-500 flex items-center justify-center">...</span>
-            <button class="w-9 h-9 flex items-center justify-center rounded-full border border-[#233246] text-gray-400 hover:text-white hover:border-gray-500 hover:bg-[#1a2636] transition-colors bg-[#0c121e]">12</button>
-            <button class="w-9 h-9 flex items-center justify-center rounded-full border border-[#233246] text-gray-400 hover:text-white hover:border-gray-500 hover:bg-[#1a2636] transition-colors bg-[#080d14]">
-              <ChevronRight :size="16" />
-            </button>
-          </div>
-        </div>
       </div>
     </div>
+
     <!-- Assign Courier Drawer -->
-    <div 
-      v-if="isAssignOpen" 
-      class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 transition-opacity"
-      @click="closeAssignDrawer"
-    ></div>
+    <Teleport to="body">
+      <Transition
+        enterActiveClass="transition-opacity duration-300"
+        leaveActiveClass="transition-opacity duration-300"
+      >
+        <div 
+          v-if="isAssignOpen" 
+          class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
+          @click="closeAssignDrawer"
+        ></div>
+      </Transition>
 
-    <div 
-      class="fixed top-0 right-0 h-full w-full sm:w-[450px] bg-[#0c121e] border-l border-[#233246] z-50 transform transition-transform duration-500 ease-in-out shadow-2xl flex flex-col"
-      :class="isAssignOpen ? 'translate-x-0' : 'translate-x-full'"
-    >
-      <div class="px-8 py-10 border-b border-[#233246] flex justify-between items-start bg-surface/50">
-        <div>
-          <h2 class="text-2xl font-bold text-white tracking-tight">Atribuir Estafeta</h2>
-          <p class="text-sm text-gray-400 mt-2 tracking-wide block">Escolha o estafeta para entregar o pedido</p>
-        </div>
-        <button @click="closeAssignDrawer" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-[#233246] transition-colors -mt-2 -mr-2">
-          <X :size="24" />
-        </button>
-      </div>
-
-      <div class="p-8 flex-1 overflow-y-auto space-y-7">
-        <div class="space-y-3 relative">
-          <label class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Estafeta</label>
-          <div class="relative">
-            <UserPlus :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
-            <select v-model="selectedCourierId" class="w-full bg-[#111926] border border-[#233246] rounded-2xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all appearance-none cursor-pointer">
-              <option value="" disabled>Selecione um estafeta disponível</option>
-              <option v-for="c in availableCouriers" :key="c.documentId || c.id" :value="c.documentId || c.id">
-                {{ c.Nome }} ({{ c.AreaDeAtuacao }})
-              </option>
-            </select>
-          </div>
-          <p v-if="availableCouriers.length === 0" class="text-warning text-sm mt-4 font-medium px-1">
-            Não existem estafetas disponíveis neste momento.
-          </p>
-        </div>
-      </div>
-
-      <div class="p-8 border-t border-[#233246] space-y-4 bg-surface/50">
-        <button 
-          @click="confirmAssign"
-          :disabled="isSubmitting || !selectedCourierId"
-          class="w-full bg-primary text-black font-bold py-4 rounded-full shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:bg-[#33f5ff] transition-all hover:-translate-y-0.5 tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+      <Transition
+        enterActiveClass="transition-transform duration-300"
+        leaveActiveClass="transition-transform duration-300"
+        enterFromClass="translate-x-full"
+        leaveToClass="translate-x-full"
+      >
+        <div 
+          v-if="isAssignOpen"
+          class="fixed top-0 right-0 h-full w-96 bg-[#141b27] border-l border-[#1f2937] z-50 flex flex-col shadow-2xl"
         >
-          <span v-if="isSubmitting">A Guardar...</span>
-          <span v-else>Confirmar Atribuição</span>
-        </button>
-        <button class="w-full bg-transparent text-white font-medium py-4 rounded-full border border-muted hover:bg-muted/50 hover:border-gray-400 transition-colors tracking-wide" @click="closeAssignDrawer">
-          Cancelar
-        </button>
-      </div>
-    </div>
+          <div class="p-6 border-b border-[#1f2937] flex items-center justify-between">
+            <div>
+              <h3 class="text-xl font-bold text-white tracking-tight">Atribuir Estafeta</h3>
+              <p class="text-xs text-gray-400 mt-1 tracking-wide block">Escolha o estafeta para entregar o pedido</p>
+            </div>
+            <button @click="closeAssignDrawer" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-[#1f2937] transition-colors">
+              <X :size="24" />
+            </button>
+          </div>
 
-    <!-- Order Details Drawer -->
-    <div 
-      v-if="isDetailsOpen" 
-      class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40 transition-opacity"
-      @click="closeDetailsDrawer"
-    ></div>
-
-    <div 
-      class="fixed top-0 right-0 h-full w-full sm:w-[500px] bg-[#0c121e] border-l border-[#233246] z-50 transform transition-transform duration-500 ease-in-out shadow-2xl flex flex-col"
-      :class="isDetailsOpen ? 'translate-x-0' : 'translate-x-full'"
-    >
-      <div class="px-8 py-10 border-b border-[#233246] flex justify-between items-start bg-surface/50">
-        <div>
-          <h2 class="text-2xl font-bold text-white tracking-tight">Detalhes do Pedido</h2>
-          <p class="text-sm text-gray-400 mt-2 tracking-wide block flex items-center gap-2">
-            ID: <span class="font-mono text-white">{{ selectedOrder?.id }}</span>
-          </p>
-        </div>
-        <button @click="closeDetailsDrawer" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-[#233246] transition-colors -mt-2 -mr-2">
-          <X :size="24" />
-        </button>
-      </div>
-
-      <div v-if="selectedOrder" class="p-8 flex-1 overflow-y-auto space-y-8">
-        
-        <!-- Estado -->
-        <div class="flex items-center gap-4 p-5 rounded-2xl bg-[#111926] border border-[#233246]">
-          <div class="flex-1">
-            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Estado Atual</h3>
-            <div class="flex items-center gap-2">
-              <span 
-                class="px-3 py-1.5 rounded-full text-sm font-bold tracking-wide border inline-flex items-center gap-2"
-                :class="selectedOrder.status === 'Pendente' ? 'bg-warning/10 text-warning border-warning/20' : selectedOrder.status === 'Transito' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-success/10 text-success border-success/20'"
-              >
-                {{ selectedOrder.status }}
-              </span>
+          <div class="p-6 flex-1 overflow-y-auto space-y-6">
+            <div class="space-y-2 relative">
+              <label class="text-xs font-bold text-primary uppercase tracking-widest pl-1">Estafeta</label>
+              <div class="relative">
+                <UserPlus :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
+                <select v-model="selectedCourierId" class="w-full bg-[#0c1219] border border-[#2a3b4f] rounded-xl py-3.5 pl-12 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all appearance-none cursor-pointer">
+                  <option value="" disabled>Selecione um estafeta disponível</option>
+                  <option v-for="c in availableCouriers" :key="c.documentId || c.id" :value="c.documentId || c.id">
+                    {{ c.Nome }} ({{ c.AreaDeAtuacao }})
+                  </option>
+                </select>
+              </div>
+              <p v-if="availableCouriers.length === 0" class="text-warning text-sm mt-4 font-medium px-1">
+                Não existem estafetas disponíveis neste momento.
+              </p>
             </div>
           </div>
-          <div class="text-right border-l border-[#233246] pl-6 py-2">
-            <h3 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Prioridade</h3>
-            <span class="text-xl font-black text-white" :class="{'text-danger': selectedOrder.priority > 2}">{{ selectedOrder.priority || 'Normal' }}</span>
+
+          <div class="p-6 border-t border-[#1f2937] space-y-3 bg-[#141b27]">
+            <button 
+              @click="confirmAssign"
+              :disabled="isSubmitting || !selectedCourierId"
+              class="w-full bg-primary text-black font-bold py-3.5 rounded-lg shadow-[0_0_20px_rgba(0,242,255,0.3)] hover:bg-[#33f5ff] transition-all hover:-translate-y-0.5 tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span v-if="isSubmitting">A Guardar...</span>
+              <span v-else>Confirmar Atribuição</span>
+            </button>
+            <button class="w-full bg-[#0c1219] text-white font-medium py-3.5 rounded-lg border border-[#2a3b4f] hover:bg-[#1a2332] transition-colors tracking-wide" @click="closeAssignDrawer">
+              Cancelar
+            </button>
           </div>
         </div>
-
-        <!-- Dados do Cliente -->
-        <div class="space-y-4">
-          <h3 class="text-xs font-bold text-primary uppercase tracking-widest border-b border-[#233246] pb-2">
-            Informação de Entrega
-          </h3>
-          <div class="space-y-3">
-             <div class="flex justify-between items-center py-2 border-b border-[#233246]/50">
-               <span class="text-gray-400 text-sm">Cliente</span>
-               <span class="text-white font-semibold">{{ selectedOrder.client }}</span>
-             </div>
-             <div class="flex justify-between items-center py-2 border-b border-[#233246]/50">
-               <span class="text-gray-400 text-sm">Destino</span>
-               <span class="text-white font-semibold flex items-center gap-2"><MapPin :size="14" class="text-primary"/> {{ selectedOrder.destination }}</span>
-             </div>
-             <div class="flex justify-between items-center py-2 border-b border-[#233246]/50">
-               <span class="text-gray-400 text-sm">Morada / Detalhes</span>
-               <span class="text-white font-semibold text-right max-w-[60%]">{{ selectedOrder.localEntrega }}</span>
-             </div>
-          </div>
-        </div>
-
-        <!-- Dados do Estafeta -->
-        <div class="space-y-4">
-          <h3 class="text-xs font-bold text-primary uppercase tracking-widest border-b border-[#233246] pb-2">
-            Estafeta Atribuído
-          </h3>
-          <div v-if="selectedOrder.courier" class="bg-[#111926] rounded-2xl p-5 border border-[#233246] flex flex-col gap-3">
-             <div class="flex justify-between items-center">
-               <span class="text-gray-400 text-sm">Nome</span>
-               <span class="text-white font-semibold">{{ selectedOrder.courier.Nome }}</span>
-             </div>
-             <div class="flex justify-between items-center">
-               <span class="text-gray-400 text-sm">Área de Atuação</span>
-               <span class="text-white font-medium">{{ selectedOrder.courier.AreaDeAtuacao }}</span>
-             </div>
-             <div class="flex justify-between items-center">
-               <span class="text-gray-400 text-sm">Telemóvel</span>
-               <span class="text-white font-medium">{{ selectedOrder.courier.Telemovel }}</span>
-             </div>
-          </div>
-          <div v-else class="text-gray-500 text-sm italic py-2">
-            Nenhum estafeta atribuído a este pedido no momento.
-          </div>
-        </div>
-
-        <!-- Detalhes do Registo -->
-        <div class="space-y-4">
-          <h3 class="text-xs font-bold text-primary uppercase tracking-widest border-b border-[#233246] pb-2">
-            Detalhes do Registo
-          </h3>
-          <div class="space-y-3">
-             <div class="flex justify-between items-center py-2 border-b border-[#233246]/50">
-               <span class="text-gray-400 text-sm">Data de Criação</span>
-               <span class="text-gray-200 text-sm">{{ new Date(selectedOrder.createdAt).toLocaleString('pt-PT') }}</span>
-             </div>
-             <div class="flex justify-between items-center py-2">
-               <span class="text-gray-400 text-sm">Última Atualização</span>
-               <span class="text-gray-200 text-sm">{{ new Date(selectedOrder.updatedAt).toLocaleString('pt-PT') }}</span>
-             </div>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="p-8 border-t border-[#233246] bg-surface/50">
-        <button class="w-full bg-[#111926] text-white font-medium flex items-center justify-center gap-2 py-3.5 rounded-full border border-[#233246] hover:bg-[#1a2636] transition-colors tracking-wide" @click="closeDetailsDrawer">
-          Fechar Atalhos
-        </button>
-      </div>
-    </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
-
-

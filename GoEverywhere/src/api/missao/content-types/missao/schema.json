@@ -1,0 +1,71 @@
+{
+  "kind": "collectionType",
+  "collectionName": "missaos",
+  "info": {
+    "singularName": "missao",
+    "pluralName": "missaos",
+    "displayName": "Missao"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "Nome": {
+      "type": "string"
+    },
+    "Data": {
+      "type": "date"
+    },
+    "Hora_Partida": {
+      "type": "time"
+    },
+    "Hora_Chegada": {
+      "type": "time"
+    },
+    "Planeta": {
+      "type": "enumeration",
+      "required": true,
+      "default": "Terra",
+      "enum": [
+        "Terra",
+        "Lua",
+        "Marte"
+      ]
+    },
+    "X": {
+      "type": "float",
+      "required": true,
+      "default": 0
+    },
+    "Y": {
+      "type": "float",
+      "required": true,
+      "default": 0
+    },
+    "Z": {
+      "type": "float",
+      "required": true,
+      "default": 0
+    },
+    "Lota": {
+      "type": "integer",
+      "required": true,
+      "default": 5
+    },
+    "Preco": {
+      "type": "biginteger",
+      "required": true,
+      "default": "50000"
+    },
+    "bilhetes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::bilhete.bilhete",
+      "mappedBy": "missao2"
+    },
+    "Carga": {
+      "type": "biginteger"
+    }
+  }
+}

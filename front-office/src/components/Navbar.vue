@@ -108,7 +108,7 @@ const isActive = (item) => {
 <style scoped>
 .navbar {
   position: fixed;
-  top: 24px;
+  top: 1.5rem;
   left: 50%;
   transform: translateX(-50%); /* Centraliza a barra */
   z-index: 1000;
@@ -116,20 +116,20 @@ const isActive = (item) => {
 
 .nav-container {
   display: flex;
-  gap: 40px;
-  padding: 16px 32px;
+  gap: 2.5rem;
+  padding: 1rem 2rem;
   background: rgba(16, 20, 25, 0.8); /* O fundo que já usas */
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 242, 255, 0.2);
-  border-radius: 100px; /* Estilo 'pílula' muito comum em headers minimalistas */
+  backdrop-filter: blur(0.75rem);
+  border: 0.0625rem solid rgba(0, 242, 255, 0.2);
+  border-radius: 6.25rem; /* Estilo 'pílula' muito comum em headers minimalistas */
 }
 
 .nav-item {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 14px;
+  font-size: 0.875rem;
   color: #b9cacb;
   text-decoration: none;
-  letter-spacing: 1px;
+  letter-spacing: 0.0625rem;
   transition: color 0.3s ease;
 }
 

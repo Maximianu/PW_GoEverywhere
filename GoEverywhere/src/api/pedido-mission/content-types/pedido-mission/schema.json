@@ -4,21 +4,13 @@
   "info": {
     "singularName": "pedido-mission",
     "pluralName": "pedido-missions",
-    "displayName": "Pedido(Mission)"
+    "displayName": "Pedido"
   },
   "options": {
     "draftAndPublish": true
   },
   "pluginOptions": {},
   "attributes": {
-    "Destino": {
-      "type": "enumeration",
-      "enum": [
-        "Lua",
-        "Marte ",
-        "Jupiter"
-      ]
-    },
     "Prioridade": {
       "type": "integer"
     },
@@ -40,11 +32,22 @@
       "relation": "oneToOne",
       "target": "api::estafeta.estafeta"
     },
-    "cliente": {
+    "kit": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::kit.kit"
+    },
+    "bilhete": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::bilhete.bilhete",
+      "mappedBy": "pedido"
+    },
+    "estafeta2": {
       "type": "relation",
       "relation": "manyToOne",
-      "target": "api::cliente.cliente",
-      "inversedBy": "pedido_missions"
+      "target": "api::estafeta.estafeta",
+      "inversedBy": "pedidos"
     }
   }
 }
