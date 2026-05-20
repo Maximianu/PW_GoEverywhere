@@ -75,7 +75,13 @@
           <h2 class="cta-title">JÁ TEM EQUIPAMENTO?</h2>
           <p class="cta-text">Traga o seu equipamento para uma inspeção e verifique se é adequado à viagem.</p>
         </div>
-        <button class="btn-outline-cyan">REGISTAR EQUIPAMENTO</button>
+        <button
+          class="btn-outline-cyan"
+          :class="{ 'active-registered': selectedKit === null }"
+          @click="registerEquipment"
+        >
+          REGISTAR EQUIPAMENTO
+        </button>
       </section>
 
       <div class="payment-section">
@@ -95,7 +101,7 @@
 
 <script setup>
 import { useBookingStore } from '../stores/BookingStore'
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 
 const bookingStore = useBookingStore()
 
@@ -104,6 +110,16 @@ const selectedKit = computed(() => bookingStore.selectedKit)
 const selectKit = (kitId) => {
   bookingStore.setSelectedKit(kitId)
 }
+
+const registerEquipment = () => {
+  bookingStore.setSelectedKit(null)
+}
+
+onMounted(() => {
+  bookingStore.fetchKits().catch(err => {
+    console.error('Erro ao carregar kits:', err)
+  })
+})
 </script>
 
 <style scoped>

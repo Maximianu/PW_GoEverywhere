@@ -92,9 +92,11 @@ import {
 } from "firebase/auth"
 import { criarClienteStrapi } from '../services/strapi'
 import { useBookingStore } from '../stores/BookingStore'
+import { useUserStore } from '../stores/UserStore'
 
 const router = useRouter()
 const bookingStore = useBookingStore()
+const userStore = useUserStore()
 
 const user = ref(null)
 const email = ref('')
@@ -109,7 +111,8 @@ onMounted(() => {
   onAuthStateChanged(auth, async (currentUser) => {
     user.value = currentUser
     if (currentUser?.email) {
-      // Sincroniza o cliente do Strapi com o estado global
+      // Sincroniza o cliente do Strapi com o UserStore e o BookingStore
+      await userStore.loadClienteFromStrapi(currentUser.email)
       await bookingStore.fetchClienteByEmail(currentUser.email)
     }
   })
@@ -130,9 +133,10 @@ const handleLogin = async () => {
   isLoading.value = true
   try {
     await signInWithEmailAndPassword(auth, email.value, password.value)
-    // Após login, carrega os dados do cliente no store para habilitar reservas
+    // Após login, carrega o cliente do Strapi para o UserStore e para o BookingStore
+    await userStore.loadClienteFromStrapi(email.value)
     await bookingStore.fetchClienteByEmail(email.value)
-    console.log('Cliente carregado no store:', bookingStore.cliente)
+    console.log('Cliente carregado no userStore:', userStore.clienteData)
     router.push('/')
   } catch (error) {
     alert("Falha na autenticação: " + error.message)
@@ -152,9 +156,10 @@ const handleRegisto = async () => {
     await createUserWithEmailAndPassword(auth, email.value, password.value)
     // 2. Criar no Strapi
     await criarClienteStrapi(email.value, primeiroNome.value, ultimoNome.value)
-    // 3. Popular o Store com o novo ID[cite: 3]
+    // 3. Popular o UserStore e o BookingStore com os dados do cliente Strapi
+    await userStore.loadClienteFromStrapi(email.value)
     await bookingStore.fetchClienteByEmail(email.value)
-    console.log('Cliente carregado no store:', bookingStore.clienteId)
+    console.log('Cliente carregado no userStore:', userStore.clienteData)
     alert("Conta de explorador criada com sucesso!")
     router.push('/')
   } catch (error) {

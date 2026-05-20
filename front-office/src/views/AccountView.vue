@@ -17,16 +17,16 @@
 
           <template v-else-if="bookingStore.clienteData">
             <div class="detail-row">
-              <strong>Primeiro Nome:</strong>
-              <span>{{ bookingStore.clienteData.nome }}</span>
+              <strong>Primeiro Nome: </strong>
+              <span>{{ userStore.clienteData.primeiroNome }}</span>
             </div>
             <div class="detail-row">
-              <strong>Último Nome:</strong>
-              <span>{{ bookingStore.clienteData.sobrenome }}</span>
+              <strong>Último Nome: </strong>
+              <span>{{ userStore.clienteData.ultimoNome }}</span>
             </div>
             <div class="detail-row">
-              <strong>Email:</strong>
-              <span>{{ bookingStore.clienteData.email }}</span>
+              <strong>Email: </strong>
+              <span>{{ userStore.clienteData.email }}</span>
             </div>
           </template>
 

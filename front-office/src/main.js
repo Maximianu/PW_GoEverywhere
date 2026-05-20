@@ -36,6 +36,7 @@ onAuthStateChanged(auth, async (user) => {
     userStore.userEmail = user.email
     console.log("Pinia atualizado com:", user.email)
     if (user.email) {
+      await userStore.loadClienteFromStrapi(user.email)
       await bookingStore.fetchClienteByEmail(user.email)
     }
   } else {

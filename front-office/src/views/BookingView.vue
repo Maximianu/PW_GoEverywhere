@@ -11,88 +11,44 @@
       <div class="booking-grid">
         <!-- Left Column -->
         <div class="booking-main">
-          <!-- Section 1: Destination Selection -->
+          <!-- Section 1: Mission Selection -->
           <div class="booking-section">
-            <h2 class="section-title">01. seleção do destino</h2>
-            
+            <h2 class="section-title">01. seleção de missão</h2>
+
             <!-- Loading State -->
             <div v-if="bookingStore.loading" class="loading-state">
-              <span>A carregar destinos...</span>
+              <span>A carregar missões...</span>
             </div>
-            
-            <!-- Destination Grid -->
-            <div v-else-if="bookingStore.destinos.length > 0" class="destination-grid">
+
+            <!-- Mission Grid -->
+            <div v-else-if="bookingStore.missoes.length > 0" class="destination-grid">
               <div 
-                v-for="destino in bookingStore.destinos" 
-                :key="destino.id"
+                v-for="missao in bookingStore.missoes" 
+                :key="missao.id"
                 class="destination-card"
-                :class="{ 'destination-card--selected': isSelected(destino) }"
-                @click="selectDestino(destino)"
+                :class="{ 'destination-card--selected': isSelected(missao) }"
+                @click="selectMissao(missao)"
               >
-                
-                <div class="card-duration" :class="{ 'card-duration--active': isSelected(destino) }">
-                  {{ getDuracao(destino) }}
+                <div class="card-duration" :class="{ 'card-duration--active': isSelected(missao) }">
+                  {{ getMissaoData(missao) }}
                 </div>
-                <h3 class="card-title">{{ getNomeDestino(destino) }}</h3>
-                <div class="card-gradient" v-if="isSelected(destino)"></div>
+                <h3 class="card-title">{{ getNomeMissao(missao) }}</h3>
+                <p class="card-subtitle">{{ getMissaoDestino(missao) }}</p>
+                <div class="card-gradient" v-if="isSelected(missao)"></div>
               </div>
             </div>
-            
+
             <!-- Empty State -->
             <div v-else class="empty-state">
-              <span>Nenhum destino disponível</span>
+              <span>Nenhuma missão disponível</span>
             </div>
           </div>
 
-          <!-- Section 2: Mission Parameters -->
           <div class="parameters-section">
-            <h2 class="section-title">
-              <ol class="parameters-list">
-                <li>02. parametros da missão</li>
-              </ol>
-            </h2>
-
-            <div class="parameters-grid">
-              <!-- Data de Lançamento -->
-              <div class="parameter-field">
-                <label class="parameter-label">data de lançamento</label>
-                <div class="parameter-input">
-                  <span class="input-date">{{ formattedDate }}</span>
-                  <div class="input-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                      <line x1="16" y1="2" x2="16" y2="6"></line>
-                      <line x1="8" y1="2" x2="8" y2="6"></line>
-                      <line x1="3" y1="10" x2="21" y2="10"></line>
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Número de Passageiros -->
-              <div class="parameter-field">
-                <label class="parameter-label">número de passageiros</label>
-                <div class="passenger-controls">
-                  <button 
-                    class="passenger-btn" 
-                    @click="bookingStore.decrementarPassageiros()"
-                    :disabled="bookingStore.numeroPassageiros <= 1"
-                  >
-                    −
-                  </button>
-                  <div class="passenger-count">
-                    {{ String(bookingStore.numeroPassageiros).padStart(2, '0') }}
-                  </div>
-                  <button 
-                    class="passenger-btn" 
-                    @click="bookingStore.incrementarPassageiros()"
-                    :disabled="bookingStore.numeroPassageiros >= 20"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            </div>
+            <h2 class="section-title">02. detalhes da missão</h2>
+            <p class="parameters-note">
+              A missão selecionada já contém data e lotação fixas definidas pelos administradores.
+            </p>
           </div>
         </div>
 
@@ -104,28 +60,22 @@
               <h3 class="pricing-title">SUMÁRIO DO PREÇO</h3>
             </div>
             <div class="pricing-body">
-              <!-- Trajetória -->
+              <!-- Missão -->
               <div class="pricing-row">
-                <span class="pricing-label">Trajetoria ({{ bookingStore.nomeDestino }})</span>
-                <span class="pricing-value">{{ bookingStore.formatPrice(bookingStore.custoTrajetoria) }}</span>
+                <span class="pricing-label">Missão ({{ bookingStore.nomeMissao }})</span>
+                <span class="pricing-value">{{ bookingStore.formatPrice(bookingStore.custoMissao) }}</span>
               </div>
-              
-              <!-- Combustível -->
+
+              <!-- Kit Atual -->
               <div class="pricing-row">
-                <span class="pricing-label">Combustível</span>
-                <span class="pricing-value">{{ bookingStore.formatPrice(bookingStore.custoCombustivel) }}</span>
+                <span class="pricing-label">Kit selecionado</span>
+                <span class="pricing-value">{{ bookingStore.formatPrice(bookingStore.kitPrice) }}</span>
               </div>
-              
-              <!-- Life Support -->
+
+              <!-- Tripulação -->
               <div class="pricing-row">
-                <span class="pricing-label">Life Support ({{ bookingStore.diasDestino }} Days)</span>
-                <span class="pricing-value">{{ bookingStore.formatPrice(bookingStore.custoLifeSupport * bookingStore.numeroPassageiros) }}</span>
-              </div>
-              
-              <!-- Seguro -->
-              <div class="pricing-row">
-                <span class="pricing-label">Seguro</span>
-                <span class="pricing-value">{{ bookingStore.formatPrice(bookingStore.custoSeguro * bookingStore.numeroPassageiros) }}</span>
+                <span class="pricing-label">Tripulação</span>
+                <span class="pricing-value">{{ bookingStore.numeroPassageiros }} pax</span>
               </div>
 
               <!-- Total -->
@@ -165,63 +115,46 @@
 
 <script setup>
 import { useBookingStore } from '../stores/BookingStore'
-import { onMounted, computed, watch } from 'vue'
+import { onMounted } from 'vue'
 
 const bookingStore = useBookingStore()
 
-// Debug: watcher para verificar mudanças
-watch(() => bookingStore.destinos, (newVal) => {
-  console.log('Destinos changed:', newVal)
-}, { immediate: true })
-
-// Data formatada
-const formattedDate = computed(() => {
-  const date = new Date()
-  const day = String(date.getDate()).padStart(2, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const year = date.getFullYear() + 2
-  return `${day}/${month}/${year}`
-})
-
-// Verificar se destino está selecionado
-function isSelected(destino) {
-  return bookingStore.destinoSelecionado?.id === destino.id
+// Verificar se missão está selecionada
+function isSelected(missao) {
+  return bookingStore.missaoSelecionada?.id === missao.id
 }
 
-// Selecionar destino
-const selectDestino = (destino) => {
-  bookingStore.selecionarDestino(destino)
+// Selecionar missão
+const selectMissao = (missao) => {
+  bookingStore.selecionarMissao(missao)
 }
 
-// Obter nome do destino
-const getNomeDestino = (destino) => {
-  if (!destino) return ''
-  // Tenta primeiro o formato direto do Strapi, depois o fallback com attributes
-  return destino.Tipo || (destino.attributes && destino.attributes.Tipo) || ''
+// Obter nome da missão
+const getNomeMissao = (missao) => {
+  if (!missao) return ''
+  return missao.Nome || missao.attributes?.Nome || ''
 }
 
-// Obter duração formatada
-function getDuracao(destino) {
-  if (!destino) return '0 DAYS'
-  const dias = destino.Dias || (destino.attributes && destino.attributes.Dias) || 0
-  if (dias >= 365) {
-    const anos = Math.floor(dias / 365)
-    return `${anos} YEAR${anos > 1 ? 'S' : ''}`
-  }
-  return `${dias} DAY${dias > 1 ? 'S' : ''}`
+// Obter destino/planeta da missão
+const getMissaoDestino = (missao) => {
+  if (!missao) return ''
+  const planeta = missao.Planeta || missao.attributes?.Planeta || ''
+  return planeta ? `Destino: ${planeta}` : ''
 }
 
+// Obter data da missão
+const getMissaoData = (missao) => {
+  if (!missao) return ''
+  const rawDate = missao.Data || missao.attributes?.Data || ''
+  if (!rawDate) return ''
+  const date = new Date(rawDate)
+  return date.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
 
-
-// Carregar destinos ao montar
+// Carregar missões ao montar
 onMounted(() => {
-  console.log('BookingView mounted, fetching destinos...')
-  console.log('Initial destinos:', bookingStore.destinos)
-  bookingStore.fetchDestinos().then(() => {
-    console.log('Destinos loaded:', bookingStore.destinos)
-    console.log('Destinos length:', bookingStore.destinos.length)
-  }).catch(err => {
-    console.error('Error fetching destinos:', err)
+  bookingStore.fetchMissoes().catch(err => {
+    console.error('Error fetching missões:', err)
   })
 })
 </script>

@@ -60,12 +60,8 @@
 
           <div class="summary-list">
             <div class="list-row">
-              <span>Trajetória</span>
-              <strong>{{ bookingStore.formatPrice(bookingStore.custoTrajetoria) }}</strong>
-            </div>
-            <div class="list-row">
-              <span>Combustível</span>
-              <strong>{{ bookingStore.formatPrice(bookingStore.custoCombustivel) }}</strong>
+              <span>Missão</span>
+              <strong>{{ bookingStore.formatPrice(bookingStore.custoMissao) }}</strong>
             </div>
             <div class="list-row">
               <span>Kit escolhido</span>
@@ -102,6 +98,7 @@
 <script setup>
 import { useBookingStore } from '../stores/BookingStore'
 import { useUserStore } from '../stores/UserStore'
+import { criarBilheteStrapi, criarPedidoStrapi } from '../services/strapi'
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -111,65 +108,55 @@ const router = useRouter()
 
 const morada = ref('')
 const clienteId = computed(() => {
-  const id = bookingStore.clienteId || localStorage.getItem('clienteId')
+  const id = userStore.clienteData?.id || bookingStore.clienteId || localStorage.getItem('clienteId')
   return Number.isFinite(Number(id)) ? Number(id) : null
 })
-const isPaymentDisabled = computed(() => !clienteId.value)
-
-const STRAPI_URL = 'http://localhost:1338'
-const STRAPI_API_TOKEN = 'e5c8410d2d4b81559a226941df1112c58791d9ebfeaf62f90e3f1055e06b05bae371cf49690d3f832aa83e8c577292c95f2b1f2a917f85bd5fc5888c755dea11276758af6986d1e5323ec20a12a361a4898dff9f2337da80b1c9cda498e71b56c81917ef9a62821fcf49529819510110fd66a0cbf965822ef7f2493181ed373e'
+const isPaymentDisabled = computed(() => !clienteId.value && !userStore.userEmail)
 
 const confirmarMissao = async () => {
-  // Validar se a morada foi preenchida
   if (!morada.value.trim()) {
     alert('Por favor, preencha a morada de entrega.')
     return
   }
 
-  // Validar se há destino selecionado
-  if (!bookingStore.destinoSelecionado || !bookingStore.destinoSelecionado.id) {
-    alert('Destino não selecionado. Por favor, volte e selecione um destino.')
+  const selectedMissao = bookingStore.missaoSelecionada
+  if (!selectedMissao || !selectedMissao.id) {
+    alert('Missão não selecionada. Por favor, volte e selecione uma missão.')
     return
   }
 
-  // Validar se há cliente ID numérico
-  if (!clienteId.value) {
+  let effectiveClienteId = clienteId.value
+  if (!effectiveClienteId && userStore.userEmail) {
+    const cliente = await bookingStore.fetchClienteByEmail(userStore.userEmail)
+    effectiveClienteId = cliente?.id || userStore.clienteData?.id || null
+  }
+
+  if (!effectiveClienteId) {
     alert('Informações de cliente não encontradas. Por favor, faça login novamente.')
     return
   }
 
   try {
-    const payload = {
-      data: {
-        destino: bookingStore.destinoSelecionado.id,
-        cliente: clienteId.value,
-        LocalEntrega: morada.value,
-        Kit: bookingStore.selectedKit,
-        NumeroPassageiros: bookingStore.numeroPassageiros,
-        Estado: 'Pendente'
-      }
+    const bilheteResponse = await criarBilheteStrapi(effectiveClienteId, selectedMissao.id)
+    const bilheteId = bilheteResponse?.data?.id
+
+    if (!bilheteId) {
+      throw new Error('Falha ao criar bilhete no Strapi.')
     }
 
-    const response = await fetch(`${STRAPI_URL}/api/pedido-missions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${STRAPI_API_TOKEN}`
-      },
-      body: JSON.stringify(payload)
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(`Erro ao criar missão: ${errorData.error?.message || response.statusText}`)
+    const pedidoPayload = {
+      bilhete: bilheteId,
+      LocalEntrega: morada.value,
+      Estado: 'Pendente'
     }
 
-    const data = await response.json()
-    console.log('Missão criada com sucesso:', data)
-    
-    alert('Missão confirmada com sucesso! Redirecionando para o histórico de missões...')
-    
-    // Limpar dados e redirecionar
+    if (bookingStore.selectedKit !== null && bookingStore.selectedKitId) {
+      pedidoPayload.kit = bookingStore.selectedKitId
+    }
+
+    await criarPedidoStrapi(pedidoPayload)
+
+    alert('Reserva concluída com sucesso! Redirecionando para a página de missões...')
     morada.value = ''
     router.push('/missions')
   } catch (error) {

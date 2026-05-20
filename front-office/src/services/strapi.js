@@ -101,3 +101,125 @@ export async function obterClientesStrapi() {
     throw error;
   }
 }
+
+export async function obterMissoesStrapi() {
+  try {
+    const response = await fetch(
+      `${STRAPI_URL}/api/missaos?filters[Data][$notNull]=true&filters[Planeta][$notNull]=true&sort=Data:asc`,
+      {
+        method: 'GET',
+        headers
+      }
+    );
+
+    if (!response.ok) {
+      const errorDetails = await response.json().catch(() => null);
+      console.error('Erro detalhado do Strapi (obterMissoes):', JSON.stringify(errorDetails, null, 2));
+      throw new Error(`Erro ${response.status}: ${errorDetails?.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Erro ao obter missões:', error);
+    throw error;
+  }
+}
+
+export async function obterKitsStrapi() {
+  try {
+    const response = await fetch(`${STRAPI_URL}/api/kits?sort=Modelo:asc`, {
+      method: 'GET',
+      headers
+    });
+
+    if (!response.ok) {
+      const errorDetails = await response.json().catch(() => null);
+      console.error('Erro detalhado do Strapi (obterKits):', JSON.stringify(errorDetails, null, 2));
+      throw new Error(`Erro ${response.status}: ${errorDetails?.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.data;
+  } catch (error) {
+    console.error('Erro ao obter kits:', error);
+    throw error;
+  }
+}
+
+export async function obterBilhetesPorClienteStrapi(clienteId) {
+  if (!clienteId) {
+    throw new Error('ClienteId é obrigatório para buscar bilhetes.')
+  }
+
+  try {
+    const response = await fetch(
+      `${STRAPI_URL}/api/bilhetes?filters[cliente][id][$eq]=${encodeURIComponent(clienteId)}&populate=*`,
+      {
+        method: 'GET',
+        headers
+      }
+    )
+
+    if (!response.ok) {
+      const errorDetails = await response.json().catch(() => null);
+      console.error('Erro detalhado do Strapi (obterBilhetesPorCliente):', JSON.stringify(errorDetails, null, 2));
+      throw new Error(`Erro ${response.status}: ${errorDetails?.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.data || [];
+  } catch (error) {
+    console.error('Erro ao obter bilhetes por cliente:', error);
+    throw error;
+  }
+}
+
+export async function criarBilheteStrapi(clienteId, missaoId) {
+  try {
+    const response = await fetch(`${STRAPI_URL}/api/bilhetes`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        data: {
+          cliente: clienteId,
+          missao: missaoId
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errorDetails = await response.json().catch(() => null);
+      console.error('Erro detalhado do Strapi (criarBilhete):', JSON.stringify(errorDetails, null, 2));
+      throw new Error(`Erro ${response.status}: ${errorDetails?.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Erro na criação do bilhete:', error);
+    throw error;
+  }
+}
+
+export async function criarPedidoStrapi(payload) {
+  try {
+    const response = await fetch(`${STRAPI_URL}/api/pedido-missions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ data: payload })
+    });
+
+    if (!response.ok) {
+      const errorDetails = await response.json().catch(() => null);
+      console.error('Erro detalhado do Strapi (criarPedido):', JSON.stringify(errorDetails, null, 2));
+      throw new Error(`Erro ${response.status}: ${errorDetails?.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Erro na criação do pedido:', error);
+    throw error;
+  }
+}
