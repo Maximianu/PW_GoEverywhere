@@ -16,16 +16,16 @@ async function request(endpoint, options = {}) {
     return response.json()
 }
 
-export async function getPedidos() {
-    return request('/pedido-missions?populate=*')
+export async function getPedidos(estafetaId) {
+    return request(`/pedido-missions?filters[estafeta][id][$eq]=${estafetaId}&populate=*`)
 }
 
-export async function getPedidoById(id) {
-    return request(`/pedido-missions/${id}?populate=*`)
+export async function getPedidoById(documentId) {
+    return request(`/pedido-missions/${documentId}?populate=*`)
 }
 
-export async function updatePedidoEstado(id, estado) {
-    return request(`/pedido-missions/${id}`, {
+export async function updatePedidoEstado(documentId, estado) {
+    return request(`/pedido-missions/${documentId}`, {
         method: 'PUT',
         body: JSON.stringify({
             data: {
@@ -33,4 +33,18 @@ export async function updatePedidoEstado(id, estado) {
             },
         }),
     })
+}
+
+export async function updatePedido(documentId, data) {
+    return request(`/pedido-missions/${documentId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+            data,
+        }),
+    })
+}
+
+export function getEstafetaLogado() {
+    const dados = localStorage.getItem('estafeta')
+    return dados ? JSON.parse(dados) : null
 }

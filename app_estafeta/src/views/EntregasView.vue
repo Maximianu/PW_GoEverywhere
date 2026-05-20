@@ -45,7 +45,7 @@
           <div class="delivery-top-row">
             <div>
               <h2>{{ delivery.name }}</h2>
-              <span class="delivery-id">#{{ delivery.id }}</span>
+              <span class="delivery-id">#{{ delivery.numero }}</span>
             </div>
 
             <span class="status-pill" :class="pillClass(delivery.status)">
@@ -74,27 +74,65 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { getPedidos, getEstafetaLogado } from '../services/api'
 
 const router = useRouter()
 const search = ref('')
 const deliveries = ref([])
 
+function getClienteNome(item) {
+  const cliente = item.cliente
+
+  if (!cliente) return 'Cliente não definido'
+
+  const primeiro = cliente.PrimeiroNome || ''
+  const ultimo = cliente.UltimoNome || ''
+
+  const nomeCompleto = `${primeiro} ${ultimo}`.trim()
+
+  return nomeCompleto || cliente.Email || 'Cliente não definido'
+}
+
+function mapStatus(status) {
+  if (!status) return 'Pendente'
+
+  const value = status.toLowerCase()
+
+  if (value.includes('transito') || value.includes('trânsito') || value.includes('rota')) {
+    return 'Em rota'
+  }
+
+  if (value.includes('concluido') || value.includes('concluído')) {
+    return 'Entregue'
+  }
+
+  if (value.includes('não') || value.includes('nao')) {
+    return 'Não Entregue'
+  }
+
+  return 'Pendente'
+}
+
 async function carregarEntregas() {
-  const estafeta = JSON.parse(localStorage.getItem('estafeta'))
+  const estafeta = getEstafetaLogado()
 
-  const response = await fetch(
-    `http://localhost:1338/api/pedido-missions?filters[estafeta][id][$eq]=${estafeta.id}&populate=*`
-  )
+  if (!estafeta) {
+    router.push('/')
+    return
+  }
 
-  const result = await response.json()
+  const result = await getPedidos(estafeta.id)
 
-  deliveries.value = result.data.map((item) => ({
-    id: item.id,
-    name: item.Cliente || 'Cliente não definido',
-    address: item.LocalEntrega || item.Destino || 'Morada não definida',
-    time: item.Horario || 'Horário não definido',
-    status: item.Estado === 'Transito' ? 'Em rota' : item.Estado || 'Pendente',
-  }))
+  deliveries.value = result.data
+    .map((item) => ({
+      id: item.documentId,
+      numero: item.id,
+      name: getClienteNome(item),
+      address: item.LocalEntrega || item.Destino || 'Morada não definida',
+      time: item.Horario || 'Horário não definido',
+      status: mapStatus(item.Estado),
+    }))
+    .filter((item) => item.status === 'Pendente' || item.status === 'Em rota')
 }
 
 onMounted(carregarEntregas)
@@ -106,7 +144,7 @@ const filteredDeliveries = computed(() => {
   return deliveries.value.filter((delivery) => {
     return (
       delivery.name.toLowerCase().includes(term) ||
-      String(delivery.id).includes(term) ||
+      String(delivery.numero).includes(term) ||
       delivery.address.toLowerCase().includes(term) ||
       delivery.status.toLowerCase().includes(term)
     )
