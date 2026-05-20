@@ -1,9 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { mockData } from '../mockData'
-import { MapPin, CheckCircle2, XCircle, UserPlus, ChevronLeft, ChevronRight, X, Clock } from 'lucide-vue-next'
+import { MapPin, CheckCircle2, XCircle, UserPlus, ChevronLeft, ChevronRight, X, Clock, List, Layers, ChevronDown } from 'lucide-vue-next'
 
 const filter = ref('todos')
+const viewMode = ref('missions')
+const expandedMissions = ref([])
 
 const orders = ref([])
 const availableCouriers = ref([])
@@ -14,11 +16,12 @@ const isSubmitting = ref(false)
 
 const loadOrders = async () => {
   try {
-    const res = await fetch('http://127.0.0.1:1338/api/pedido-missions?populate[0]=bilhete.cliente&populate[1]=bilhete.cliente2&populate[2]=estafeta')
+    const res = await fetch('http://127.0.0.1:1338/api/pedido-missions?populate[0]=bilhete.cliente&populate[1]=bilhete.cliente2&populate[2]=estafeta&populate[3]=bilhete.missao&populate[4]=bilhete.missao2')
     const json = await res.json()
     
     orders.value = json.data.map(item => {
       const clienteObj = item.cliente || (item.bilhete && item.bilhete.cliente) || (item.bilhete && item.bilhete.cliente2) || null;
+      const missaoObj = (item.bilhete && item.bilhete.missao) || (item.bilhete && item.bilhete.missao2) || null;
       return {
       id: item.documentId || item.id,
       client: clienteObj ? `${clienteObj.PrimeiroNome || ''} ${clienteObj.UltimoNome || ''}`.trim() : (item.Cliente || 'Sem Cliente'),
@@ -31,7 +34,14 @@ const loadOrders = async () => {
       localEntrega: item.LocalEntrega || 'Não Definido',
       status: item.Estado || 'Pendente',
       priority: item.Prioridade || 0,
-      courier: item.estafeta || null
+      courier: item.estafeta || null,
+      mission: missaoObj ? {
+        id: missaoObj.documentId || missaoObj.id,
+        nome: missaoObj.Nome || 'Sem Nome',
+        planeta: missaoObj.Planeta || 'Desconhecido',
+        data: missaoObj.Data ? new Date(missaoObj.Data).toLocaleDateString('pt-PT') : 'N/A',
+        lota: missaoObj.Lota || 0
+      } : null
     }
     })
   } catch (error) {
@@ -128,6 +138,47 @@ const filteredOrders = computed(() => {
 const setFilter = (val) => {
   filter.value = val
 }
+
+const toggleMission = (missionId) => {
+  const index = expandedMissions.value.indexOf(missionId)
+  if (index > -1) {
+    expandedMissions.value.splice(index, 1)
+  } else {
+    expandedMissions.value.push(missionId)
+  }
+}
+
+const groupedByMission = computed(() => {
+  const groups = {}
+  
+  // Create a default group for unassigned orders
+  groups['unassigned'] = {
+    mission: null,
+    orders: []
+  }
+  
+  filteredOrders.value.forEach(order => {
+    if (order.mission && order.mission.id) {
+      const mId = order.mission.id
+      if (!groups[mId]) {
+        groups[mId] = {
+          mission: order.mission,
+          orders: []
+        }
+      }
+      groups[mId].orders.push(order)
+    } else {
+      groups['unassigned'].orders.push(order)
+    }
+  })
+
+  // Remove unassigned group if it's empty
+  if (groups['unassigned'].orders.length === 0) {
+    delete groups['unassigned']
+  }
+
+  return groups
+})
 </script>
 
 <template>
@@ -161,27 +212,48 @@ const setFilter = (val) => {
 
     <!-- Filters & Table -->
     <div class="space-y-6">
-      <!-- Tabs -->
-      <div class="flex gap-8 border-b border-[#233246] px-2 text-sm font-semibold">
-        <button 
-          @click="setFilter('todos')"
-          class="pb-4 border-b-[3px] transition-colors duration-300"
-          :class="filter === 'todos' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'"
-        >A Aguardar Ação ({{ stats.total }})</button>
-        <button 
-          @click="setFilter('pendentes')"
-          class="pb-4 border-b-[3px] transition-colors duration-300"
-          :class="filter === 'pendentes' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'"
-        >Por Aprovar ({{ stats.pending }})</button>
-        <button 
-          @click="setFilter('aprovados')"
-          class="pb-4 border-b-[3px] transition-colors duration-300"
-          :class="filter === 'aprovados' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'"
-        >Por Atribuir ({{ stats.total - stats.pending }})</button>
+      <!-- Tabs and View Mode Toggle -->
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+        <!-- Tabs -->
+        <div class="flex gap-8 border-b border-[#233246] px-2 text-sm font-semibold">
+          <button 
+            @click="setFilter('todos')"
+            class="pb-4 border-b-[3px] transition-colors duration-300"
+            :class="filter === 'todos' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'"
+          >A Aguardar Ação ({{ stats.total }})</button>
+          <button 
+            @click="setFilter('pendentes')"
+            class="pb-4 border-b-[3px] transition-colors duration-300"
+            :class="filter === 'pendentes' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'"
+          >Por Aprovar ({{ stats.pending }})</button>
+          <button 
+            @click="setFilter('aprovados')"
+            class="pb-4 border-b-[3px] transition-colors duration-300"
+            :class="filter === 'aprovados' ? 'border-primary text-primary shadow-[0_4px_10px_-4px_rgba(0,242,255,0.4)]' : 'border-transparent text-gray-500 hover:text-gray-300'"
+          >Por Atribuir ({{ stats.total - stats.pending }})</button>
+        </div>
+        
+        <!-- View Mode Toggle -->
+        <div class="flex bg-[#111926] p-1.5 rounded-xl border border-[#233246] shrink-0">
+          <button 
+            @click="viewMode = 'list'"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+            :class="viewMode === 'list' ? 'bg-primary text-black shadow-[0_0_15px_rgba(0,242,255,0.2)]' : 'text-gray-400 hover:text-gray-200'"
+          >
+            <List :size="16" /> Lista
+          </button>
+          <button 
+            @click="viewMode = 'missions'"
+            class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+            :class="viewMode === 'missions' ? 'bg-primary text-black shadow-[0_0_15px_rgba(0,242,255,0.2)]' : 'text-gray-400 hover:text-gray-200'"
+          >
+            <Layers :size="16" /> Missões
+          </button>
+        </div>
       </div>
 
-      <!-- Table Section -->
-      <div class="bg-surface border border-[#233246] rounded-[2rem] overflow-hidden shadow-2xl">
+      <!-- Table Section (List View) -->
+      <div v-if="viewMode === 'list'" class="bg-surface border border-[#233246] rounded-[2rem] overflow-hidden shadow-2xl">
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse min-w-[900px]">
             <thead>
@@ -263,6 +335,127 @@ const setFilter = (val) => {
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Missions View -->
+      <div v-else class="space-y-4">
+        <div v-if="Object.keys(groupedByMission).length > 0" class="space-y-4">
+          <div v-for="(group, mId) in groupedByMission" :key="mId" class="bg-surface border border-[#233246] rounded-2xl overflow-hidden shadow-lg transition-all duration-300" :class="{'ring-1 ring-primary/50': expandedMissions.includes(mId)}">
+            <!-- Accordion Header -->
+            <div 
+              @click="toggleMission(mId)"
+              class="p-6 flex items-center justify-between cursor-pointer hover:bg-[#1a2636] transition-colors"
+            >
+              <div class="flex items-center gap-6">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-inner"
+                     :class="group.mission ? 'bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border border-indigo-500/30 text-indigo-400' : 'bg-gray-800 border border-gray-700 text-gray-400'">
+                   <Layers v-if="group.mission" :size="24" />
+                   <List v-else :size="24" />
+                </div>
+                <div>
+                  <h3 class="text-xl font-bold text-white">
+                    {{ group.mission ? group.mission.nome : 'Sem Missão Atribuída' }}
+                  </h3>
+                  <div v-if="group.mission" class="flex items-center gap-3 text-sm text-gray-400 mt-1">
+                    <span class="inline-flex items-center gap-1"><MapPin :size="14"/> {{ group.mission.planeta }}</span>
+                    <span>&bull;</span>
+                    <span class="text-gray-300 font-medium">Lotação: {{ group.orders.length }} / {{ group.mission.lota }}</span>
+                  </div>
+                  <div v-else class="text-sm text-gray-400 mt-1">Pedidos sem missão específica</div>
+                </div>
+              </div>
+              
+              <div class="flex items-center gap-6">
+                <div class="flex -space-x-2">
+                  <div class="text-xs font-bold bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full">
+                    {{ group.orders.length }} Pedido{{ group.orders.length !== 1 ? 's' : '' }}
+                  </div>
+                </div>
+                <div class="text-gray-400 transition-transform duration-300" :class="{'rotate-180 text-white': expandedMissions.includes(mId)}">
+                  <ChevronDown :size="24" />
+                </div>
+              </div>
+            </div>
+            
+            <!-- Accordion Content (Table) -->
+            <div v-show="expandedMissions.includes(mId)" class="border-t border-[#233246] bg-[#111926]">
+               <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[900px]">
+                  <thead>
+                    <tr class="border-b border-[#233246] text-gray-400 text-xs uppercase tracking-widest font-semibold bg-[#0c1219]">
+                      <th class="p-5 pl-6 font-semibold">ID</th>
+                      <th class="p-5 font-semibold">Cliente</th>
+                      <th class="p-5 font-semibold">Destino Final</th>
+                      <th class="p-5 font-semibold">Status</th>
+                      <th class="p-5 pr-6 font-semibold">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-[#233246]">
+                    <tr v-for="order in group.orders" :key="order.id" class="hover:bg-[#1a2636] transition-colors group">
+                      <td class="p-5 pl-6">
+                        <span class="font-mono text-xs font-bold text-gray-400 bg-[#111926] border border-[#233246] px-2 py-1 rounded">
+                          {{ order.id.substring(0, 8) }}
+                        </span>
+                      </td>
+                      <td class="p-5">
+                        <div class="flex items-center gap-3">
+                          <div class="w-8 h-8 rounded-full bg-[#1e2e42] flex items-center justify-center text-xs font-bold text-primary shrink-0 shadow-inner">
+                            {{ order.initials }}
+                          </div>
+                          <span class="text-gray-200 font-semibold text-sm">{{ order.client }}</span>
+                        </div>
+                      </td>
+                      <td class="p-5 text-sm">
+                        <div class="flex items-center gap-2 text-gray-400">
+                          <MapPin :size="14" class="text-gray-500" />
+                          {{ order.destination }}
+                        </div>
+                      </td>
+                      <td class="p-5">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider border" :class="order.status === 'Pendente' ? 'bg-gray-500/20 text-gray-300 border-gray-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/30'">
+                          <Clock v-if="order.status === 'Pendente'" :size="12" class="shrink-0" />
+                          <CheckCircle2 v-else :size="12" class="shrink-0" />
+                          {{ order.status }}
+                        </span>
+                      </td>
+                      <td class="p-5 pr-6">
+                        <div class="flex items-center gap-3">
+                          <template v-if="order.status === 'Pendente'">
+                            <button @click.stop="updateOrderStatus(order, 'Aprovado')" class="w-6 h-6 flex items-center justify-center text-success border border-success/30 rounded-full hover:bg-success hover:text-black transition-all text-xs" title="Aprovar">
+                              <CheckCircle2 :size="14" strokeWidth="3" />
+                            </button>
+                            <button @click.stop="updateOrderStatus(order, 'Rejeitado')" class="w-6 h-6 flex items-center justify-center text-danger border border-danger/30 rounded-full hover:bg-danger hover:text-black transition-all text-xs" title="Rejeitar">
+                              <XCircle :size="14" strokeWidth="3" />
+                            </button>
+                          </template>
+                          <button 
+                            v-if="!order.courier"
+                            @click.stop="order.status === 'Aprovado' ? openAssignModal(order) : null"
+                            class="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all"
+                            :class="order.status === 'Aprovado' ? 'bg-primary text-black shadow-[0_0_10px_rgba(0,242,255,0.3)] hover:bg-[#33f5ff]' : 'bg-transparent border border-muted text-gray-300 cursor-not-allowed opacity-50'"
+                          >
+                            Atribuir
+                            <UserPlus :size="12" strokeWidth="2.5" />
+                          </button>
+                          <div v-else class="px-3 py-1 rounded-full text-xs font-bold bg-[#1a2636] text-primary border border-primary/30 flex items-center gap-1">
+                             Atribuído
+                             <CheckCircle2 :size="12" strokeWidth="3" />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+               </div>
+            </div>
+          </div>
+        </div>
+        <div v-else class="flex items-center justify-center py-12 bg-surface border border-[#233246] rounded-[2rem] shadow-2xl">
+          <div class="text-center">
+            <Layers class="mx-auto mb-4 text-gray-600" :size="48" />
+            <p class="text-gray-400 font-medium">Nenhum pedido encontrado</p>
+          </div>
         </div>
       </div>
     </div>

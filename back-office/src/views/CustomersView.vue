@@ -9,7 +9,7 @@ const customers = ref([])
 
 const loadCustomers = async () => {
   try {
-    const res = await fetch('http://127.0.0.1:1338/api/clientes?populate=*')
+    const res = await fetch('http://127.0.0.1:1338/api/clientes?populate[0]=bilhetes&populate[1]=bilhetes.pedido')
     const json = await res.json()
     customers.value = json.data.map(item => ({
       id: item.documentId || item.id,
@@ -18,8 +18,8 @@ const loadCustomers = async () => {
       ultimoNome: item.UltimoNome || '',
       email: item.Email || 'n/a',
       initials: ((item.PrimeiroNome ? item.PrimeiroNome[0] : '') + (item.UltimoNome ? item.UltimoNome[0] : '')).toUpperCase() || '??',
-      pedidos: item.pedido_missions?.length || 0,
-      pedidosList: item.pedido_missions || [],
+      pedidos: item.bilhetes?.length || 0,
+      pedidosList: item.bilhetes?.map(b => b.pedido).filter(p => p) || [],
       dataCriacao: new Date(item.createdAt).toLocaleDateString('pt-PT')
     }))
   } catch (error) {

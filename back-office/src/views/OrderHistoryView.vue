@@ -9,7 +9,7 @@ const orders = ref([])
 const isDetailsOpen = ref(false)
 const selectedOrder = ref(null)
 
-const viewMode = ref('list')
+const viewMode = ref('missions')
 const expandedMissions = ref([])
 
 const toggleMission = (missionId) => {
