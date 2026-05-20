@@ -9,6 +9,11 @@ const router = createRouter({
       redirect: '/moon-3d'
     },
     {
+      path: '/login',
+      name: 'login',
+      component: () => import('../views/LoginView.vue')
+    },
+    {
       path: '/moon-3d',
       name: 'moon-3d',
       component: () => import('../views/Moon3DView.vue')

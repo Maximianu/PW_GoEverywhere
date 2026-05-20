@@ -66,6 +66,9 @@
     },
     "Carga": {
       "type": "biginteger"
+    },
+    "Problema": {
+      "type": "text"
     }
   }
 }

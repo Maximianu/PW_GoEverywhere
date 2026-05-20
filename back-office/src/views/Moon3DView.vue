@@ -1,13 +1,12 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { Settings, Home, MapPin, Calendar, Clock, Trash2, ChevronUp, ChevronDown } from 'lucide-vue-next'
+import { MapPin, Calendar, Clock, Trash2, Pencil, ChevronUp, ChevronDown } from 'lucide-vue-next'
 
 const containerRef = ref(null)
-const router = useRouter()
 const selectedPoint = ref(null)
 const isLoading = ref(true)
 const labelsContainer = ref(null)
+const showFutureTripsOnly = ref(false)
 
 const todayDate = computed(() => {
   const hoje = new Date()
@@ -40,6 +39,7 @@ const isDatePickerOpen = ref(false)
 
 const showMissionModal = ref(false)
 const missionPlanet = ref('')
+const editingMission = ref(null)
 const missionForm = ref({
   Nome: '',
   Planeta: '',
@@ -168,6 +168,7 @@ const adjustPosition = (axis, amount) => {
 }
 
 const openMission = (planet = '') => {
+  editingMission.value = null
   missionPlanet.value = planet
   missionForm.value = {
     Nome: '',
@@ -186,6 +187,27 @@ const openMission = (planet = '') => {
   selectedPoint.value = null
 }
 
+const openEditMission = (mission) => {
+  editingMission.value = mission
+  missionPlanet.value = mission.Planeta || ''
+  missionForm.value = {
+    Nome: mission.Nome || '',
+    Planeta: mission.Planeta || 'Terra',
+    Lota: mission.Lota || '',
+    Data: mission.Data || todayDate.value,
+    Hora_Partida: mission.Hora_Partida || '',
+    Carga: mission.Carga || '',
+    Preco: mission.Preco || '',
+    X: mission.X ?? 0,
+    Y: mission.Y ?? 0,
+    Z: mission.Z ?? 0
+  }
+  closeComboOptions()
+  showMissionModal.value = true
+  showMissionsDrawer.value = false
+  selectedPoint.value = null
+}
+
 const isSubmitting = ref(false)
 
 const submitMission = async () => {
@@ -200,18 +222,24 @@ const submitMission = async () => {
     payload.data.Y = parseFloat(payload.data.Y) || 0
     payload.data.Z = parseFloat(payload.data.Z) || 0
 
-    const response = await fetch('http://127.0.0.1:1338/api/missaos', {
-      method: 'POST',
+    const missionId = editingMission.value?.documentId || editingMission.value?.id
+    const url = editingMission.value
+      ? `http://127.0.0.1:1338/api/missaos/${missionId}`
+      : 'http://127.0.0.1:1338/api/missaos'
+
+    const response = await fetch(url, {
+      method: editingMission.value ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
 
     if (response.ok) {
       showMissionModal.value = false
+      editingMission.value = null
       await loadMissions()
     } else {
       const err = await response.json()
-      alert('Falha ao criar a missão: ' + (err.error?.message || 'Erro desconhecido'))
+      alert(`Falha ao ${editingMission.value ? 'editar' : 'criar'} a missão: ` + (err.error?.message || 'Erro desconhecido'))
     }
   } catch (error) {
     console.error(error)
@@ -976,16 +1004,18 @@ const updateLabels = () => {
         (activeMainPlanet === mars && p.userData.planet === 'Marte') ||
         (activeMainPlanet === earth && p.userData.planet === 'Terra')
       )
+      const canShowStaticPoint = !showFutureTripsOnly.value || p.userData.isMissionPoint
 
       const shouldShow =
         !isWarping &&
         (
-          (activeMainPlanet === moon && isMoonPoint) ||
-          (activeMainPlanet === mars && isMarsPoint) ||
-          (activeMainPlanet === earth && isEarthPoint) ||
+          (canShowStaticPoint && activeMainPlanet === moon && isMoonPoint) ||
+          (canShowStaticPoint && activeMainPlanet === mars && isMarsPoint) ||
+          (canShowStaticPoint && activeMainPlanet === earth && isEarthPoint) ||
           isDynamicOnActive
         )
 
+      p.visible = shouldShow
       el.style.transform = `translate(10px, -50%) translate(${x}px, ${y}px)`
       el.style.opacity = (v.z > 1 || !shouldShow) ? '0' : '1'
       el.style.pointerEvents = (v.z > 1 || isDragging.value || !shouldShow) ? 'none' : 'auto'
@@ -1204,16 +1234,14 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="absolute top-10 right-10 z-20 flex gap-3">
-      <router-link
-        to="/dashboard"
-        class="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 text-white rounded-lg hover:bg-white/10 transition-all text-xs font-semibold backdrop-blur-xl"
+      <button
+        type="button"
+        @click="showFutureTripsOnly = !showFutureTripsOnly"
+        class="flex items-center gap-2 px-4 py-2 border text-white rounded-lg transition-all text-xs font-semibold backdrop-blur-xl"
+        :class="showFutureTripsOnly ? 'bg-blue-600 border-blue-400/50 shadow-lg shadow-blue-600/20' : 'bg-white/5 border-white/10 hover:bg-white/10'"
       >
-        <Home :size="14" />
-        Dashboard
-      </router-link>
-
-      <button class="p-2 bg-white/5 border border-white/10 text-white rounded-lg hover:bg-white/10 transition-all">
-        <Settings :size="14" />
+        <Calendar :size="14" />
+        Viagens Futuras
       </button>
     </div>
 
@@ -1280,9 +1308,9 @@ onBeforeUnmount(() => {
               <div class="flex items-center gap-3">
                 <div class="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                 <div>
-                  <p class="text-white/40 text-[9px] font-mono uppercase tracking-[0.2em]">Nova Missão</p>
+                  <p class="text-white/40 text-[9px] font-mono uppercase tracking-[0.2em]">{{ editingMission ? 'Editar Missão' : 'Nova Missão' }}</p>
                   <h2 class="text-lg font-black text-white uppercase tracking-tight">
-                    {{ missionPlanet ? `Destino: ${missionPlanet}` : 'Criar Missão' }}
+                    {{ editingMission ? (missionForm.Nome || 'Editar Missão') : (missionPlanet ? `Destino: ${missionPlanet}` : 'Criar Missão') }}
                   </h2>
                 </div>
               </div>
@@ -1559,7 +1587,7 @@ onBeforeUnmount(() => {
                 :disabled="isSubmitting"
                 class="flex-1 py-2.5 bg-blue-600 text-white rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-blue-500 transition-all shadow-lg active:scale-95 disabled:opacity-50"
               >
-                {{ isSubmitting ? 'A lançar...' : 'Lançar Missão' }}
+                {{ isSubmitting ? (editingMission ? 'A guardar...' : 'A lançar...') : (editingMission ? 'Guardar Missão' : 'Lançar Missão') }}
               </button>
             </div>
           </div>
@@ -1611,6 +1639,13 @@ onBeforeUnmount(() => {
                     <h3 class="text-sm font-bold text-white uppercase">{{ m.Nome || 'Sem Nome' }}</h3>
                     <div class="flex items-center gap-2">
                       <span class="text-[9px] bg-blue-600 px-2 py-0.5 rounded font-mono uppercase tracking-wider text-white">{{ m.Planeta }}</span>
+                      <button
+                        @click.stop="openEditMission(m)"
+                        class="text-blue-400 hover:text-blue-300 transition-colors ml-1 flex items-center justify-center"
+                        title="Editar missão"
+                      >
+                        <Pencil :size="14" />
+                      </button>
                       <button
                         @click.stop="deleteMission(m)"
                         class="text-red-500 hover:text-red-400 transition-colors ml-1 flex items-center justify-center"
