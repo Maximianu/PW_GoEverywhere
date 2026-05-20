@@ -801,6 +801,7 @@ export interface ApiMissaoMissao extends Struct.CollectionTypeSchema {
     Preco: Schema.Attribute.BigInteger &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'50000'>;
+    Problema: Schema.Attribute.Text;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

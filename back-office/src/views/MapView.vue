@@ -8,6 +8,8 @@ const POLLING_INTERVAL = 10000
 
 const mapContainer = ref(null)
 const courierData = ref([])
+const orderData = ref([])
+const selectedCourier = ref(null)
 const isLoading = ref(false)
 const isConnected = ref(false)
 const lastUpdate = ref(null)
@@ -39,6 +41,43 @@ const filteredCouriers = computed(() => {
     return matchSearch && matchFilter
   })
 })
+
+const normalizeRelation = (relation) => {
+  if (!relation) return null
+  if (relation.data) {
+    const data = relation.data
+    return {
+      id: data.id,
+      documentId: data.documentId,
+      ...(data.attributes || data)
+    }
+  }
+  return relation
+}
+
+const selectedCourierOrders = computed(() => {
+  if (!selectedCourier.value) return []
+  const selectedIds = [
+    selectedCourier.value.id,
+    selectedCourier.value.documentId
+  ].filter(Boolean).map(String)
+
+  return orderData.value.filter(order => {
+    const courier = normalizeRelation(order.courier)
+    if (!courier) return false
+    const courierIds = [
+      courier.id,
+      courier.documentId
+    ].filter(Boolean).map(String)
+    return courierIds.some(id => selectedIds.includes(id))
+  })
+})
+
+const isSameCourier = (a, b) => {
+  if (!a || !b) return false
+  return String(a.id) === String(b.id) ||
+    (a.documentId && b.documentId && a.documentId === b.documentId)
+}
 
 watch(filteredCouriers, () => {
   updateMapMarkers()
@@ -92,6 +131,7 @@ const fetchCouriers = async () => {
       const a = item.attributes ?? item
       return {
         id: item.id,
+        documentId: item.documentId ?? a.documentId,
         nome: a.Nome ?? a.nome ?? `Estafeta ${item.id}`,
         disponivel: a.Disponivel ?? a.disponivel ?? false,
         area: a.AreaDeAtuacao ?? a.areaDeAtuacao ?? '',
@@ -104,6 +144,13 @@ const fetchCouriers = async () => {
     isConnected.value = true
     lastUpdate.value = new Date()
     updateMapMarkers()
+    if (selectedCourier.value) {
+      const updatedSelected = courierData.value.find(c =>
+        String(c.id) === String(selectedCourier.value.id) ||
+        (c.documentId && c.documentId === selectedCourier.value.documentId)
+      )
+      if (updatedSelected) selectedCourier.value = updatedSelected
+    }
   } catch (err) {
     error.value = err.message
     isConnected.value = false
@@ -118,6 +165,43 @@ const fetchCouriers = async () => {
   } finally {
     isLoading.value = false
   }
+}
+
+const fetchOrders = async () => {
+  try {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(STRAPI_TOKEN && { Authorization: `Bearer ${STRAPI_TOKEN}` })
+    }
+    const res = await fetch('/api/pedido-missions?populate[0]=bilhete.cliente&populate[1]=bilhete.cliente2&populate[2]=estafeta&pagination[pageSize]=100', { headers })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const json = await res.json()
+
+    orderData.value = (json.data || []).map(item => {
+      const a = item.attributes ?? item
+      const bilhete = a.bilhete ?? item.bilhete ?? null
+      const clienteObj = a.cliente || bilhete?.cliente || bilhete?.cliente2 || null
+      const courier = normalizeRelation(a.estafeta ?? item.estafeta ?? null)
+
+      return {
+        id: item.documentId || item.id,
+        client: clienteObj ? `${clienteObj.PrimeiroNome || ''} ${clienteObj.UltimoNome || ''}`.trim() : (a.Cliente || 'Sem Cliente'),
+        destination: a.Destino || 'Não definido',
+        localEntrega: a.LocalEntrega || 'Não definido',
+        status: a.Estado || 'Pendente',
+        priority: a.Prioridade || 0,
+        createdAt: a.createdAt || item.createdAt || null,
+        courier
+      }
+    })
+  } catch (err) {
+    console.error('Erro ao buscar pedidos do Strapi:', err)
+    orderData.value = []
+  }
+}
+
+const refreshMapData = async () => {
+  await Promise.all([fetchCouriers(), fetchOrders()])
 }
 
 const getInitials = (nome) => {
@@ -195,6 +279,7 @@ const updateMapMarkers = () => {
     } else {
       const marker = L.marker(latlng, { icon: createCustomMarker(courier) }).addTo(map)
       marker.bindPopup(buildPopup(courier), { className: 'clean-popup' })
+      marker.on('click', () => selectCourier(courier))
       markerMap[key] = marker
     }
   })
@@ -230,6 +315,17 @@ const focusOnCourier = (courier) => {
   markerMap[String(courier.id)].openPopup()
 }
 
+const selectCourier = (courier) => {
+  if (isSameCourier(selectedCourier.value, courier)) {
+    selectedCourier.value = null
+    return
+  }
+
+  selectedCourier.value = courier
+  showSidebar.value = true
+  focusOnCourier(courier)
+}
+
 const initMap = () => {
   loadLeafletCSS()
   if (map) return
@@ -252,8 +348,8 @@ const initMap = () => {
 onMounted(() => {
   setTimeout(() => {
     initMap()
-    fetchCouriers()
-    pollingTimer = setInterval(fetchCouriers, POLLING_INTERVAL)
+    refreshMapData()
+    pollingTimer = setInterval(refreshMapData, POLLING_INTERVAL)
   }, 150)
 })
 
@@ -301,7 +397,7 @@ onUnmounted(() => {
         <Wifi v-if="isConnected" :size="13" class="chip-icon chip-online" />
         <WifiOff v-else :size="13" class="chip-icon chip-offline" />
         <span class="status-time">{{ isConnected ? lastUpdateFormatted : 'Offline' }}</span>
-        <button @click="fetchCouriers" class="chip-refresh" :disabled="isLoading">
+        <button @click="refreshMapData" class="chip-refresh" :disabled="isLoading">
           <RefreshCw :size="12" :class="{ spin: isLoading }" />
         </button>
       </div>
@@ -329,12 +425,58 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <div class="courier-list">
+          <div v-if="selectedCourier" class="selected-courier-detail">
+            <div class="courier-card selected detail-top-card" @click="selectCourier(selectedCourier)">
+              <div class="avatar" :style="{ background: selectedCourier.disponivel ? '#16a34a' : '#3b82f6' }">
+                {{ getInitials(selectedCourier.nome) }}
+              </div>
+              <div class="card-body">
+                <div class="card-top">
+                  <span class="card-name">{{ selectedCourier.nome }}</span>
+                  <span :class="['status-badge', selectedCourier.disponivel ? 'badge-green' : 'badge-blue']">
+                    {{ selectedCourier.disponivel ? 'Disp.' : 'Ocup.' }}
+                  </span>
+                </div>
+                <div class="card-sub">{{ selectedCourier.area }}</div>
+              </div>
+            </div>
+
+            <div class="courier-orders-panel">
+              <div class="orders-panel-top">
+                <div>
+                  <span class="orders-eyebrow">Pedidos associados</span>
+                  <h3>{{ selectedCourier.nome }}</h3>
+                </div>
+                <span class="orders-count">{{ selectedCourierOrders.length }}</span>
+              </div>
+
+              <div v-if="selectedCourierOrders.length === 0" class="empty-orders">
+                Nenhum pedido associado a este estafeta.
+              </div>
+
+              <div v-else class="orders-list">
+                <div v-for="order in selectedCourierOrders" :key="order.id" class="order-card">
+                  <div class="order-card-top">
+                    <span class="order-client">{{ order.client }}</span>
+                    <span class="order-status">{{ order.status }}</span>
+                  </div>
+                  <div class="order-line">
+                    <MapPin :size="12" />
+                    <span>{{ order.localEntrega }}</span>
+                  </div>
+                  <div class="order-destination">{{ order.destination }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="courier-list">
             <div
               v-for="courier in filteredCouriers"
               :key="courier.id"
               class="courier-card"
-              @click="focusOnCourier(courier)"
+              :class="{ selected: selectedCourier && String(selectedCourier.id) === String(courier.id) }"
+              @click="selectCourier(courier)"
             >
               <div class="avatar" :style="{ background: courier.disponivel ? '#16a34a' : '#3b82f6' }">
                 {{ getInitials(courier.nome) }}
@@ -522,6 +664,7 @@ onUnmounted(() => {
   z-index: 1050; 
   box-shadow: -4px 0 28px rgba(0,0,0,0.3);
   display: flex; flex-direction: column;
+  user-select: none;
 }
 
 .slide-right-enter-active, .slide-right-leave-active { transition: transform 0.3s ease; }
@@ -551,6 +694,115 @@ onUnmounted(() => {
 
 .courier-list { flex: 1; overflow-y: auto; padding: 10px 0; }
 
+.selected-courier-detail {
+  flex: 1;
+  overflow: hidden;
+  padding-top: 10px;
+}
+
+.detail-top-card {
+  border-bottom: 0;
+  margin-bottom: 0;
+}
+
+.courier-orders-panel {
+  margin: 12px 12px 12px;
+  padding: 14px;
+  border: 1px solid rgba(96, 165, 250, 0.24);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.95);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.orders-panel-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.orders-eyebrow {
+  display: block;
+  margin-bottom: 3px;
+  color: #60a5fa;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.orders-panel-top h3 {
+  color: white;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.orders-count {
+  min-width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.22);
+  color: #bfdbfe;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.empty-orders {
+  color: #94a3b8;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.orders-list {
+  display: grid;
+  gap: 8px;
+}
+
+.order-card {
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.order-card-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.order-client {
+  color: white;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.order-status {
+  color: #93c5fd;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.order-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #cbd5e1;
+  font-size: 11px;
+}
+
+.order-destination {
+  margin-top: 5px;
+  color: #64748b;
+  font-size: 11px;
+}
+
 .courier-card { 
   display: flex; 
   gap: 12px; 
@@ -560,6 +812,7 @@ onUnmounted(() => {
   transition: background 0.2s;
 }
 .courier-card:hover { background: rgba(255, 255, 255, 0.05); }
+.courier-card.selected { background: rgba(59, 130, 246, 0.18); }
 
 .avatar { 
   width: 36px; 
@@ -573,6 +826,7 @@ onUnmounted(() => {
   font-size: 11px; 
   flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  user-select: none;
 }
 
 .card-body { flex: 1; }
