@@ -1,8 +1,9 @@
 <script setup>
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Moon, LayoutDashboard, ListOrdered, Users, Map, LogOut, Rocket, Clock, User } from 'lucide-vue-next'
 
 const route = useRoute()
+const router = useRouter()
 
 const navItems = [
   { name: 'Viagens', path: '/moon-3d', icon: Rocket, color: 'cyan', colorHex: '#FFD93D' },
@@ -18,6 +19,11 @@ const isActive = (path) => {
   if (path === '/dashboard' && route.path === '/dashboard') return true
   if (path !== '/dashboard' && route.path.startsWith(path)) return true
   return false
+}
+
+const confirmLogout = () => {
+  const wantsLogout = window.confirm('Tens a certeza que queres terminar sessão?')
+  if (wantsLogout) router.push('/login')
 }
 </script>
 
@@ -128,7 +134,14 @@ const isActive = (path) => {
               <span class="text-xs text-gray-500 group-hover:text-gray-400 transition-colors duration-300">Administrador</span>
             </div>
           </div>
-          <LogOut :size="18" class="text-gray-500 group-hover:text-red-400 transition-all duration-300 transform group-hover:scale-110" />
+          <button
+            type="button"
+            class="logout-btn"
+            title="Terminar sessão"
+            @click.stop="confirmLogout"
+          >
+            <LogOut :size="18" />
+          </button>
         </div>
       </div>
 
@@ -184,6 +197,26 @@ const isActive = (path) => {
 nav a:hover .icon-wrap {
   transform: scale(1.12);
   filter: brightness(1.25);
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+}
+
+.logout-btn:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.12);
+  transform: scale(1.08);
 }
 
 /* Smooth active transitions */
