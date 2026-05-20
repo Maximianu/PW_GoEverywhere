@@ -79,13 +79,22 @@ const submitLogin = async () => {
 <style scoped>
 .login-page {
   position: relative;
-  min-height: 100%;
+  width: 100vw;
+  min-height: 100vh;
   overflow: hidden;
   display: grid;
   place-items: center;
   padding: 48px;
   background: #000;
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+:global(html),
+:global(body),
+:global(#app) {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
 }
 
 .stars-layer {
@@ -126,6 +135,7 @@ const submitLogin = async () => {
 
 .brand-panel {
   color: white;
+  transform: translateX(-70px);
 }
 
 .brand-mark {
@@ -306,6 +316,10 @@ const submitLogin = async () => {
 
   .login-shell {
     grid-template-columns: 1fr;
+  }
+
+  .brand-panel {
+    transform: none;
   }
 }
 </style>
