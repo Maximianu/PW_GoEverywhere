@@ -5,7 +5,7 @@
       <div class="login-panel">
 
         <div class="field-group">
-          <label>Nome de Utilizador</label>
+          <label>Email</label>
           <input v-model="username" />
         </div>
 
@@ -149,7 +149,7 @@ async function login() {
 
     const result = await response.json()
 
-    if (result.data.length === 0) {
+    if (!result.data || result.data.length === 0) {
       erro.value = true
       return
     }
@@ -160,13 +160,18 @@ async function login() {
       erro.value = true
       return
     }
+
     localStorage.setItem(
       'estafeta',
       JSON.stringify({
         id: estafeta.id,
+        documentId: estafeta.documentId,
         nome: estafeta.Nome,
         email: estafeta.Email,
         telemovel: estafeta.Telemovel,
+        area: estafeta.AreaDeAtuacao,
+        disponivel: estafeta.Disponivel,
+        idade: estafeta.Idade,
       }),
     )
 
