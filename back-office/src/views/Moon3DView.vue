@@ -50,7 +50,8 @@ const missionForm = ref({
   Preco: '',
   X: 0,
   Y: 0,
-  Z: 0
+  Z: 0,
+  Descricao_missao: ''
 })
 
 const closeComboOptions = () => {
@@ -180,7 +181,8 @@ const openMission = (planet = '') => {
     Preco: '',
     X: 0,
     Y: 0,
-    Z: 0
+    Z: 0,
+    Descricao_missao: ''
   }
   closeComboOptions()
   showMissionModal.value = true
@@ -200,7 +202,8 @@ const openEditMission = (mission) => {
     Preco: mission.Preco || '',
     X: mission.X ?? 0,
     Y: mission.Y ?? 0,
-    Z: mission.Z ?? 0
+    Z: mission.Z ?? 0,
+    Descricao_missao: mission.Descricao_missao || ''
   }
   closeComboOptions()
   showMissionModal.value = true
@@ -343,7 +346,8 @@ const renderDynamicMissions = (missions) => {
       date: m.Data,
       color: missionColor,
       isDynamic: true,
-      planet: m.Planeta
+      planet: m.Planeta,
+      fullDescription: m.Descricao_missao || ''
     }
 
     pin.children[0].userData = pointData
@@ -1285,6 +1289,7 @@ onBeforeUnmount(() => {
             <button @click="selectedPoint = null" class="text-white/30 hover:text-white transition-colors text-xl">✕</button>
           </div>
           <p class="text-cyan-400 text-xs mb-2 font-mono">{{ selectedPoint.date }}</p>
+          <p v-if="selectedPoint.fullDescription" class="text-white text-sm mb-4 leading-relaxed text-justify">{{ selectedPoint.fullDescription }}</p>
           <p class="text-gray-400 text-sm mb-8 leading-relaxed text-justify">{{ selectedPoint.description }}</p>
           <button
             @click="selectedPoint = null"
@@ -1327,6 +1332,16 @@ onBeforeUnmount(() => {
                   class="field-control"
                   @focus="closeFieldOptions()"
                 />
+              </div>
+
+              <div>
+                <label class="field-label">Descrição da Missão</label>
+                <textarea
+                  v-model="missionForm.Descricao_missao"
+                  placeholder="Breve descrição da missão..."
+                  class="field-control min-h-[80px] resize-none py-3"
+                  @focus="closeFieldOptions()"
+                ></textarea>
               </div>
 
               <div class="grid grid-cols-2 gap-3">
@@ -1658,6 +1673,10 @@ onBeforeUnmount(() => {
 
                   <div class="text-[10px] text-white/60 font-mono mb-2">
                     Planeta: <span class="text-white">{{ m.Planeta }}</span>
+                  </div>
+
+                  <div v-if="m.Descricao_missao" class="text-xs text-gray-400 mb-3 italic">
+                    {{ m.Descricao_missao }}
                   </div>
 
                   <div class="grid grid-cols-2 gap-2 text-[10px] text-white/60 font-mono mb-3">

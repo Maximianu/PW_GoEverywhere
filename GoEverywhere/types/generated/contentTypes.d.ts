@@ -783,6 +783,7 @@ export interface ApiMissaoMissao extends Struct.CollectionTypeSchema {
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     Data: Schema.Attribute.Date;
+    Descricao_missao: Schema.Attribute.Text;
     Hora_Chegada: Schema.Attribute.Time;
     Hora_Partida: Schema.Attribute.Time;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
