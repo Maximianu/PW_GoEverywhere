@@ -32,7 +32,8 @@ const loadCustomers = async () => {
         pedidos: item.bilhetes?.length || 0,
         pedidosList: item.bilhetes?.map(b => b.pedido).filter(p => p) || [],
         missoesList: missoesList,
-        dataCriacao: new Date(item.createdAt).toLocaleDateString('pt-PT')
+        dataCriacao: new Date(item.createdAt).toLocaleDateString('pt-PT'),
+        createdAt: item.createdAt
       }
     })
   } catch (error) {
@@ -54,9 +55,19 @@ const closeDrawer = () => {
 }
 
 const stats = computed(() => {
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const thisMonthCount = customers.value.filter(c => {
+    if (!c.createdAt) return false;
+    const d = new Date(c.createdAt);
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+  }).length;
+
   return {
     total: customers.value.length,
-    thisMonth: customers.value.length
+    thisMonth: thisMonthCount
   }
 })
 

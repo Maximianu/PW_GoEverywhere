@@ -23,12 +23,18 @@ const toggleMission = (missionId) => {
 
 const loadOrders = async () => {
   try {
-    const res = await fetch('http://127.0.0.1:1338/api/pedido-missions?populate[0]=bilhete.cliente&populate[1]=bilhete.cliente2&populate[2]=estafeta&populate[3]=bilhete.missao&populate[4]=bilhete.missao2&pagination[limit]=500')
+    const res = await fetch('http://127.0.0.1:1338/api/pedido-missions?populate[0]=bilhete.cliente&populate[1]=bilhete.cliente2&populate[2]=estafeta&populate[3]=bilhete.missao&populate[4]=bilhete.missao2&populate[5]=kit&pagination[limit]=500')
     const json = await res.json()
     
     orders.value = json.data.map(item => {
       const clienteObj = item.cliente || (item.bilhete && item.bilhete.cliente) || (item.bilhete && item.bilhete.cliente2) || null;
       const missaoObj = (item.bilhete && item.bilhete.missao) || (item.bilhete && item.bilhete.missao2) || null;
+      const kitObj = item.kit || null;
+      
+      const missaoPreco = missaoObj && missaoObj.Preco ? parseFloat(missaoObj.Preco) : 0;
+      const kitPreco = kitObj && kitObj.Preco ? parseFloat(kitObj.Preco) : 0;
+      const totalPrice = missaoPreco + kitPreco;
+
       return {
       id: item.documentId || item.id,
       client: clienteObj ? `${clienteObj.PrimeiroNome || ''} ${clienteObj.UltimoNome || ''}`.trim() : (item.Cliente || 'Sem Cliente'),
@@ -42,7 +48,9 @@ const loadOrders = async () => {
       status: item.Estado || 'Pendente',
       priority: item.Prioridade || 0,
       courier: item.estafeta?.Nome || 'Não atribuído',
-      price: item.Preco || '0€',
+      missionPrice: missaoPreco,
+      kitPrice: kitPreco,
+      totalPrice: totalPrice,
       mission: missaoObj ? {
         id: missaoObj.documentId || missaoObj.id,
         nome: missaoObj.Nome || 'Sem Nome',
@@ -75,10 +83,13 @@ const closeDetailsDrawer = () => {
 const getStatusColor = (status) => {
   switch (status) {
     case 'Entregue': return 'bg-green-500/20 text-green-300 border-green-500/30'
+    case 'Concluído':
+    case 'Concluido': return 'bg-green-500/20 text-green-300 border-green-500/30'
     case 'Transito': return 'bg-blue-500/20 text-blue-300 border-blue-500/30'
     case 'Aprovado': return 'bg-amber-500/20 text-amber-300 border-amber-500/30'
     case 'Pendente': return 'bg-gray-500/20 text-gray-300 border-gray-500/30'
     case 'Cancelado': return 'bg-red-500/20 text-red-300 border-red-500/30'
+    case 'Rejeitado': return 'bg-red-500/20 text-red-300 border-red-500/30'
     default: return 'bg-gray-500/20 text-gray-300 border-gray-500/30'
   }
 }
@@ -86,7 +97,10 @@ const getStatusColor = (status) => {
 const getStatusIcon = (status) => {
   switch (status) {
     case 'Entregue': return CheckCircle2
+    case 'Concluído':
+    case 'Concluido': return CheckCircle2
     case 'Cancelado': return XCircle
+    case 'Rejeitado': return XCircle
     default: return Clock
   }
 }
@@ -252,7 +266,9 @@ const groupedByMission = computed(() => {
             <option value="Aprovado">Aprovado</option>
             <option value="Transito">Em Trânsito</option>
             <option value="Entregue">Entregue</option>
+            <option value="Concluído">Concluído</option>
             <option value="Cancelado">Cancelado</option>
+            <option value="Rejeitado">Rejeitado</option>
           </select>
           <select v-model="dateFilter" class="px-4 py-3 bg-[#111926] border border-[#233246] rounded-xl text-white text-sm focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all cursor-pointer">
             <option value="todos">Qualquer Data</option>
@@ -389,7 +405,6 @@ const groupedByMission = computed(() => {
                   <tr class="border-b border-[#233246] text-gray-400 text-xs uppercase tracking-widest font-semibold bg-[#0c1219]">
                     <th class="p-5 pl-6 font-semibold">ID</th>
                     <th class="p-5 font-semibold">Cliente</th>
-                    <th class="p-5 font-semibold">Destino Final</th>
                     <th class="p-5 font-semibold">Estafeta</th>
                     <th class="p-5 font-semibold">Status</th>
                     <th class="p-5 font-semibold">Data & Hora</th>
@@ -409,12 +424,6 @@ const groupedByMission = computed(() => {
                           {{ order.initials }}
                         </div>
                         <span class="text-gray-200 font-semibold text-sm">{{ order.client }}</span>
-                      </div>
-                    </td>
-                    <td class="p-5 text-sm">
-                      <div class="flex items-center gap-2 text-gray-400">
-                        <MapPin :size="14" class="text-gray-500" />
-                        {{ order.destination }}
                       </div>
                     </td>
                     <td class="p-5 text-sm text-gray-400 font-medium">{{ order.courier }}</td>
@@ -525,9 +534,19 @@ const groupedByMission = computed(() => {
               <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Prioridade</p>
               <p class="text-white">{{ selectedOrder.priority > 0 ? '🔴 Alta' : '🟢 Normal' }}</p>
             </div>
-            <div>
-              <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Preço</p>
-              <p class="text-white font-semibold text-lg">{{ selectedOrder.price }}</p>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Preço da Missão</p>
+                <p class="text-white font-semibold text-lg">{{ selectedOrder.missionPrice }}€</p>
+              </div>
+              <div>
+                <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Preço do Kit</p>
+                <p class="text-white font-semibold text-lg">{{ selectedOrder.kitPrice }}€</p>
+              </div>
+            </div>
+            <div class="pt-4 border-t border-[#1f2937]">
+              <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Preço Total</p>
+              <p class="text-white font-black text-2xl text-primary">{{ selectedOrder.totalPrice }}€</p>
             </div>
           </div>
         </div>
