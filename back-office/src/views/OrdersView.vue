@@ -14,6 +14,10 @@ const orderToAssign = ref(null)
 const selectedCourierId = ref('')
 const isSubmitting = ref(false)
 
+const isPriorityOpen = ref(false)
+const orderToSetPriority = ref(null)
+const selectedPriority = ref('')
+
 const loadOrders = async () => {
   try {
     const res = await fetch('http://127.0.0.1:1338/api/pedido-missions?populate[0]=bilhete.cliente&populate[1]=bilhete.cliente2&populate[2]=estafeta&populate[3]=bilhete.missao&populate[4]=bilhete.missao2')
@@ -33,7 +37,7 @@ const loadOrders = async () => {
       updatedAt: item.updatedAt || Date.now(),
       localEntrega: item.LocalEntrega || 'Não Definido',
       status: item.Estado || 'Pendente',
-      priority: item.Prioridade || 0,
+      priority: item.Prioridade_Entrega || 'Não Definida',
       courier: item.estafeta || null,
       mission: missaoObj ? {
         id: missaoObj.documentId || missaoObj.id,
@@ -80,6 +84,42 @@ const updateOrderStatus = async (order, newStatus) => {
     }
   } catch (error) {
     console.error(error)
+  }
+}
+
+const openPriorityModal = (order) => {
+  orderToSetPriority.value = order
+  selectedPriority.value = ''
+  isPriorityOpen.value = true
+}
+
+const closePriorityDrawer = () => {
+  isPriorityOpen.value = false
+  orderToSetPriority.value = null
+  selectedPriority.value = ''
+}
+
+const confirmPriorityAndApprove = async () => {
+  if (!selectedPriority.value) return
+  isSubmitting.value = true
+  try {
+    const response = await fetch(`http://127.0.0.1:1338/api/pedido-missions/${orderToSetPriority.value.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: { Estado: 'Aprovado', Prioridade_Entrega: selectedPriority.value } })
+    })
+    
+    if (response.ok) {
+      await loadOrders()
+      closePriorityDrawer()
+    } else {
+      if (response.status === 403) alert('Erro 403: Permissão negada! Ative a permissão "update" para Pedido(Mission) no Strapi.')
+      else alert('Falha ao atualizar o estado e prioridade.')
+    }
+  } catch(error) {
+    console.error(error)
+  } finally {
+    isSubmitting.value = false
   }
 }
 
@@ -310,7 +350,7 @@ const groupedByMission = computed(() => {
                 <td class="p-6">
                   <div class="flex items-center gap-3">
                     <template v-if="order.status === 'Pendente'">
-                      <button @click.stop="updateOrderStatus(order, 'Aprovado')" class="w-8 h-8 flex items-center justify-center text-success border border-success/30 rounded-full hover:bg-success hover:text-black transition-all shadow-[0_0_5px_rgba(16,185,129,0.2)] hover:shadow-[0_0_15px_rgba(16,185,129,0.5)]" title="Aprovar">
+                      <button @click.stop="openPriorityModal(order)" class="w-8 h-8 flex items-center justify-center text-success border border-success/30 rounded-full hover:bg-success hover:text-black transition-all shadow-[0_0_5px_rgba(16,185,129,0.2)] hover:shadow-[0_0_15px_rgba(16,185,129,0.5)]" title="Aprovar">
                         <CheckCircle2 :size="16" strokeWidth="3" />
                       </button>
                       <button @click.stop="updateOrderStatus(order, 'Rejeitado')" class="w-8 h-8 flex items-center justify-center text-danger border border-danger/30 rounded-full hover:bg-danger hover:text-black transition-all shadow-[0_0_5px_rgba(239,68,68,0.2)] hover:shadow-[0_0_15px_rgba(239,68,68,0.5)]" title="Rejeitar">
@@ -422,7 +462,7 @@ const groupedByMission = computed(() => {
                       <td class="p-5 pr-6">
                         <div class="flex items-center gap-3">
                           <template v-if="order.status === 'Pendente'">
-                            <button @click.stop="updateOrderStatus(order, 'Aprovado')" class="w-6 h-6 flex items-center justify-center text-success border border-success/30 rounded-full hover:bg-success hover:text-black transition-all text-xs" title="Aprovar">
+                            <button @click.stop="openPriorityModal(order)" class="w-6 h-6 flex items-center justify-center text-success border border-success/30 rounded-full hover:bg-success hover:text-black transition-all text-xs" title="Aprovar">
                               <CheckCircle2 :size="14" strokeWidth="3" />
                             </button>
                             <button @click.stop="updateOrderStatus(order, 'Rejeitado')" class="w-6 h-6 flex items-center justify-center text-danger border border-danger/30 rounded-full hover:bg-danger hover:text-black transition-all text-xs" title="Rejeitar">
@@ -459,6 +499,71 @@ const groupedByMission = computed(() => {
         </div>
       </div>
     </div>
+
+    <!-- Priority Drawer -->
+    <Teleport to="body">
+      <Transition
+        enterActiveClass="transition-opacity duration-300"
+        leaveActiveClass="transition-opacity duration-300"
+      >
+        <div 
+          v-if="isPriorityOpen" 
+          class="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
+          @click="closePriorityDrawer"
+        ></div>
+      </Transition>
+
+      <Transition
+        enterActiveClass="transition-transform duration-300"
+        leaveActiveClass="transition-transform duration-300"
+        enterFromClass="translate-x-full"
+        leaveToClass="translate-x-full"
+      >
+        <div 
+          v-if="isPriorityOpen"
+          class="fixed top-0 right-0 h-full w-96 bg-[#141b27] border-l border-[#1f2937] z-50 flex flex-col shadow-2xl"
+        >
+          <div class="p-6 border-b border-[#1f2937] flex items-center justify-between">
+            <div>
+              <h3 class="text-xl font-bold text-white tracking-tight">Definir Prioridade</h3>
+              <p class="text-xs text-gray-400 mt-1 tracking-wide block">Escolha a prioridade para aprovar o pedido</p>
+            </div>
+            <button @click="closePriorityDrawer" class="p-2 text-gray-400 hover:text-white rounded-full hover:bg-[#1f2937] transition-colors">
+              <X :size="24" />
+            </button>
+          </div>
+
+          <div class="p-6 flex-1 overflow-y-auto space-y-6">
+            <div class="space-y-2 relative">
+              <label class="text-xs font-bold text-primary uppercase tracking-widest pl-1">Prioridade</label>
+              <div class="relative">
+                <Layers :size="18" class="absolute left-4 top-1/2 -translate-y-1/2 text-primary" />
+                <select v-model="selectedPriority" class="w-full bg-[#0c1219] border border-[#2a3b4f] rounded-xl py-3.5 pl-12 pr-4 text-white focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all appearance-none cursor-pointer">
+                  <option value="" disabled>Selecione a prioridade</option>
+                  <option value="Alta">Alta</option>
+                  <option value="Média">Média</option>
+                  <option value="Baixa">Baixa</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 border-t border-[#1f2937] space-y-3 bg-[#141b27]">
+            <button 
+              @click="confirmPriorityAndApprove"
+              :disabled="isSubmitting || !selectedPriority"
+              class="w-full bg-success text-black font-bold py-3.5 rounded-lg shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:bg-[#34d399] transition-all hover:-translate-y-0.5 tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span v-if="isSubmitting">A Guardar...</span>
+              <span v-else>Aprovar Pedido</span>
+            </button>
+            <button class="w-full bg-[#0c1219] text-white font-medium py-3.5 rounded-lg border border-[#2a3b4f] hover:bg-[#1a2332] transition-colors tracking-wide" @click="closePriorityDrawer">
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Assign Courier Drawer -->
     <Teleport to="body">

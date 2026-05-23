@@ -46,7 +46,7 @@ const loadOrders = async () => {
       updatedAt: item.updatedAt,
       localEntrega: item.LocalEntrega || 'Não Definido',
       status: item.Estado || 'Pendente',
-      priority: item.Prioridade || 0,
+      priority: item.Prioridade_Entrega || 'Não Definida',
       courier: item.estafeta?.Nome || 'Não atribuído',
       missionPrice: missaoPreco,
       kitPrice: kitPreco,
@@ -500,7 +500,7 @@ const groupedByMission = computed(() => {
                   <p class="text-xs text-gray-400">Data: {{ selectedOrder.mission.data }} | Planeta: {{ selectedOrder.mission.planeta }}</p>
                 </div>
               </div>
-              <div class="flex items-start gap-2">
+              <div v-else class="flex items-start gap-2">
                 <MapPin :size="16" class="text-gray-500 mt-1 shrink-0" />
                 <p class="text-white">{{ selectedOrder.destination }}</p>
               </div>
@@ -532,7 +532,12 @@ const groupedByMission = computed(() => {
             </div>
             <div>
               <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Prioridade</p>
-              <p class="text-white">{{ selectedOrder.priority > 0 ? '🔴 Alta' : '🟢 Normal' }}</p>
+              <p class="text-white flex items-center gap-2">
+                <span v-if="selectedOrder.priority === 'Alta'">🔴 Alta</span>
+                <span v-else-if="selectedOrder.priority === 'Média'">🟡 Média</span>
+                <span v-else-if="selectedOrder.priority === 'Baixa'">🟢 Baixa</span>
+                <span v-else>⚪ {{ selectedOrder.priority }}</span>
+              </p>
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>

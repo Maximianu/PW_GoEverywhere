@@ -11,8 +11,13 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "Prioridade": {
-      "type": "integer"
+    "Prioridade_Entrega": {
+      "type": "enumeration",
+      "enum": [
+        "Alta",
+        "Média",
+        "Baixa"
+      ]
     },
     "Estado": {
       "type": "enumeration",

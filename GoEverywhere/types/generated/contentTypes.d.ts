@@ -875,7 +875,9 @@ export interface ApiPedidoMissionPedidoMission
       'api::pedido-mission.pedido-mission'
     > &
       Schema.Attribute.Private;
-    Prioridade: Schema.Attribute.Integer;
+    Prioridade_Entrega: Schema.Attribute.Enumeration<
+      ['Alta', 'M\u00E9dia', 'Baixa']
+    >;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
