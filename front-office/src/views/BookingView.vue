@@ -77,10 +77,9 @@
               <div class="kit-selection-display">
                 <div v-if="bookingStore.selectedKit" class="kit-selected-card animate-fade-in">
                   <div class="kit-info">
-                    <span class="kit-name">{{ getPropSafe(bookingStore.selectedKit, 'Nome') || 'Kit Adquirido' }}</span>
-                    <span class="kit-desc">{{ getPropSafe(bookingStore.selectedKit, 'Descricao') || 'Especificações padrão salvas.' }}</span>
+                    <span class="kit-name">{{ bookingStore.selectedKitLabel }}</span>
                   </div>
-                  <span class="kit-price">+ {{ getPropSafe(bookingStore.selectedKit, 'Preco') || 0 }}€</span>
+                  <span class="kit-price">+ {{bookingStore.kitPrice}}€</span>
                 </div>
                 <div v-else class="kit-empty-card">
                   <span class="empty-text">Não escolhido</span>
@@ -96,9 +95,9 @@
                 <span>{{ custoBaseExibido }} €</span>
               </div>
               
-              <div class="summary-line" v-if="kitSelecionado">
-                <span>Kit Equipamento ({{ getPropSafe(kitSelecionado, 'Nome') || 'Selecionado' }})</span>
-                <span>{{ getPropSafe(kitSelecionado, 'Preco') || 0 }} €</span>
+              <div class="summary-line" v-if="bookingStore.storedSelectedKit">
+                <span>Kit Equipamento ({{ getPropSafe(bookingStore.storedSelectedKit, 'Nome') || 'Selecionado' }})</span>
+                <span>{{ getPropSafe(bookingStore.storedSelectedKit, 'Preco') || 0 }} €</span>
               </div>
 
               <div class="summary-total">
@@ -160,8 +159,9 @@ const custoBaseExibido = computed(() => {
 
 // Correção estrita da soma matemática (Evita concatenação de strings)
 const precoTotalCalculado = computed(() => {
+  console.log(bookingStore.selectedKit)
   const base = Number(custoBaseExibido.value) || 0
-  const kit = bookingStore.selectedKit.value ? (Number(getPropSafe(kitSelecionado.value, 'Preco') || getPropSafe(kitSelecionado.value, 'preco')) || 0) : 0
+  const kit = bookingStore.kitPrice ? Number(bookingStore.kitPrice) : 0
   return base + kit
 })
 
