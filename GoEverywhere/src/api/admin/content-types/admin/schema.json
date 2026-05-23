@@ -17,8 +17,8 @@
     "email": {
       "type": "email"
     },
-    "pass": {
-      "type": "password"
+    "PIN": {
+      "type": "string"
     }
   }
 }

@@ -35,6 +35,7 @@ const config: Core.Config.Middlewares = [
       ],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'],
       headers: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+      credentials: true,
       keepHeaderOnError: true,
     },
   },

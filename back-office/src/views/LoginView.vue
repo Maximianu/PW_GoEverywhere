@@ -1,19 +1,48 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Lock, Mail, Rocket } from 'lucide-vue-next'
+import { Lock, Mail, Rocket, AlertCircle } from 'lucide-vue-next'
+import { authService } from '../services/auth'
 
 const router = useRouter()
 const email = ref('')
-const password = ref('')
+const pin = ref('')
 const isLoading = ref(false)
+const error = ref('')
 
 const submitLogin = async () => {
+  error.value = ''
+  
+  // Validações
+  if (!email.value) {
+    error.value = 'Por favor, insira o email'
+    return
+  }
+  if (!pin.value) {
+    error.value = 'Por favor, insira o PIN'
+    return
+  }
+  
   isLoading.value = true
-  setTimeout(() => {
+  
+  try {
+    const result = await authService.login(email.value, pin.value)
+    
+    if (result.success) {
+      // Login bem-sucedido
+      setTimeout(() => {
+        isLoading.value = false
+        router.push('/dashboard')
+      }, 450)
+    } else {
+      // Erro no login
+      error.value = result.error || 'Falha ao fazer login'
+      isLoading.value = false
+    }
+  } catch (err) {
+    error.value = 'Erro ao conectar ao servidor'
     isLoading.value = false
-    router.push('/moon-3d')
-  }, 450)
+  }
 }
 </script>
 
@@ -44,6 +73,11 @@ const submitLogin = async () => {
           <h2>Entrar na plataforma</h2>
         </div>
 
+        <div v-if="error" class="error-message">
+          <AlertCircle :size="18" />
+          <span>{{ error }}</span>
+        </div>
+
         <label class="login-field">
           <span>Email</span>
           <div class="input-wrap">
@@ -53,10 +87,10 @@ const submitLogin = async () => {
         </label>
 
         <label class="login-field">
-          <span>Password</span>
+          <span>PIN</span>
           <div class="input-wrap">
             <Lock :size="18" />
-            <input v-model="password" type="password" placeholder="••••••••" autocomplete="current-password" />
+            <input v-model="pin" type="password" placeholder="••••••••" autocomplete="off" />
           </div>
         </label>
 
@@ -307,6 +341,23 @@ const submitLogin = async () => {
 .login-button:disabled {
   opacity: 0.65;
   cursor: wait;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
+  font-size: 13px;
+}
+
+.error-message svg {
+  flex-shrink: 0;
 }
 
 @media (max-width: 900px) {

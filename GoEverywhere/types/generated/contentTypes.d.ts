@@ -478,7 +478,7 @@ export interface ApiAdminAdmin extends Struct.CollectionTypeSchema {
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::admin.admin'> &
       Schema.Attribute.Private;
     Nome: Schema.Attribute.String;
-    pass: Schema.Attribute.Password;
+    PIN: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

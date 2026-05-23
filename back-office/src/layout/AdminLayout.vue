@@ -1,9 +1,24 @@
 <script setup>
 import { useRoute, useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
 import { Moon, LayoutDashboard, ListOrdered, Users, Map, LogOut, Rocket, Clock, User } from 'lucide-vue-next'
+import { authService } from '../services/auth'
 
 const route = useRoute()
 const router = useRouter()
+const adminName = ref('')
+const adminInitials = ref('')
+
+onMounted(() => {
+  const admin = authService.getCurrentAdmin()
+  adminName.value = admin.nome || 'Administrador'
+  // Gerar iniciais do nome
+  adminInitials.value = admin.nome
+    ?.split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase() || 'A'
+})
 
 const navItems = [
   { name: 'Viagens', path: '/moon-3d', icon: Rocket, color: 'cyan', colorHex: '#FFD93D' },
@@ -23,7 +38,10 @@ const isActive = (path) => {
 
 const confirmLogout = () => {
   const wantsLogout = window.confirm('Tens a certeza que queres terminar sessão?')
-  if (wantsLogout) router.push('/login')
+  if (wantsLogout) {
+    authService.logout()
+    router.push('/login')
+  }
 }
 </script>
 
@@ -126,11 +144,11 @@ const confirmLogout = () => {
       <div class="w-full mt-auto relative z-10">
         <div class="flex items-center justify-between px-3 py-3 rounded-2xl hover:bg-white/5 transition-all duration-300 cursor-pointer text-gray-300 hover:text-white group">
           <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-gray-600 to-slate-700 flex items-center justify-center text-xs overflow-hidden border border-white/10 group-hover:border-cyan-500/50 transition-all duration-300 shadow-lg">
-              <img src="https://ui-avatars.com/api/?name=Cmdr+Sterling&background=1e293b&color=fff&rounded=true" alt="User" class="w-full h-full object-cover shrink-0">
+            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-xs font-bold overflow-hidden border border-white/10 group-hover:border-cyan-500/50 transition-all duration-300 shadow-lg">
+              <span class="text-white">{{ adminInitials }}</span>
             </div>
             <div>
-              <span class="text-sm font-medium block">Cmdr. Sterling</span>
+              <span class="text-sm font-medium block">{{ adminName }}</span>
               <span class="text-xs text-gray-500 group-hover:text-gray-400 transition-colors duration-300">Administrador</span>
             </div>
           </div>
