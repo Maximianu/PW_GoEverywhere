@@ -122,8 +122,10 @@ export const useBookingStore = defineStore('booking', () => {
   }
 
   function selecionarMissao(missao) {
+    console.log('Missão selecionada:', missao)
     missaoSelecionada.value = missao
     const lota = missao.Lota || missao.attributes?.Lota || 1
+    console.log('Lotação:', lota)
     numeroPassageiros.value = lota
   }
 
