@@ -6,16 +6,17 @@
       <h1 class="details-title">Detalhes da Encomenda</h1>
 
       <div class="info-box">
-        <p><strong>Cliente :</strong> {{ pedido.name }}</p>
+        <p><strong>Cliente:</strong> {{ pedido.name }}</p>
         <p><strong>Encomenda:</strong> #{{ pedido.numero }}</p>
         <p><strong>Morada:</strong> {{ pedido.address }}</p>
         <p><strong>Telefone:</strong> {{ pedido.phone }}</p>
         <p><strong>Janela:</strong> {{ pedido.time }}</p>
+        <p><strong>Prioridade:</strong> {{ pedido.priority }}</p>
         <p><strong>Estado:</strong> {{ pedido.status }}</p>
       </div>
 
       <p class="notas-entrega">
-        <strong>Notas da Entrega :</strong> {{ pedido.notes }}
+        <strong>Notas da Entrega:</strong> {{ pedido.notes }}
       </p>
 
       <div class="map-container">
@@ -66,7 +67,7 @@
 
       <template v-if="isRegistarEntrega">
         <div class="info-box signature-box" style="margin-top: 20px;">
-          <p><strong>Assinatura :</strong></p>
+          <p><strong>Assinatura:</strong></p>
         </div>
 
         <div class="photo-box mt-small">
@@ -107,6 +108,7 @@ const pedido = ref({
   address: '',
   phone: '',
   time: '',
+  priority: '',
   status: 'Pendente',
   notes: '',
 })
@@ -116,24 +118,20 @@ const mapUrl = computed(() => {
   return `https://maps.google.com/maps?q=${morada}&t=&z=15&ie=UTF8&iwloc=&output=embed`
 })
 
-function getCliente(item) {
-  return item.cliente || item.bilhete?.cliente || item.bilhete?.cliente2 || null
-}
-
 function getClienteNome(item) {
-  const cliente = getCliente(item)
+  const cliente = item.cliente
 
   if (!cliente) return 'Cliente não definido'
 
   const primeiro = cliente.PrimeiroNome || cliente.primeiroNome || ''
   const ultimo = cliente.UltimoNome || cliente.ultimoNome || ''
-  const nomeCompleto = `${primeiro} ${ultimo}`.trim()
+  const nome = `${primeiro} ${ultimo}`.trim()
 
-  return nomeCompleto || cliente.Email || cliente.email || 'Cliente não definido'
+  return nome || cliente.Email || cliente.email || 'Cliente não definido'
 }
 
 function getClienteTelefone(item) {
-  const cliente = getCliente(item)
+  const cliente = item.cliente
 
   return (
     cliente?.Telemovel ||
@@ -173,6 +171,7 @@ function mapPedido(item) {
     address: item.LocalEntrega || item.Destino || 'Morada não definida',
     phone: getClienteTelefone(item),
     time: item.Horario || 'Horário não definido',
+    priority: item.Prioridade || item.Prioridade_Entrega || 'Normal',
     status: mapStatus(item.Estado),
     notes: item.Problema || item.Observacoes || item.Notas || item.Descricao || 'Sem notas',
   }
@@ -182,7 +181,6 @@ async function carregarPedido() {
   try {
     const response = await getPedidoById(route.params.id)
     pedido.value = mapPedido(response.data)
-
     isEmRota.value = pedido.value.status === 'Em Rota'
   } catch (err) {
     console.error(err)
@@ -214,18 +212,12 @@ async function iniciarCorrida() {
 
 function toggleProblema() {
   isRegistarProblema.value = !isRegistarProblema.value
-
-  if (isRegistarProblema.value) {
-    isRegistarEntrega.value = false
-  }
+  if (isRegistarProblema.value) isRegistarEntrega.value = false
 }
 
 function toggleEntrega() {
   isRegistarEntrega.value = !isRegistarEntrega.value
-
-  if (isRegistarEntrega.value) {
-    isRegistarProblema.value = false
-  }
+  if (isRegistarEntrega.value) isRegistarProblema.value = false
 }
 
 async function guardarAlteracoes() {
@@ -262,10 +254,7 @@ async function guardarAlteracoes() {
     pedido.value.status = mapStatus(dadosAtualizados.Estado)
     isGuardarSelecionado.value = true
 
-    if (
-      dadosAtualizados.Estado === 'Concluido' ||
-      dadosAtualizados.Estado === 'Não Entregue'
-    ) {
+    if (dadosAtualizados.Estado === 'Concluido' || dadosAtualizados.Estado === 'Não Entregue') {
       router.push('/historico')
     }
   } catch (err) {

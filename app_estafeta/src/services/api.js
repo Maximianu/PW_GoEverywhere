@@ -17,9 +17,7 @@ async function request(endpoint, options = {}) {
 }
 
 export async function getPedidos(estafetaId) {
-    const result = await request(
-        `/pedido-missions?populate[bilhete][populate]=cliente&populate[cliente]=*&populate[estafeta]=*&populate[estafeta2]=*`
-    )
+    const result = await request('/pedido-missions?populate=*')
 
     result.data = result.data.filter((pedido) => {
         return (
@@ -32,20 +30,7 @@ export async function getPedidos(estafetaId) {
 }
 
 export async function getPedidoById(documentId) {
-    return request(
-        `/pedido-missions/${documentId}?populate[bilhete][populate]=cliente&populate[cliente]=*&populate[estafeta]=*&populate[estafeta2]=*`
-    )
-}
-
-export async function updatePedidoEstado(documentId, estado) {
-    return request(`/pedido-missions/${documentId}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-            data: {
-                Estado: estado,
-            },
-        }),
-    })
+    return request(`/pedido-missions/${documentId}?populate=*`)
 }
 
 export async function updatePedido(documentId, data) {
