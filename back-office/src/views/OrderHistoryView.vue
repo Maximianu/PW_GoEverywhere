@@ -21,6 +21,17 @@ const toggleMission = (missionId) => {
   }
 }
 
+const expandedCouriers = ref([])
+
+const toggleCourier = (courierName) => {
+  const index = expandedCouriers.value.indexOf(courierName)
+  if (index > -1) {
+    expandedCouriers.value.splice(index, 1)
+  } else {
+    expandedCouriers.value.push(courierName)
+  }
+}
+
 const loadOrders = async () => {
   try {
     const res = await fetch('http://127.0.0.1:1338/api/pedido-missions?populate[0]=bilhete.cliente&populate[1]=bilhete.cliente2&populate[2]=estafeta&populate[3]=bilhete.missao&populate[4]=bilhete.missao2&populate[5]=kit&pagination[limit]=500')
@@ -107,7 +118,7 @@ const getStatusIcon = (status) => {
 
 const stats = computed(() => ({
   total: orders.value.length,
-  entregues: orders.value.filter(o => o.status === 'Entregue').length,
+  entregues: orders.value.filter(o => o.status === 'Concluido').length,
   emTransito: orders.value.filter(o => o.status === 'Transito').length,
   cancelados: orders.value.filter(o => o.status === 'Cancelado').length
 }))
@@ -172,6 +183,38 @@ const groupedByMission = computed(() => {
         }
       }
       groups[mId].orders.push(order)
+    } else {
+      groups['unassigned'].orders.push(order)
+    }
+  })
+
+  // Remove unassigned group if it's empty
+  if (groups['unassigned'].orders.length === 0) {
+    delete groups['unassigned']
+  }
+
+  return groups
+})
+
+const groupedByCourier = computed(() => {
+  const groups = {}
+  
+  // Create a default group for unassigned orders
+  groups['unassigned'] = {
+    courier: null,
+    orders: []
+  }
+
+  filteredOrders.value.forEach(order => {
+    if (order.courier && order.courier !== 'Não atribuído') {
+      const cName = order.courier
+      if (!groups[cName]) {
+        groups[cName] = {
+          courier: cName,
+          orders: []
+        }
+      }
+      groups[cName].orders.push(order)
     } else {
       groups['unassigned'].orders.push(order)
     }
@@ -252,6 +295,13 @@ const groupedByMission = computed(() => {
             >
               <Layers :size="16" /> Missões
             </button>
+            <button 
+              @click="viewMode = 'couriers'"
+              class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+              :class="viewMode === 'couriers' ? 'bg-primary text-black shadow-[0_0_15px_rgba(0,242,255,0.2)]' : 'text-gray-400 hover:text-gray-200'"
+            >
+              <User :size="16" /> Estafetas
+            </button>
           </div>
 
           <div class="hidden xl:block w-px h-8 bg-[#233246]"></div>
@@ -264,11 +314,10 @@ const groupedByMission = computed(() => {
             <option value="todos">Todos os Status</option>
             <option value="Pendente">Pendente</option>
             <option value="Aprovado">Aprovado</option>
-            <option value="Transito">Em Trânsito</option>
-            <option value="Entregue">Entregue</option>
-            <option value="Concluído">Concluído</option>
-            <option value="Cancelado">Cancelado</option>
             <option value="Rejeitado">Rejeitado</option>
+            <option value="Transito">Transito</option>
+            <option value="Concluido">Concluido</option>
+            <option value="Cancelado">Cancelado</option>
           </select>
           <select v-model="dateFilter" class="px-4 py-3 bg-[#111926] border border-[#233246] rounded-xl text-white text-sm focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(0,242,255,0.15)] transition-all cursor-pointer">
             <option value="todos">Qualquer Data</option>
@@ -356,7 +405,7 @@ const groupedByMission = computed(() => {
     </div>
 
     <!-- Missions View -->
-    <div v-else class="space-y-6">
+    <div v-else-if="viewMode === 'missions'" class="space-y-6">
       <div v-if="Object.keys(groupedByMission).length > 0" class="space-y-4">
         <div v-for="(group, mId) in groupedByMission" :key="mId" class="bg-surface border border-[#233246] rounded-2xl overflow-hidden shadow-lg transition-all duration-300" :class="{'ring-1 ring-primary/50': expandedMissions.includes(mId)}">
           <!-- Accordion Header -->
@@ -457,6 +506,119 @@ const groupedByMission = computed(() => {
       <div v-else class="flex items-center justify-center py-12 bg-surface border border-[#233246] rounded-[2rem] shadow-2xl">
         <div class="text-center">
           <Layers class="mx-auto mb-4 text-gray-600" :size="48" />
+          <p class="text-gray-400 font-medium">Nenhum pedido encontrado</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Couriers View -->
+    <div v-else-if="viewMode === 'couriers'" class="space-y-6">
+      <div v-if="Object.keys(groupedByCourier).length > 0" class="space-y-4">
+        <div v-for="(group, cName) in groupedByCourier" :key="cName" class="bg-surface border border-[#233246] rounded-2xl overflow-hidden shadow-lg transition-all duration-300" :class="{'ring-1 ring-primary/50': expandedCouriers.includes(cName)}">
+          <!-- Accordion Header -->
+          <div 
+            @click="toggleCourier(cName)"
+            class="p-6 flex items-center justify-between cursor-pointer hover:bg-[#1a2636] transition-colors"
+          >
+            <div class="flex items-center gap-6">
+              <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 shadow-inner"
+                   :class="group.courier ? 'bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-green-500/30 text-green-400' : 'bg-gray-800 border border-gray-700 text-gray-400'">
+                 <User :size="24" />
+              </div>
+              <div>
+                <h3 class="text-xl font-bold text-white">
+                  {{ group.courier ? group.courier : 'Sem Estafeta Atribuído' }}
+                </h3>
+                <div v-if="group.courier" class="flex items-center gap-3 text-sm text-gray-400 mt-1">
+                  Pedidos entregues ou a entregar por este estafeta
+                </div>
+                <div v-else class="text-sm text-gray-400 mt-1">Pedidos avulsos ou não planeados para nenhum estafeta</div>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-6">
+              <div class="flex -space-x-2">
+                <div class="text-xs font-bold bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded-full">
+                  {{ group.orders.length }} Pedido{{ group.orders.length !== 1 ? 's' : '' }}
+                </div>
+              </div>
+              <div class="text-gray-400 transition-transform duration-300" :class="{'rotate-180 text-white': expandedCouriers.includes(cName)}">
+                <ChevronDown :size="24" />
+              </div>
+            </div>
+          </div>
+          
+          <!-- Accordion Content (Table) -->
+          <div v-show="expandedCouriers.includes(cName)" class="border-t border-[#233246] bg-[#111926]">
+             <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse min-w-[1000px]">
+                <thead>
+                  <tr class="border-b border-[#233246] text-gray-400 text-xs uppercase tracking-widest font-semibold bg-[#0c1219]">
+                    <th class="p-5 pl-6 font-semibold">ID</th>
+                    <th class="p-5 font-semibold">Cliente</th>
+                    <th class="p-5 font-semibold">Missão / Destino</th>
+                    <th class="p-5 font-semibold">Status</th>
+                    <th class="p-5 font-semibold">Data & Hora</th>
+                    <th class="p-5 pr-6 font-semibold">Ação</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-[#233246]">
+                  <tr v-for="order in group.orders" :key="order.id" class="hover:bg-[#1a2636] transition-colors group cursor-pointer" @click="openDetailsDrawer(order)">
+                    <td class="p-5 pl-6">
+                      <span class="font-mono text-xs font-bold text-gray-400 bg-[#111926] border border-[#233246] px-2 py-1 rounded">
+                        {{ order.id.substring(0, 8) }}
+                      </span>
+                    </td>
+                    <td class="p-5">
+                      <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-[#1e2e42] flex items-center justify-center text-xs font-bold text-primary shrink-0 shadow-inner">
+                          {{ order.initials }}
+                        </div>
+                        <span class="text-gray-200 font-semibold text-sm">{{ order.client }}</span>
+                      </div>
+                    </td>
+                    <td class="p-5 text-sm">
+                      <div v-if="order.mission" class="flex flex-col mb-1">
+                        <span class="text-indigo-400 font-semibold">{{ order.mission.nome }}</span>
+                        <div class="flex items-center gap-1 text-gray-400 text-xs mt-0.5">
+                          <MapPin :size="12" /> {{ order.mission.planeta }}
+                        </div>
+                      </div>
+                      <div v-else class="flex items-center gap-2 text-gray-300">
+                        <MapPin :size="16" class="text-gray-500" />
+                        {{ order.destination }}
+                      </div>
+                    </td>
+                    <td class="p-5">
+                      <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] uppercase font-bold tracking-wider border" :class="getStatusColor(order.status)">
+                        <component :is="getStatusIcon(order.status)" :size="12" class="shrink-0" />
+                        {{ order.status }}
+                      </span>
+                    </td>
+                    <td class="p-5 text-gray-400 text-sm">
+                      <div class="flex flex-col">
+                        <span>{{ order.date }}</span>
+                        <span class="text-xs text-gray-500">{{ order.time }}</span>
+                      </div>
+                    </td>
+                    <td class="p-5 pr-6">
+                      <button
+                        @click.stop="openDetailsDrawer(order)"
+                        class="text-primary hover:text-white font-semibold text-xs uppercase tracking-wide transition-colors border border-primary/30 px-3 py-1.5 rounded-full hover:bg-primary/10"
+                      >
+                        Detalhes
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+             </div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="flex items-center justify-center py-12 bg-surface border border-[#233246] rounded-[2rem] shadow-2xl">
+        <div class="text-center">
+          <User class="mx-auto mb-4 text-gray-600" :size="48" />
           <p class="text-gray-400 font-medium">Nenhum pedido encontrado</p>
         </div>
       </div>
