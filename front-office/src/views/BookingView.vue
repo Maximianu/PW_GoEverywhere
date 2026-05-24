@@ -18,7 +18,7 @@
           
           <div ref="labelsContainer" class="three-labels-layer">
             <div 
-              v-for="missao in bookingStore.missoes" \r
+              v-for="missao in bookingStore.missoesDisponiveis" \r
               :key="missao.documentId || missao.id"
               :data-id="missao.documentId || missao.id"
               class="planet-label"
@@ -38,7 +38,9 @@
         <section class="panel config-panel">
           
           <div v-if="!bookingStore.missaoSelecionada" class="empty-selection-state">
-            <div class="radar-icon">📡</div>
+            <div class="radar-icon">
+              <span class="dinkie-icons--satellite-antenna"></span>
+            </div>
             <h3>Nenhum Alvo Adquirido</h3>
             <p>Por favor, selecione um planeta e clique num dos marcadores orbitais ativos para carregar os parâmetros de telemetria.</p>
           </div>
@@ -68,7 +70,7 @@
               </div>
               <div class="spec-item">
                 <span class="spec-label">Lotação Disponível</span>
-                <span class="spec-value">{{ bookingStore.numeroPassageiros }} Lugares</span>
+                <span class="spec-value">{{ lotacaoExibida }} Lugares</span>
               </div>
             </div>
 
@@ -155,6 +157,25 @@ const custoBaseExibido = computed(() => {
   const m = bookingStore.missaoSelecionada
   if (!m) return 0
   return m.Preco ?? m.preco ?? m.attributes?.Preco ?? m.attributes?.preco ?? 0
+})
+
+// Lotação exibida: lotação máxima menos bilhetes vendidos (lendo relação populada do Strapi)
+const lotacaoExibida = computed(() => {
+  const m = bookingStore.missaoSelecionada
+  if (!m) return 0
+
+  const rawMax = m.Lotacao ?? m.Lota ?? m.lotacao ?? m.attributes?.Lotacao ?? m.attributes?.Lota ?? m.attributes?.lotacao
+  const max = Number(rawMax) || 0
+
+  const bilhetes = m.Bilhetes ?? m.bilhetes ?? m.attributes?.Bilhetes ?? m.attributes?.bilhetes ?? m.attributes?.missao2 ?? m.missao2
+  let sold = 0
+  if (bilhetes == null) sold = 0
+  else if (typeof bilhetes === 'number') sold = bilhetes
+  else if (Array.isArray(bilhetes)) sold = bilhetes.length
+  else if (bilhetes.data && Array.isArray(bilhetes.data)) sold = bilhetes.data.length
+  else sold = Number(bilhetes.length ?? bilhetes.data?.length ?? bilhetes) || 0
+
+  return Math.max(0, max - sold)
 })
 
 // Correção estrita da soma matemática (Evita concatenação de strings)
@@ -311,7 +332,7 @@ const createWarpLines = () => {
 
 const createMissionPins = () => {
   points.length = 0
-  const missoes = bookingStore.missoes || []
+  const missoes = bookingStore.missoesDisponiveis || []
   
   missoes.forEach((missao) => {
     const planetKey = normalizePlanetKey(getPropSafe(missao, 'Planeta'))
@@ -716,6 +737,15 @@ onBeforeUnmount(() => {
   padding: 20px;
 }
 .radar-icon { font-size: 48px; margin-bottom: 16px; }
+.dinkie-icons--satellite-antenna {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-image: url("../assets/dinkie-icons--satellite-antenna.png");
+}
+
 .empty-selection-state h3 { color: #e1fdff; margin: 0 0 12px 0; }
 .section-header-inline {
   display: flex;

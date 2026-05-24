@@ -29,8 +29,7 @@ export const useUserStore = defineStore("userEmail", () => {
         ultimoNome: cliente.UltimoNome,
         email: cliente.Email
       };
-      console.log('este Cliente foi encontrado de certeza:', clienteData.value);
-
+      
       return clienteData.value;
     } catch (error) {
       console.error('Erro ao carregar cliente do Strapi:', error);
