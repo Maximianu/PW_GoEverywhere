@@ -157,7 +157,9 @@ const confirmarMissao = async () => {
     const pedidoPayload = {
       bilhete: bilheteId,
       LocalEntrega: morada.value,
-      Estado: 'Pendente'
+      Estado: 'Pendente',
+      cliente: effectiveClienteId,
+      cliente2: effectiveClienteId
     }
 
     if (bookingStore.selectedKit !== null && bookingStore.selectedKitId) {
