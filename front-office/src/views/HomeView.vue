@@ -146,21 +146,19 @@
             </div>
             <div style="padding: 2rem; display: flex; flex-direction: column; gap: 0.75rem;">
               <div style="font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 1.5rem; line-height: 2rem; color: white;">
-                Espaço Profundo
+                Marte Primordial
               </div>
               <div style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 1rem; line-height: 1.5rem; color: rgba(255,255,255,0.6);">
-                <p style="margin: 0;">A última fronteira. Missões tripuladas</p>
-                <p style="margin: 0;">para as areias de Marte e os anéis de</p>
-                <p style="margin: 0;">Saturno.</p>
+                <p style="margin: 0;">O novo lar da humanidade. Missões tripuladas de longo curso para os desertos vermelhos e os desfiladeiros colossais de Ares.</p>
               </div>
               <div style="display: flex; flex-direction: column; gap: 0.4688rem; padding-top: 0.75rem; padding-bottom: 1.25rem;">
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                   <div style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 0.875rem; color: rgba(255,255,255,0.4);">•</div>
-                  <div style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 0.875rem; color: rgba(255,255,255,0.4);">Viagem Criogênica</div>
+                  <div style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 0.875rem; color: rgba(255,255,255,0.4);">Terraformação Atmosférica</div>
                 </div>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
                   <div style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 0.875rem; color: rgba(255,255,255,0.4);">•</div>
-                  <div style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 0.875rem; color: rgba(255,255,255,0.4);">Exploração de Titã</div>
+                  <div style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 0.875rem; color: rgba(255,255,255,0.4);">Postos Avançados em Phobos</div>
                 </div>
               </div>
               <router-link to="/book" style="border: 0.0625rem solid rgba(0,242,255,0.3); display: flex; align-items: center; justify-content: center; padding: 0.8125rem; border-radius: 0.5rem;">
@@ -263,7 +261,7 @@
         </div>
         <div style="border-top: 0.0625rem solid rgba(255,255,255,0.05); padding-top: 2.5625rem; display: flex; align-items: center; justify-content: space-between;">
           <div style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 0.75rem; line-height: 1rem; color: rgba(255,255,255,0.3);">
-            © 2024 GoEverywhere: Space Edition. Todos os direitos reservados.
+            © 2026 GoEverywhere: Space Edition. Todos os direitos reservados.
           </div>
           <div style="display: flex; gap: 1.5rem; align-items: flex-start;">
             <div style="font-family: 'Inter', sans-serif; font-weight: 400; font-size: 0.75rem; line-height: 1rem; color: rgba(255,255,255,0.3);">
