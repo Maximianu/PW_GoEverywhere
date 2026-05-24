@@ -1,6 +1,6 @@
 <template>
-  <main class="page-shell" style="padding: 7.5rem 0 0;">
-    <section class="panel" style="max-width: 45rem; margin: 0 auto; z-index: 1;">
+  <main class="page-shell" >
+    <section class="panel" >
         <div class="section-header">
           <div>
             <p class="small-note">Conta</p>
@@ -103,12 +103,32 @@ const logout = async () => {
 </script>
 
 <style scoped>
+
+.page-shell {
+  padding: 7.5rem 0 0;
+  z-index: 1;
+}
+
+.panel{
+  width: 40rem; 
+  margin: 0 auto; 
+  z-index: 1; 
+  position:fixed; 
+  top: 50%; 
+  left: 50%; 
+  transform: translate(-50%, -50%);
+  background-color: rgba(35, 37, 42, 0.85); /* Fundo semi-transparente para destacar o conteúdo */
+  padding: 2rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0,0,0 0.45);
+}
+
 .corner-video-wrapper {
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  width: 70rem; /* 256px */
-  height: 50rem; /* 144px */
+  bottom: 0rem;
+  right: 0rem;
+  width: 100%; /* 256px */
+  height: 100%; /* 144px */
   overflow: hidden;
   border-radius: 0.75rem;
   box-shadow: 0 8px 24px rgba(0,0,0,0.45);
