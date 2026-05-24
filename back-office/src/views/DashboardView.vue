@@ -29,12 +29,11 @@ onMounted(async () => {
       stats.value.totalOrders = jsonOrders.meta?.pagination?.total ?? dataLength
       
       if (jsonOrders.data && dataLength > 0) {
-        const targetRegions = ['Braga', 'Porto', 'Guimarães', 'Barcelona']
+        const targetRegions = ['Braga', 'Porto', 'Guimarães']
         const regionsMap = {
            'Braga': 0,
            'Porto': 0,
-           'Guimarães': 0,
-           'Barcelona': 0
+           'Guimarães': 0
         }
         const planetsMap = {}
 
