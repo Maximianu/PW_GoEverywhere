@@ -57,6 +57,7 @@ const loadOrders = async () => {
       updatedAt: item.updatedAt,
       localEntrega: item.LocalEntrega || 'Não Definido',
       status: item.Estado || 'Pendente',
+      problema: item.Problema || null,
       priority: item.Prioridade_Entrega || 'Não Definida',
       courier: item.estafeta?.Nome || 'Não atribuído',
       missionPrice: missaoPreco,
@@ -684,6 +685,12 @@ const groupedByCourier = computed(() => {
                 <component :is="getStatusIcon(selectedOrder.status)" :size="14" />
                 {{ selectedOrder.status }}
               </span>
+            </div>
+            <div v-if="selectedOrder.status === 'Cancelado' && selectedOrder.problema">
+              <p class="text-xs font-semibold text-red-400 uppercase mb-2">Motivo do Cancelamento</p>
+              <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                <p class="text-red-300 text-sm italic">{{ selectedOrder.problema }}</p>
+              </div>
             </div>
             <div>
               <p class="text-xs font-semibold text-gray-400 uppercase mb-2">Data e Hora</p>
