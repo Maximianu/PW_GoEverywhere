@@ -22,22 +22,40 @@ const isSubmitting = ref(false)
 
 const loadCouriers = async () => {
   try {
-    const res = await fetch('http://127.0.0.1:1338/api/estafetas')
+    const res = await fetch('http://127.0.0.1:1338/api/estafetas?populate=reviews')
     const json = await res.json()
-    couriers.value = json.data.map(item => ({
-      id: `C-${item.documentId ? item.documentId.substring(0,4) : item.id}`,
-      dbId: item.documentId || item.id,
-      dbNome: item.Nome || '',
-      dbEmail: item.Email || '',
-      dbTelemovel: item.Telemovel || '',
-      dbIdade: item.Idade || '',
-      dbAreaDeAtuacao: item.AreaDeAtuacao || 'Braga',
-      dbDisponivel: item.Disponivel !== undefined ? item.Disponivel : true,
-      initials: item.Nome ? item.Nome.substring(0, 2).toUpperCase() : '??',
-      name: item.Nome || 'Estafeta Sem Nome',
-      performance: Math.floor(Math.random() * 20) + 80,
-      status: item.Disponivel ? 'Disponível' : 'Ativo'
-    }))
+    couriers.value = json.data.map(item => {
+      let avgRating = 0;
+      let reviewCount = 0;
+      if (item.reviews && Array.isArray(item.reviews)) {
+        let sum = 0;
+        item.reviews.forEach(r => {
+           if (r.Estrela_estafeta) {
+             sum += r.Estrela_estafeta;
+             reviewCount++;
+           }
+        });
+        if (reviewCount > 0) {
+           avgRating = sum / reviewCount;
+        }
+      }
+
+      return {
+        id: `C-${item.documentId ? item.documentId.substring(0,4) : item.id}`,
+        dbId: item.documentId || item.id,
+        dbNome: item.Nome || '',
+        dbEmail: item.Email || '',
+        dbTelemovel: item.Telemovel || '',
+        dbIdade: item.Idade || '',
+        dbAreaDeAtuacao: item.AreaDeAtuacao || 'Braga',
+        dbDisponivel: item.Disponivel !== undefined ? item.Disponivel : true,
+        initials: item.Nome ? item.Nome.substring(0, 2).toUpperCase() : '??',
+        name: item.Nome || 'Estafeta Sem Nome',
+        performance: avgRating,
+        reviewCount: reviewCount,
+        status: item.Disponivel ? 'Disponível' : 'Ativo'
+      };
+    })
   } catch (error) {
     console.error('Erro ao buscar estafetas do Strapi:', error)
     couriers.value = mockData.couriers
@@ -223,7 +241,7 @@ const deleteCourier = async (courier) => {
                 <th class="p-6 font-semibold">Nome</th>
                 <th class="p-6 font-semibold">Área de Atuação</th>
                 <th class="p-6 font-semibold">Email</th>
-                <th class="p-6 font-semibold">Performance</th>
+                <th class="p-6 font-semibold">Avaliação</th>
                 <th class="p-6 font-semibold">Estado</th>
                 <th class="p-6 text-center font-semibold">Ações</th>
               </tr>
@@ -243,17 +261,12 @@ const deleteCourier = async (courier) => {
                   </div>
                 </td>
                 <td class="p-6">
-                  <div class="flex items-center gap-4 max-w-[180px]">
-                    <div class="flex-1 bg-[#080d14] h-1.5 rounded-full overflow-hidden border border-[#233246]/50">
-                      <div class="h-full rounded-full transition-all duration-1000"
-                           :class="{
-                             'bg-primary shadow-[0_0_8px_rgba(0,242,255,0.8)]': courier.performance >= 90,
-                             'bg-primary/80': courier.performance >= 80 && courier.performance < 90,
-                             'bg-warning shadow-[0_0_8px_rgba(245,158,11,0.8)]': courier.performance < 80
-                           }"
-                           :style="`width: ${courier.performance}%`"></div>
-                    </div>
-                    <span class="text-sm font-bold text-white w-10 text-right">{{ courier.performance }}%</span>
+                  <div class="flex items-center gap-2">
+                    <span v-if="courier.reviewCount > 0" class="text-sm font-bold text-white flex items-center gap-1">
+                      {{ courier.performance.toFixed(1) }} <span class="text-yellow-500 text-base leading-none">★</span>
+                    </span>
+                    <span v-else class="text-sm font-bold text-gray-500">S/A</span>
+                    <span v-if="courier.reviewCount > 0" class="text-xs text-gray-500">({{ courier.reviewCount }})</span>
                   </div>
                 </td>
                 <td class="p-6">
