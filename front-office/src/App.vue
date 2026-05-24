@@ -15,7 +15,7 @@ import Navbar from './components/Navbar.vue'
 /* Estilos globais para garantir que o fundo ocupe tudo */
 .front-office-app {
   min-height: 100vh;
-  background: #0a0c0f; /* Cor de fundo do teu design */
+  background: #0b0e14; /* Cor de fundo do teu design */
   color: #e0e2eb;
 }
 </style>

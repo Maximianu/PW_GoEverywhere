@@ -50,6 +50,11 @@
         <p v-if="message" class="subtitle" :style="{ color: messageType === 'error' ? 'red' : 'green' }">{{ message }}</p>
       </section>
     </main>
+  <div class="corner-video-wrapper show" aria-hidden="true">
+    <video class="corner-video" autoplay muted loop playsinline>
+      <source src="../assets/rocket.mp4" type="video/mp4" />
+    </video>
+  </div>
 </template>
 
 <script setup>
@@ -96,3 +101,38 @@ const logout = async () => {
   }
 }
 </script>
+
+<style scoped>
+.corner-video-wrapper {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  width: 16rem; /* 256px */
+  height: 9rem; /* 144px */
+  overflow: hidden;
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  pointer-events: none; /* do not block interaction */
+  z-index: 60;
+}
+.corner-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: translateZ(0);
+  /* central radial mask to fade edges so only the ship remains clearly visible */
+  -webkit-mask-image: radial-gradient(circle at 40% 55%, rgba(0,0,0,1) 18%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0) 70%);
+  mask-image: radial-gradient(circle at 40% 55%, rgba(0,0,0,1) 18%, rgba(0,0,0,0.6) 40%, rgba(0,0,0,0) 70%);
+  opacity: 0.98;
+}
+
+/* subtle fade-in when component mounts */
+.corner-video-wrapper { opacity: 0; transition: opacity 700ms ease; }
+.corner-video-wrapper.show { opacity: 1; }
+
+/* hide on very small screens */
+@media (max-width: 640px) {
+  .corner-video-wrapper { display: none; }
+}
+</style>

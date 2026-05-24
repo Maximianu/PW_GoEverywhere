@@ -3,13 +3,15 @@
     <!-- Hero Section -->
     <div style="position: relative; height: 50rem; overflow: hidden;">
       <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center;">
-        <img src="../assets/imageHome.png" alt="" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.7; object-fit: cover; width: 100%; height: 100%;" />
+        <video autoplay muted loop style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.7; object-fit: cover; width: 100%; height: 100%;">
+          <source src="../assets/planetaCinematico.mp4" type="video/mp4" />
+        </video>
         <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to bottom, rgba(5,7,10,0.6), rgba(5,7,10,0.2) 78.846%, rgba(5,7,10,0.9) 92%, #05070a 100%);"></div>
         <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 12rem; background: linear-gradient(to bottom, rgba(5,7,10,0), #05070a 100%);"></div>
         <!-- Background image using imageHome.png -->
       </div>
       <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 52.7888rem; height: 29.875rem;">
-        <div style="position: absolute; left: 1rem; top: 0; width: 50.7888rem; display: flex; align-items: center; box-shadow: 0 1.5625rem 1.5625rem 0 rgba(0,0,0,0.15);">
+        <div style="position: absolute; left: 1rem; top: 0; width: 50.7888rem; display: flex; align-items: center;">
           <div style="font-family: 'Orbitron', sans-serif; font-weight: bold; font-size: 6rem; line-height: 6rem; text-align: center; background: linear-gradient(to right, white, #00f2ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; color: transparent; letter-spacing: -0.15rem;">
             <p style="margin: 0;">GoEverywhere</p>
             <p style="margin: 0;">Beyond the</p>
