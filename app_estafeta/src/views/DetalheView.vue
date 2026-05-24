@@ -19,6 +19,7 @@
 
       <div class="map-container">
         <iframe
+          v-if="pedido.address"
           :src="mapUrl"
           width="100%"
           height="100%"
@@ -64,13 +65,24 @@
       </button>
 
       <template v-if="isRegistarEntrega">
-        <div class="info-box signature-box" style="margin-top: 20px;">
-          <p><strong>Assinatura:</strong></p>
-        </div>
-
-        <div class="photo-box mt-small">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
-          <p>Adicionar fotografia da entrega</p>
+        <div class="photo-box mt-small" @click="triggerFileInput" style="cursor: pointer; overflow: hidden; position: relative; min-height: 120px; margin-top: 20px !important;">
+          <input
+            type="file"
+            ref="fileInput"
+            accept="image/*"
+            @change="onFileChange"
+            style="display: none"
+          />
+          <template v-if="fotoPreview">
+            <img :src="fotoPreview" style="width: 100%; height: 100%; object-fit: cover; max-height: 200px; border-radius: 8px;" />
+            <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.7); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 10px;">
+              Alterar Foto
+            </div>
+          </template>
+          <template v-else>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            <p>Adicionar fotografia da entrega</p>
+          </template>
         </div>
       </template>
 
@@ -98,6 +110,19 @@ const isRegistarProblema = ref(false)
 const isRegistarEntrega = ref(false)
 const isGuardarSelecionado = ref(false)
 const problemaTexto = ref('')
+const fileInput = ref(null)
+const fotoPreview = ref(null)
+
+function triggerFileInput() {
+  fileInput.value?.click()
+}
+
+function onFileChange(event) {
+  const file = event.target.files[0]
+  if (file) {
+    fotoPreview.value = URL.createObjectURL(file)
+  }
+}
 
 const pedido = ref({
   id: '',
@@ -142,9 +167,13 @@ function getClienteTelefone(item) {
 }
 
 function mapStatus(status) {
-  if (!status) return 'Pendente'
+  if (!status) return 'Outro'
 
   const value = status.toLowerCase()
+
+  if (value.includes('aprovado')) {
+    return 'Pendente'
+  }
 
   if (value.includes('transito') || value.includes('trânsito') || value.includes('rota')) {
     return 'Em Rota'
@@ -154,11 +183,11 @@ function mapStatus(status) {
     return 'Entregue'
   }
 
-  if (value.includes('não') || value.includes('nao')) {
+  if (value.includes('não') || value.includes('nao') || value.includes('rejeitado') || value.includes('cancelado')) {
     return 'Não Entregue'
   }
 
-  return 'Pendente'
+  return 'Outro'
 }
 
 function mapPedido(item) {
@@ -229,7 +258,7 @@ async function guardarAlteracoes() {
       }
 
       dadosAtualizados = {
-        Estado: 'Não Entregue',
+        Estado: 'Cancelado',
         Problema: problemaTexto.value,
       }
     } else if (isRegistarEntrega.value) {
@@ -252,7 +281,7 @@ async function guardarAlteracoes() {
     pedido.value.status = mapStatus(dadosAtualizados.Estado)
     isGuardarSelecionado.value = true
 
-    if (dadosAtualizados.Estado === 'Concluido' || dadosAtualizados.Estado === 'Não Entregue') {
+    if (dadosAtualizados.Estado === 'Concluido' || dadosAtualizados.Estado === 'Cancelado') {
       router.push('/historico')
     }
   } catch (err) {

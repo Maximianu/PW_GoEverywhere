@@ -63,15 +63,19 @@ const pedidos = ref([])
 const reviews = ref([])
 
 function mapStatus(status) {
-  if (!status) return 'Pendente'
+  if (!status) return 'Outro'
 
   const value = status.toLowerCase()
+
+  if (value.includes('aprovado')) {
+    return 'Pendente'
+  }
 
   if (value.includes('concluido') || value.includes('concluído')) {
     return 'Entregue'
   }
 
-  if (value.includes('não') || value.includes('nao') || value.includes('rejeitado')) {
+  if (value.includes('não') || value.includes('nao') || value.includes('rejeitado') || value.includes('cancelado')) {
     return 'Não Entregue'
   }
 
@@ -79,7 +83,7 @@ function mapStatus(status) {
     return 'Em rota'
   }
 
-  return 'Pendente'
+  return 'Outro'
 }
 
 async function carregarPerfil() {
@@ -102,7 +106,7 @@ async function carregarPerfil() {
     status: mapStatus(item.Estado),
   }))
 
-  const reviewsResult = await getReviews()
+  const reviewsResult = await getReviews(dados.id)
   reviews.value = reviewsResult.data || []
 }
 
@@ -125,11 +129,11 @@ const entregasNaoEntregues = computed(
 )
 
 const taxaSucesso = computed(() => {
-  const totalFinalizadas = entregasConcluidas.value + entregasNaoEntregues.value
+  const total = totalEntregas.value
 
-  if (totalFinalizadas === 0) return '0%'
+  if (total === 0) return '0%'
 
-  const taxa = (entregasConcluidas.value / totalFinalizadas) * 100
+  const taxa = (entregasConcluidas.value / total) * 100
   return `${taxa.toFixed(1)}%`
 })
 

@@ -54,7 +54,7 @@
           <p class="delivery-line">📍 {{ item.address }}</p>
 
           <div class="delivery-line-flex">
-            <span>⏰ {{ item.time }}</span>
+            <span v-if="item.time && item.time !== '—'">⏰ {{ item.time }}</span>
             <span>📅 {{ item.date }}</span>
           </div>
 
@@ -98,19 +98,23 @@ function getClienteNome(item) {
 }
 
 function mapStatus(status) {
-  if (!status) return 'Pendente'
+  if (!status) return 'Outro'
 
   const value = status.toLowerCase()
+
+  if (value.includes('aprovado')) {
+    return 'Pendente'
+  }
 
   if (value.includes('concluido') || value.includes('concluído')) {
     return 'Entregue'
   }
 
-  if (value.includes('não') || value.includes('nao')) {
+  if (value.includes('não') || value.includes('nao') || value.includes('rejeitado') || value.includes('cancelado')) {
     return 'Não Entregue'
   }
 
-  return 'Pendente'
+  return 'Outro'
 }
 
 async function carregarHistorico() {

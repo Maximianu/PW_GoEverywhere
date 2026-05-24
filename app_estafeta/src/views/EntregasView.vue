@@ -61,7 +61,7 @@
             📍 {{ delivery.address }}
           </p>
 
-          <p class="delivery-line">
+          <p v-if="delivery.time && delivery.time !== 'Horário não definido'" class="delivery-line">
             ⏰ {{ delivery.time }}
           </p>
 
@@ -145,9 +145,13 @@ function getClienteNome(item) {
 }
 
 function mapStatus(status) {
-  if (!status) return 'Pendente'
+  if (!status) return 'Outro'
 
   const value = status.toLowerCase()
+
+  if (value.includes('aprovado')) {
+    return 'Pendente'
+  }
 
   if (
     value.includes('transito') ||
@@ -166,12 +170,14 @@ function mapStatus(status) {
 
   if (
     value.includes('não') ||
-    value.includes('nao')
+    value.includes('nao') ||
+    value.includes('rejeitado') ||
+    value.includes('cancelado')
   ) {
     return 'Não Entregue'
   }
 
-  return 'Pendente'
+  return 'Outro'
 }
 
 async function carregarEntregas() {

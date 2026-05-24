@@ -47,6 +47,14 @@ export function getEstafetaLogado() {
     return dados ? JSON.parse(dados) : null
 }
 
-export async function getReviews() {
-    return request('/reviews')
+export async function getReviews(estafetaId) {
+    const result = await request('/reviews?populate=*')
+    if (estafetaId && result.data) {
+        result.data = result.data.filter((review) => {
+            const est = review.estafeta || review.attributes?.estafeta
+            const id = est?.id || est?.data?.id
+            return id === estafetaId
+        })
+    }
+    return result
 }
