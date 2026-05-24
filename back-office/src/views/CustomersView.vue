@@ -247,7 +247,7 @@ const filteredCustomers = computed(() => {
               <div v-if="selectedCustomer.pedidosList && selectedCustomer.pedidosList.length > 0" class="space-y-3">
                 <div v-for="pedido in selectedCustomer.pedidosList" :key="pedido.id" class="bg-[#0c1219] p-4 rounded-xl border border-[#2a3b4f] flex flex-col gap-2">
                   <div class="flex justify-between items-start">
-                    <span class="text-white font-semibold flex items-center gap-2"><MapPin :size="14" class="text-gray-400" /> {{ pedido.Destino || 'N/A' }}</span>
+                    <span class="text-white font-semibold flex items-center gap-2"><MapPin :size="14" class="text-gray-400" /> {{ pedido.LocalEntrega || pedido.Destino || 'N/A' }}</span>
                     <span class="text-xs font-bold px-2 py-1 rounded-full border bg-opacity-20 whitespace-nowrap" :class="pedido.Estado === 'Entregue' ? 'text-green-400 border-green-500/30 bg-green-500/10' : (pedido.Estado === 'Cancelado' ? 'text-red-400 border-red-500/30 bg-red-500/10' : 'text-blue-400 border-blue-500/30 bg-blue-500/10')">
                       {{ pedido.Estado || 'Pendente' }}
                     </span>
