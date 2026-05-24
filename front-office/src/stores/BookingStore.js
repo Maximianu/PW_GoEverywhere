@@ -283,12 +283,12 @@ export const useBookingStore = defineStore('booking', () => {
     }[normalized] || normalized
 
     const foundKit = kits.value.find((kit) => {
-      const modelo = String(kit.attributes?.Modelo || kit.attributes?.modelo || '').toLowerCase()
+      const modelo = String(kit.Modelo || kit.modelo || kit.attributes?.Modelo || kit.attributes?.modelo || '').toLowerCase()
       return modelo === mappedModel || modelo.includes(mappedModel)
     })
 
     if (foundKit) {
-      return foundKit.id
+      return foundKit.documentId || foundKit.id
     }
 
     return Number.isFinite(Number(selectedKit.value)) ? Number(selectedKit.value) : null
