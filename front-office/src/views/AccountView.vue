@@ -1,6 +1,6 @@
 <template>
   <main class="page-shell" style="padding: 7.5rem 0 0;">
-    <section class="panel" style="max-width: 45rem; margin: 0 auto;">
+    <section class="panel" style="max-width: 45rem; margin: 0 auto; z-index: 1;">
         <div class="section-header">
           <div>
             <p class="small-note">Conta</p>
@@ -52,7 +52,7 @@
     </main>
   <div class="corner-video-wrapper show" aria-hidden="true">
     <video class="corner-video" autoplay muted loop playsinline>
-      <source src="../assets/rocket.mp4" type="video/mp4" />
+      <source src="../assets/rocket.mp4" type="video/mp4"/>
     </video>
   </div>
 </template>
@@ -107,13 +107,13 @@ const logout = async () => {
   position: fixed;
   bottom: 1.5rem;
   right: 1.5rem;
-  width: 16rem; /* 256px */
-  height: 9rem; /* 144px */
+  width: 70rem; /* 256px */
+  height: 50rem; /* 144px */
   overflow: hidden;
   border-radius: 0.75rem;
   box-shadow: 0 8px 24px rgba(0,0,0,0.45);
   pointer-events: none; /* do not block interaction */
-  z-index: 60;
+  z-index: 0;
 }
 .corner-video {
   width: 100%;
