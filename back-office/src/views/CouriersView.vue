@@ -217,39 +217,33 @@ const deleteCourier = async (courier) => {
 
       <div class="bg-surface border border-[#233246] rounded-[2rem] overflow-hidden shadow-2xl">
         <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse min-w-[800px]">
+          <table class="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr class="border-b border-[#233246] text-gray-400 text-xs uppercase tracking-widest font-semibold bg-[#111926]">
-                <th class="p-6 text-center w-32">ID</th>
-                <th class="p-6 w-1/3">Nome</th>
-                <th class="p-6 w-1/4">Performance</th>
-                <th class="p-6">Estado</th>
-                <th class="p-6 text-center">Ações</th>
+                <th class="p-6 font-semibold">Nome</th>
+                <th class="p-6 font-semibold">Área de Atuação</th>
+                <th class="p-6 font-semibold">Email</th>
+                <th class="p-6 font-semibold">Performance</th>
+                <th class="p-6 font-semibold">Estado</th>
+                <th class="p-6 text-center font-semibold">Ações</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-[#233246]">
               <tr v-for="courier in filteredCouriers" :key="courier.id" class="hover:bg-[#1a2636] transition-colors group">
-                <td class="p-6 text-center">
-                  <span class="font-mono text-xs font-bold text-gray-400 bg-[#111926] border border-[#233246] px-2 py-1 rounded">
-                    {{ courier.id }}
-                  </span>
-                </td>
                 <td class="p-6">
-                  <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0 shadow-inner"
-                         :class="{
-                           'bg-blue-600': courier.id === 'C-1024',
-                           'bg-indigo-400 text-black': courier.id === 'C-1025',
-                           'bg-yellow-500 text-black': courier.id === 'C-1026',
-                           'bg-rose-300 text-black': courier.id === 'C-1027'
-                         }">
-                      {{ courier.initials }}
-                    </div>
-                    <span class="text-white font-semibold">{{ courier.name }}</span>
+                  <span class="text-white font-semibold">{{ courier.name }}</span>
+                </td>
+                <td class="p-6 text-sm text-gray-300">
+                  <span class="bg-[#1a2636] px-3 py-1.5 rounded-lg border border-[#2a3b4f]">{{ courier.dbAreaDeAtuacao }}</span>
+                </td>
+                <td class="p-6 text-sm text-gray-300">
+                  <div class="flex items-center gap-2">
+                    <Mail :size="14" class="text-gray-500" />
+                    {{ courier.dbEmail || 'N/A' }}
                   </div>
                 </td>
                 <td class="p-6">
-                  <div class="flex items-center gap-4 max-w-[200px]">
+                  <div class="flex items-center gap-4 max-w-[180px]">
                     <div class="flex-1 bg-[#080d14] h-1.5 rounded-full overflow-hidden border border-[#233246]/50">
                       <div class="h-full rounded-full transition-all duration-1000"
                            :class="{

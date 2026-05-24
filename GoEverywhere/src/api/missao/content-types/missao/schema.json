@@ -66,6 +66,12 @@
     },
     "Carga": {
       "type": "biginteger"
+    },
+    "Problema": {
+      "type": "text"
+    },
+    "Descricao_missao": {
+      "type": "text"
     }
   }
 }
