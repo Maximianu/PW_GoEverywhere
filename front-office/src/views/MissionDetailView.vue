@@ -43,6 +43,22 @@
               </div>
             </div>
 
+            <div class="list-card">
+              <div class="list-row">
+                <div>
+                  <span class="label">Classificação Média do Estafeta</span>
+                  <p class="status-text">
+                    <span v-if="courierReviewCount > 0">
+                      <span class="avg-stars">{{ getCourierStars }}</span>
+                      <strong style="margin-left:8px">{{ courierAvg }} / 5</strong>
+                    </span>
+                    <span v-else>Sem avaliações</span>
+                  </p>
+                  <p class="sub-label">{{ courierReviewCount }} avaliações</p>
+                </div>
+              </div>
+            </div>
+
             <div class="list-card" :class="{ 'active-card': isMissaoAtiva }">
               <div class="list-row split-cols">
                 <div>
@@ -105,7 +121,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { obterBilheteStrapi, obterEstafetaPorBilheteStrapi } from '../services/strapi'
+import { obterBilheteStrapi, obterEstafetaPorBilheteStrapi, obterReviewsPorEstafetaStrapi } from '../services/strapi'
 
 const route = useRoute()
 const router = useRouter()
@@ -115,6 +131,8 @@ const loading = ref(true)
 const error = ref(null)
 const estafetaId = ref(null)
 const estafetaNome = ref(null)
+const courierAvg = ref(null)
+const courierReviewCount = ref(0)
 
 const bilheteId = computed(() => route.params.id)
 console.log('ID do bilhete extraído da rota:', bilheteId.value)
@@ -221,13 +239,56 @@ const fetchEstafetaDoBilhete = async (bilheteDocumentId) => {
       return
     }
 
-    estafetaId.value = estafetaRelation.id || estafetaRelation?.data?.id || null
+    estafetaId.value = estafetaRelation.documentId
+    console.log('Id estafeta relacionado ao bilhete:', estafetaId.value)
     const attrs = getRelationAttributes(estafetaRelation)
     estafetaNome.value = attrs?.Nome || attrs?.nome || null
+    // Buscar média de reviews do estafeta
+    if (estafetaId.value) {
+      await fetchEstafetaRating(estafetaId.value)
+    }
   } catch (err) {
     console.error('Erro ao buscar estafeta do pedido:', err)
     estafetaId.value = null
     estafetaNome.value = null
+  }
+}
+
+const fetchEstafetaRating = async (id) => {
+  try {
+    courierAvg.value = null
+    courierReviewCount.value = 0
+
+    const reviews = await obterReviewsPorEstafetaStrapi(id)
+    console.log(`Reviews do estafeta ${id}:`, reviews)
+    if (!reviews || reviews.length === 0) return
+
+    let sum = 0
+    let count = 0
+
+    for (const r of reviews) {
+      const attrs = r?.attributes || r
+      let val = attrs?.Estrela_estafeta ?? attrs?.estrela_estafeta ?? attrs?.avaliacao_estafeta ?? attrs?.avaliacao_estafeta
+      if (val === undefined || val === null) {
+        // try alternative keys
+        val = attrs?.avaliacao_estafeta ?? attrs?.Estrela_estafeta
+      }
+
+      const num = Number(val)
+      if (!isNaN(num)) {
+        sum += num
+        count += 1
+      }
+    }
+
+    if (count > 0) {
+      courierReviewCount.value = count
+      courierAvg.value = Number((sum / count).toFixed(1))
+    }
+  } catch (err) {
+    console.error('Erro ao buscar reviews do estafeta:', err)
+    courierAvg.value = null
+    courierReviewCount.value = 0
   }
 }
 
@@ -256,6 +317,14 @@ const fetchBilhete = async () => {
 }
 
 onMounted(fetchBilhete)
+
+const getCourierStars = computed(() => {
+  if (!courierAvg.value) return ''
+  const full = Math.round(courierAvg.value)
+  const filled = '★'.repeat(full)
+  const empty = '☆'.repeat(5 - full)
+  return filled + empty
+})
 </script>
 
 
@@ -421,6 +490,12 @@ onMounted(fetchBilhete)
   font-size: 16px;
   display: block;
   margin-top: 2px;
+}
+
+.avg-stars {
+  color: #ffd700;
+  font-size: 20px;
+  letter-spacing: 2px;
 }
 
 /* Botão de Ação */

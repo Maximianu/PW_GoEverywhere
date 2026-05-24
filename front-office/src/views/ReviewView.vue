@@ -44,25 +44,6 @@
               <div class="readonly-comment">{{ comentarioEstafeta }}</div>
             </div>
           </div>
-
-          <div class="panel review-panel">
-            <h3 class="card-title">Estatísticas do Estafeta</h3>
-            <p class="card-text">Classificação média e total de avaliações do estafeta atribuído.</p>
-            <div class="rating-section">
-              <label class="field-label">Média de Estrelas</label>
-              <div class="stars-container">
-                <span
-                  v-for="star in 5"
-                  :key="`avg-star-${star}`"
-                  class="star readonly"
-                  :class="{ active: estafetaAverage >= star }"
-                >★</span>
-              </div>
-              <div class="readonly-comment" style="min-height: auto;">
-                <strong>{{ estafetaAverage.toFixed(1) }}</strong> média · {{ estafetaReviewsCount }} avaliações
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -119,25 +100,6 @@
             </div>
           </div>
 
-          <div class="panel review-panel">
-            <h3 class="card-title">Estatísticas do Estafeta</h3>
-            <p class="card-text">Ver média de estrelas e número de avaliações do estafeta atribuído.</p>
-            <div class="rating-section">
-              <label class="field-label">Média de Estrelas</label>
-              <div class="stars-container">
-                <span
-                  v-for="star in 5"
-                  :key="`avg-star-form-${star}`"
-                  class="star readonly"
-                  :class="{ active: estafetaAverage >= star }"
-                >★</span>
-              </div>
-              <div style="color: rgba(185,202,203,0.8); margin-top:8px;">
-                <strong>{{ estafetaAverage.toFixed(1) }}</strong> média · {{ estafetaReviewsCount }} avaliações
-              </div>
-            </div>
-          </div>
-
         </div>
 
         <div class="actions-wrapper">
@@ -166,7 +128,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { obterReviewPorBilheteStrapi, obterReviewsPorEstafetaStrapi } from '../services/strapi'
+import { obterReviewPorBilheteStrapi } from '../services/strapi'
 
 const route = useRoute()
 const router = useRouter()
@@ -188,10 +150,6 @@ const messageType = ref('') // 'error' ou 'success'
 const successfulSubmit = ref(false)
 const existingReview = ref(null)
 const reviewExists = computed(() => !!existingReview.value)
-
-// Estatísticas do estafeta
-const estafetaReviewsCount = ref(0)
-const estafetaAverage = ref(0)
 
 const STRAPI_URL = import.meta.env.VITE_STRAPI_URL || 'http://localhost:1338'
 
@@ -219,46 +177,6 @@ const loadExistingReview = async () => {
   }
 }
 
-const loadEstafetaReviews = async () => {
-  try {
-    if (!courierId.value) {
-      estafetaReviewsCount.value = 0
-      estafetaAverage.value = 0
-      return
-    }
-
-    const reviews = await obterReviewsPorEstafetaStrapi(courierId.value)
-    if (!reviews || reviews.length === 0) {
-      estafetaReviewsCount.value = 0
-      estafetaAverage.value = 0
-      return
-    }
-
-    let sum = 0
-    let count = 0
-
-    for (const r of reviews) {
-      const attrs = r.attributes || {}
-      // Compatibilidade com várias formas de retorno
-      const estrela = (typeof r.Estrela_estafeta !== 'undefined' && r.Estrela_estafeta !== null)
-        ? Number(r.Estrela_estafeta)
-        : (typeof attrs.Estrela_estafeta !== 'undefined' ? Number(attrs.Estrela_estafeta) : null)
-
-      if (!isNaN(estrela) && estrela !== null) {
-        sum += estrela
-        count += 1
-      }
-    }
-
-    estafetaReviewsCount.value = count
-    estafetaAverage.value = count > 0 ? sum / count : 0
-  } catch (error) {
-    console.error('Erro ao carregar estatísticas do estafeta:', error)
-    estafetaReviewsCount.value = 0
-    estafetaAverage.value = 0
-  }
-}
-
 onMounted(async () => {
   if (!ticketId.value) {
     message.value = 'Parâmetro inválido: ticketId em falta na URL.'
@@ -267,9 +185,6 @@ onMounted(async () => {
   }
 
   await loadExistingReview()
-
-  // Carregar estatísticas do estafeta (mesmo que exista review)
-  await loadEstafetaReviews()
 
   if (!reviewExists.value && !courierId.value) {
     message.value = 'Parâmetro inválido: courierId em falta na URL.'
@@ -408,7 +323,7 @@ const submitReview = async () => {
 /* Grelha de Avaliação Responsiva */
 .review-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 32px;
   margin-top: 12px;
 }
