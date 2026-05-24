@@ -324,12 +324,12 @@ export async function criarPedidoStrapi(payload) {
 
 export async function obterReviewsPorEstafetaStrapi(estafetaId) {
   if (!estafetaId) {
-    throw new Error('EstafetaId é obrigatório para buscar reviews.')
+    throw new Error('Estafeta id é obrigatório para buscar reviews.')
   }
 
   try {
     const response = await fetch(
-      `${STRAPI_URL}/api/reviews?filters[estafeta][id][$eq]=${encodeURIComponent(estafetaId)}&populate[0]=estafeta&sort=createdAt:desc`,
+      `${STRAPI_URL}/api/reviews?filters[estafeta][documentId][$eq]=${encodeURIComponent(estafetaId)}&populate[0]=estafeta`,
       {
         method: 'GET',
         headers
