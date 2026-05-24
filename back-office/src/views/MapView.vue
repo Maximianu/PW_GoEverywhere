@@ -696,7 +696,7 @@ onUnmounted(() => {
 
 .selected-courier-detail {
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
   padding-top: 10px;
 }
 

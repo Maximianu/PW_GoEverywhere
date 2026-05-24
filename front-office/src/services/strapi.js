@@ -153,8 +153,9 @@ export async function obterBilhetesPorClienteStrapi(clienteId) {
   }
 
   try {
+    // Use cliente2 bidirectional relation and populate missao2 with its data
     const response = await fetch(
-      `${STRAPI_URL}/api/bilhetes?filters[cliente][id][$eq]=${encodeURIComponent(clienteId)}&populate=*`,
+      `${STRAPI_URL}/api/bilhetes?filters[cliente2][id][$eq]=${encodeURIComponent(clienteId)}&populate[0]=missao2&sort=id:desc`,
       {
         method: 'GET',
         headers
@@ -175,6 +176,101 @@ export async function obterBilhetesPorClienteStrapi(clienteId) {
   }
 }
 
+export async function obterBilheteStrapi(bilheteId) {
+  if (!bilheteId) {
+    throw new Error('BilheteId é obrigatório para buscar detalhes do bilhete.')
+  }
+
+  try {
+    // Fetch single ticket with populated missao2 relation
+    const response = await fetch(
+      `${STRAPI_URL}/api/bilhetes/${encodeURIComponent(bilheteId)}?populate[0]=missao2`,
+      {
+        method: 'GET',
+        headers
+      }
+    )
+
+    if (!response.ok) {
+      const errorDetails = await response.json().catch(() => null);
+      console.error('Erro detalhado do Strapi (obterBilhete):', JSON.stringify(errorDetails, null, 2));
+      throw new Error(`Erro ${response.status}: ${errorDetails?.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.data || null;
+  } catch (error) {
+    console.error('Erro ao obter bilhete:', error);
+    throw error;
+  }
+}
+
+export async function obterReviewPorBilheteStrapi(bilheteDocumentId) {
+  if (!bilheteDocumentId) {
+    throw new Error('Bilhete documentId é obrigatório para buscar a review.')
+  }
+
+  try {
+    const response = await fetch(
+      `${STRAPI_URL}/api/reviews?filters[bilhete][documentId][$eq]=${encodeURIComponent(bilheteDocumentId)}&populate[0]=estafeta`,
+      {
+        method: 'GET',
+        headers
+      }
+    )
+
+    if (!response.ok) {
+      const errorDetails = await response.json().catch(() => null);
+      console.error('Erro detalhado do Strapi (obterReviewPorBilhete):', JSON.stringify(errorDetails, null, 2));
+      throw new Error(`Erro ${response.status}: ${errorDetails?.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.data?.[0] || null;
+  } catch (error) {
+    console.error('Erro ao obter review por bilhete:', error);
+    throw error;
+  }
+}
+
+export async function obterEstafetaPorBilheteStrapi(bilheteDocumentId) {
+  if (!bilheteDocumentId) {
+    throw new Error('Bilhete documentId é obrigatório para buscar o estafeta.')
+  }
+
+  try {
+    const response = await fetch(
+      `${STRAPI_URL}/api/pedido-missions?filters[bilhete][documentId][$eq]=${encodeURIComponent(bilheteDocumentId)}&populate[0]=estafeta&populate[1]=estafeta2`,
+      {
+        method: 'GET',
+        headers
+      }
+    )
+
+    if (!response.ok) {
+      const errorDetails = await response.json().catch(() => null);
+      console.error('Erro detalhado do Strapi (obterEstafetaPorBilhete):', JSON.stringify(errorDetails, null, 2));
+      throw new Error(`Erro ${response.status}: ${errorDetails?.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    const pedido = data.data?.[0] || null
+    if (!pedido) return null
+
+    const relation = pedido.attributes?.estafeta || pedido.attributes?.estafeta2 || pedido.estafeta || pedido.estafeta2
+    if (!relation) return null
+
+    if (relation.data) {
+      return relation.data
+    }
+
+    return relation
+  } catch (error) {
+    console.error('Erro ao buscar estafeta por bilhete:', error);
+    throw error;
+  }
+}
+
 export async function criarBilheteStrapi(clienteId, missaoId) {
   try {
     const response = await fetch(`${STRAPI_URL}/api/bilhetes`, {
@@ -183,7 +279,9 @@ export async function criarBilheteStrapi(clienteId, missaoId) {
       body: JSON.stringify({
         data: {
           cliente: clienteId,
-          missao: missaoId
+          missao: missaoId,
+          cliente2: clienteId,
+          missao2: missaoId
         }
       })
     });
@@ -220,6 +318,34 @@ export async function criarPedidoStrapi(payload) {
     return data;
   } catch (error) {
     console.error('Erro na criação do pedido:', error);
+    throw error;
+  }
+}
+
+export async function obterReviewsPorEstafetaStrapi(estafetaId) {
+  if (!estafetaId) {
+    throw new Error('EstafetaId é obrigatório para buscar reviews.')
+  }
+
+  try {
+    const response = await fetch(
+      `${STRAPI_URL}/api/reviews?filters[estafeta][id][$eq]=${encodeURIComponent(estafetaId)}&populate[0]=estafeta&sort=createdAt:desc`,
+      {
+        method: 'GET',
+        headers
+      }
+    )
+
+    if (!response.ok) {
+      const errorDetails = await response.json().catch(() => null);
+      console.error('Erro detalhado do Strapi (obterReviewsPorEstafeta):', JSON.stringify(errorDetails, null, 2));
+      throw new Error(`Erro ${response.status}: ${errorDetails?.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.data || [];
+  } catch (error) {
+    console.error('Erro ao obter reviews por estafeta:', error);
     throw error;
   }
 }

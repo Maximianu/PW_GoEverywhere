@@ -31,9 +31,9 @@
     },
     "estafeta": {
       "type": "relation",
-      "relation": "oneToOne",
+      "relation": "manyToOne",
       "target": "api::estafeta.estafeta",
-      "inversedBy": "review"
+      "inversedBy": "reviews"
     }
   }
 }

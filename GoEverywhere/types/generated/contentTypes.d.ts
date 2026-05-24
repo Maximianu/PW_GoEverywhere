@@ -729,7 +729,7 @@ export interface ApiEstafetaEstafeta extends Struct.CollectionTypeSchema {
     >;
     PIN: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
-    review: Schema.Attribute.Relation<'oneToOne', 'api::review.review'>;
+    reviews: Schema.Attribute.Relation<'oneToMany', 'api::review.review'>;
     Telemovel: Schema.Attribute.Integer;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -915,7 +915,7 @@ export interface ApiReviewReview extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     Descricao_estafeta: Schema.Attribute.Text;
     Descricao_missao: Schema.Attribute.Text;
-    estafeta: Schema.Attribute.Relation<'oneToOne', 'api::estafeta.estafeta'>;
+    estafeta: Schema.Attribute.Relation<'manyToOne', 'api::estafeta.estafeta'>;
     Estrela_estafeta: Schema.Attribute.Integer;
     Estrela_missao: Schema.Attribute.Integer;
     locale: Schema.Attribute.String & Schema.Attribute.Private;

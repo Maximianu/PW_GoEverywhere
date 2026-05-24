@@ -19,22 +19,22 @@
             <div class="input-row">
               <div class="input-group">
                 <label>IBAN</label>
-                <input type="text" value="PT50 0000 0000 0000 0000 0000 0" readonly />
+                <input type="text" placeholder="PT50 0000 0000 0000 0000 0000 0" />
               </div>
               <div class="input-group">
                 <label>SWIFT / BIC</label>
-                <input type="text" value="ORBITPTPLXXX" readonly />
+                <input type="text" placeholder="ORBITPTPLXXX"  />
               </div>
             </div>
 
             <div class="input-row mt-4">
               <div class="input-group">
                 <label>Entidade</label>
-                <input type="text" value="12345" readonly />
+                <input type="text" placeholder="12345"  />
               </div>
               <div class="input-group">
                 <label>Referência</label>
-                <input type="text" value="987 654 321" readonly />
+                <input type="text" placeholder="987 654 321"  />
               </div>
             </div>
             
@@ -86,7 +86,7 @@
             CONFIRMAR E LANÇAR
           </button>
           <p v-if="isPaymentDisabled" class="subtitle" style="color: #ff6666; margin-top: 1rem;">
-            Cliente não encontrado. Faça login novamente para continuar.
+            {{ !bookingStore.missaoSelecionada ? 'Nenhuma missão selecionada. Volte e escolha uma missão.' : 'Cliente não encontrado. Faça login novamente para continuar.' }}
           </p>
         </aside>
 
@@ -111,7 +111,11 @@ const clienteId = computed(() => {
   const id = userStore.clienteData?.id || bookingStore.clienteId || localStorage.getItem('clienteId')
   return Number.isFinite(Number(id)) ? Number(id) : null
 })
-const isPaymentDisabled = computed(() => !clienteId.value && !userStore.userEmail)
+const isPaymentDisabled = computed(() => {
+  const hasMissao = bookingStore.missaoSelecionada && bookingStore.missaoSelecionada.id
+  const hasClient = clienteId.value || userStore.userEmail
+  return !hasMissao || !hasClient
+})
 
 const confirmarMissao = async () => {
   if (!morada.value.trim()) {
@@ -122,6 +126,12 @@ const confirmarMissao = async () => {
   const selectedMissao = bookingStore.missaoSelecionada
   if (!selectedMissao || !selectedMissao.id) {
     alert('Missão não selecionada. Por favor, volte e selecione uma missão.')
+    return
+  }
+
+  // Redirecionar se não há missão selecionada
+  if (!bookingStore.missaoSelecionada) {
+    router.push('/book')
     return
   }
 
@@ -147,7 +157,9 @@ const confirmarMissao = async () => {
     const pedidoPayload = {
       bilhete: bilheteId,
       LocalEntrega: morada.value,
-      Estado: 'Pendente'
+      Estado: 'Pendente',
+      cliente: effectiveClienteId,
+      cliente2: effectiveClienteId
     }
 
     if (bookingStore.selectedKit !== null && bookingStore.selectedKitId) {
@@ -338,22 +350,22 @@ const confirmarMissao = async () => {
 }
 
 .btn-confirm {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width: 100%;
   background: #00f2ff;
   color: #00363a;
-  padding: 1.25rem;
-  text-decoration: none;
-  font-weight: 800;
-  letter-spacing: 0.125rem;
-  border-radius: 0.25rem;
-  transition: all 0.3s ease;
+  border: none;
+  padding: 16px;
+  font-weight: 700;
+  border-radius: 4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
 }
 
 .btn-confirm:hover {
-  background: #e1fdff;
-  transform: translateY(-0.125rem);
+  background: #53e4ff;
+  box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
 }
 
 /* Responsividade */
