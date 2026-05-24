@@ -30,7 +30,7 @@
             v-model="search"
             type="text"
             class="search-input"
-            placeholder="Pesquisar encomenda"
+            placeholder="Pesquisar por cliente ou encomenda"
           />
         </div>
       </section>
@@ -81,16 +81,17 @@ const search = ref('')
 const deliveries = ref([])
 
 function getClienteNome(item) {
-  const cliente = item.cliente
+  const clienteDireto = item.cliente
+  const clienteBilhete = item.bilhete?.cliente || item.bilhete?.cliente2
+  const cliente = clienteDireto || clienteBilhete
 
   if (!cliente) return 'Cliente não definido'
 
-  const primeiro = cliente.PrimeiroNome || ''
-  const ultimo = cliente.UltimoNome || ''
-
+  const primeiro = cliente.PrimeiroNome || cliente.primeiroNome || ''
+  const ultimo = cliente.UltimoNome || cliente.ultimoNome || ''
   const nomeCompleto = `${primeiro} ${ultimo}`.trim()
 
-  return nomeCompleto || cliente.Email || 'Cliente não definido'
+  return nomeCompleto || cliente.Email || cliente.email || 'Cliente não definido'
 }
 
 function mapStatus(status) {

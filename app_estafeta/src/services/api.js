@@ -17,11 +17,24 @@ async function request(endpoint, options = {}) {
 }
 
 export async function getPedidos(estafetaId) {
-    return request(`/pedido-missions?filters[estafeta][id][$eq]=${estafetaId}&populate=*`)
+    const result = await request(
+        `/pedido-missions?populate[bilhete][populate]=cliente&populate[cliente]=*&populate[estafeta]=*&populate[estafeta2]=*`
+    )
+
+    result.data = result.data.filter((pedido) => {
+        return (
+            pedido.estafeta?.id === estafetaId ||
+            pedido.estafeta2?.id === estafetaId
+        )
+    })
+
+    return result
 }
 
 export async function getPedidoById(documentId) {
-    return request(`/pedido-missions/${documentId}?populate=*`)
+    return request(
+        `/pedido-missions/${documentId}?populate[bilhete][populate]=cliente&populate[cliente]=*&populate[estafeta]=*&populate[estafeta2]=*`
+    )
 }
 
 export async function updatePedidoEstado(documentId, estado) {

@@ -9,7 +9,7 @@
       <section class="stats-grid stats-grid-3 history-stats">
         <div class="stat-card">
           <span class="stat-label">Total</span>
-          <strong>{{ history.length }}</strong>
+          <strong>{{ filteredHistory.length }}</strong>
         </div>
         <div class="stat-card">
           <span class="stat-label">Entregues</span>
@@ -28,7 +28,7 @@
             v-model="search"
             type="text"
             class="search-input"
-            placeholder="Pesquisar encomenda"
+            placeholder="Pesquisar por cliente ou encomenda"
           />
         </div>
       </section>
@@ -55,6 +55,10 @@
             <span>⏰ {{ item.time }}</span>
             <span>📅 {{ item.date }}</span>
           </div>
+
+          <p v-if="item.problema" class="delivery-line">
+            ⚠️ {{ item.problema }}
+          </p>
         </article>
       </section>
 
@@ -78,15 +82,17 @@ const selectedDate = ref('')
 const history = ref([])
 
 function getClienteNome(item) {
-  const cliente = item.cliente
+  const clienteDireto = item.cliente
+  const clienteBilhete = item.bilhete?.cliente || item.bilhete?.cliente2
+  const cliente = clienteDireto || clienteBilhete
 
   if (!cliente) return 'Cliente não definido'
 
-  const primeiro = cliente.PrimeiroNome || ''
-  const ultimo = cliente.UltimoNome || ''
+  const primeiro = cliente.PrimeiroNome || cliente.primeiroNome || ''
+  const ultimo = cliente.UltimoNome || cliente.ultimoNome || ''
   const nomeCompleto = `${primeiro} ${ultimo}`.trim()
 
-  return nomeCompleto || cliente.Email || 'Cliente não definido'
+  return nomeCompleto || cliente.Email || cliente.email || 'Cliente não definido'
 }
 
 function mapStatus(status) {
@@ -94,8 +100,13 @@ function mapStatus(status) {
 
   const value = status.toLowerCase()
 
-  if (value.includes('concluido') || value.includes('concluído')) return 'Entregue'
-  if (value.includes('não') || value.includes('nao')) return 'Não Entregue'
+  if (value.includes('concluido') || value.includes('concluído')) {
+    return 'Entregue'
+  }
+
+  if (value.includes('não') || value.includes('nao')) {
+    return 'Não Entregue'
+  }
 
   return 'Pendente'
 }
@@ -119,6 +130,7 @@ async function carregarHistorico() {
       time: item.Horario || '—',
       date: item.updatedAt?.slice(0, 10) || item.createdAt?.slice(0, 10) || '—',
       status: mapStatus(item.Estado),
+      problema: item.Problema || '',
     }))
     .filter((item) => item.status === 'Entregue' || item.status === 'Não Entregue')
 }
@@ -133,7 +145,8 @@ const filteredHistory = computed(() => {
       !term ||
       item.name.toLowerCase().includes(term) ||
       String(item.numero).includes(term) ||
-      item.address.toLowerCase().includes(term)
+      item.address.toLowerCase().includes(term) ||
+      item.status.toLowerCase().includes(term)
 
     const matchesDate =
       !selectedDate.value || item.date === selectedDate.value

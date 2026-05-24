@@ -18,17 +18,34 @@
       </div>
 
       <section class="stats-grid profile-stats">
-        <div class="stat-card"><span class="stat-label">Horas Trabalhadas</span><strong>460</strong></div>
-        <div class="stat-card"><span class="stat-label">Entregas Hoje</span><strong>3</strong></div>
-        <div class="stat-card"><span class="stat-label">Entregas Concluídas</span><strong>99</strong></div>
-        <div class="stat-card"><span class="stat-label">Taxa de sucesso</span><strong>89.9%</strong></div>
+        <div class="stat-card">
+          <span class="stat-label">Horas Trabalhadas</span>
+          <strong>460</strong>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-label">Entregas Hoje</span>
+          <strong>{{ entregasHoje }}</strong>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-label">Entregas Totais</span>
+          <strong>{{ totalEntregas }}</strong>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-label">Taxa de sucesso</span>
+          <strong>{{ taxaSucesso }}</strong>
+        </div>
       </section>
 
       <div class="small-box centered-box">
         <p>Avaliação média: 4,3 (12 avaliações)</p>
       </div>
 
-      <button class="primary-btn btn-glow logout-main-btn" @click="logout">Terminar Sessão</button>
+      <button class="primary-btn btn-glow logout-main-btn" @click="logout">
+        Terminar Sessão
+      </button>
 
       <nav class="bottom-nav">
         <button class="nav-item" @click="go('/entregas')">ENTREGAS</button>
@@ -40,8 +57,9 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { getPedidos, getEstafetaLogado } from '../services/api'
 
 const router = useRouter()
 
@@ -51,15 +69,74 @@ const estafeta = ref({
   telemovel: '',
 })
 
-onMounted(() => {
-  const dados = localStorage.getItem('estafeta')
+const pedidos = ref([])
 
-  if (dados) {
-    estafeta.value = {
-      ...estafeta.value,
-      ...JSON.parse(dados),
-    }
+function mapStatus(status) {
+  if (!status) return 'Pendente'
+
+  const value = status.toLowerCase()
+
+  if (value.includes('concluido') || value.includes('concluído')) {
+    return 'Entregue'
   }
+
+  if (value.includes('não') || value.includes('nao')) {
+    return 'Não Entregue'
+  }
+
+  if (value.includes('transito') || value.includes('trânsito') || value.includes('rota')) {
+    return 'Em rota'
+  }
+
+  return 'Pendente'
+}
+
+async function carregarPerfil() {
+  const dados = getEstafetaLogado()
+
+  if (!dados) {
+    router.push('/')
+    return
+  }
+
+  estafeta.value = {
+    ...estafeta.value,
+    ...dados,
+  }
+
+  const result = await getPedidos(dados.id)
+
+  pedidos.value = result.data.map((item) => ({
+    id: item.documentId,
+    numero: item.id,
+    status: mapStatus(item.Estado),
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  }))
+}
+
+onMounted(carregarPerfil)
+
+const totalEntregas = computed(() => pedidos.value.length)
+
+const entregasConcluidas = computed(
+  () => pedidos.value.filter((p) => p.status === 'Entregue').length,
+)
+
+const entregasHoje = computed(() => {
+  const hoje = new Date().toISOString().slice(0, 10)
+
+  return pedidos.value.filter((p) => {
+    const data = (p.updatedAt || p.createdAt || '').slice(0, 10)
+    return data === hoje
+  }).length
+})
+
+const taxaSucesso = computed(() => {
+  if (totalEntregas.value === 0) return '0%'
+
+  const taxa = (entregasConcluidas.value / totalEntregas.value) * 100
+  return `${taxa.toFixed(1)}%`
 })
 
 function go(path) {

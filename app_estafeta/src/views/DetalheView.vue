@@ -116,20 +116,24 @@ const mapUrl = computed(() => {
   return `https://maps.google.com/maps?q=${morada}&t=&z=15&ie=UTF8&iwloc=&output=embed`
 })
 
+function getCliente(item) {
+  return item.cliente || item.bilhete?.cliente || item.bilhete?.cliente2 || null
+}
+
 function getClienteNome(item) {
-  const cliente = item.cliente
+  const cliente = getCliente(item)
 
   if (!cliente) return 'Cliente não definido'
 
-  const primeiro = cliente.PrimeiroNome || ''
-  const ultimo = cliente.UltimoNome || ''
+  const primeiro = cliente.PrimeiroNome || cliente.primeiroNome || ''
+  const ultimo = cliente.UltimoNome || cliente.ultimoNome || ''
   const nomeCompleto = `${primeiro} ${ultimo}`.trim()
 
-  return nomeCompleto || cliente.Email || 'Cliente não definido'
+  return nomeCompleto || cliente.Email || cliente.email || 'Cliente não definido'
 }
 
 function getClienteTelefone(item) {
-  const cliente = item.cliente
+  const cliente = getCliente(item)
 
   return (
     cliente?.Telemovel ||
@@ -170,7 +174,7 @@ function mapPedido(item) {
     phone: getClienteTelefone(item),
     time: item.Horario || 'Horário não definido',
     status: mapStatus(item.Estado),
-    notes: item.Observacoes || item.Notas || item.Descricao || item.Problema || 'Sem notas',
+    notes: item.Problema || item.Observacoes || item.Notas || item.Descricao || 'Sem notas',
   }
 }
 

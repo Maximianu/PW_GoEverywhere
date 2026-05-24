@@ -48,6 +48,9 @@
       "relation": "manyToOne",
       "target": "api::estafeta.estafeta",
       "inversedBy": "pedidos"
+    },
+    "Problema": {
+      "type": "string"
     }
   }
 }
