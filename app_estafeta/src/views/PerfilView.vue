@@ -17,17 +17,17 @@
         <p v-if="estafeta.telemovel">📞 {{ estafeta.telemovel }}</p>
       </div>
 
-      <section class="stats-grid stats-grid-2 profile-stats">
-        <div class="stat-card">
-          <span class="stat-label">Entregas Totais</span>
-          <strong>{{ totalEntregas }}</strong>
-        </div>
+    <div class="profile-stats-wide">
+      <div class="profile-stat-wide">
+        <span class="stat-label">Entregas Totais</span>
+        <strong>{{ totalEntregas }}</strong>
+      </div>
 
-        <div class="stat-card">
-          <span class="stat-label">Taxa de sucesso</span>
-          <strong>{{ taxaSucesso }}</strong>
-        </div>
-      </section>
+      <div class="profile-stat-wide">
+        <span class="stat-label">Taxa de sucesso</span>
+        <strong>{{ taxaSucesso }}</strong>
+      </div>
+    </div>
 
       <div class="small-box centered-box">
         <p>Avaliação média: {{ mediaReviews }} ({{ totalReviews }} avaliações)</p>
@@ -108,7 +108,13 @@ async function carregarPerfil() {
 
 onMounted(carregarPerfil)
 
-const totalEntregas = computed(() => pedidos.value.length)
+const totalEntregas = computed(() => {
+  return pedidos.value.filter(
+    (p) =>
+      p.status === 'Entregue' ||
+      p.status === 'Não Entregue'
+  ).length
+})
 
 const entregasConcluidas = computed(
   () => pedidos.value.filter((p) => p.status === 'Entregue').length,
@@ -148,3 +154,30 @@ function logout() {
   router.push('/')
 }
 </script>
+
+<style scoped>
+.profile-stats-wide {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.profile-stat-wide {
+  width: 100%;
+  border: 1px solid rgba(173, 214, 255, 0.65);
+  border-radius: 12px;
+  padding: 16px;
+  background: rgba(20, 40, 65, 0.55);
+}
+
+.profile-stat-wide strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 28px;
+}
+
+
+</style>
