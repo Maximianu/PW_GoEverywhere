@@ -11,10 +11,12 @@
           <span class="stat-label">Total</span>
           <strong>{{ filteredHistory.length }}</strong>
         </div>
+
         <div class="stat-card">
           <span class="stat-label">Entregues</span>
           <strong>{{ deliveredCount }}</strong>
         </div>
+
         <div class="stat-card active-stat">
           <span class="stat-label">Não Entregues</span>
           <strong>{{ notDeliveredCount }}</strong>
@@ -52,9 +54,11 @@
           <p class="delivery-line">📍 {{ item.address }}</p>
 
           <div class="delivery-line-flex">
-            <span>⏰ {{ item.time }}</span>
+            <span v-if="item.time && item.time !== '—'">⏰ {{ item.time }}</span>
             <span>📅 {{ item.date }}</span>
           </div>
+
+          <p class="delivery-line">⚡ Prioridade: {{ item.priority }}</p>
 
           <p v-if="item.problema" class="delivery-line">
             ⚠️ {{ item.problema }}
@@ -82,33 +86,35 @@ const selectedDate = ref('')
 const history = ref([])
 
 function getClienteNome(item) {
-  const clienteDireto = item.cliente
-  const clienteBilhete = item.bilhete?.cliente || item.bilhete?.cliente2
-  const cliente = clienteDireto || clienteBilhete
+  const cliente = item.cliente
 
   if (!cliente) return 'Cliente não definido'
 
   const primeiro = cliente.PrimeiroNome || cliente.primeiroNome || ''
   const ultimo = cliente.UltimoNome || cliente.ultimoNome || ''
-  const nomeCompleto = `${primeiro} ${ultimo}`.trim()
+  const nome = `${primeiro} ${ultimo}`.trim()
 
-  return nomeCompleto || cliente.Email || cliente.email || 'Cliente não definido'
+  return nome || cliente.Email || cliente.email || 'Cliente não definido'
 }
 
 function mapStatus(status) {
-  if (!status) return 'Pendente'
+  if (!status) return 'Outro'
 
   const value = status.toLowerCase()
+
+  if (value.includes('aprovado')) {
+    return 'Pendente'
+  }
 
   if (value.includes('concluido') || value.includes('concluído')) {
     return 'Entregue'
   }
 
-  if (value.includes('não') || value.includes('nao')) {
+  if (value.includes('não') || value.includes('nao') || value.includes('rejeitado') || value.includes('cancelado')) {
     return 'Não Entregue'
   }
 
-  return 'Pendente'
+  return 'Outro'
 }
 
 async function carregarHistorico() {
@@ -129,6 +135,7 @@ async function carregarHistorico() {
       address: item.LocalEntrega || item.Destino || 'Morada não definida',
       time: item.Horario || '—',
       date: item.updatedAt?.slice(0, 10) || item.createdAt?.slice(0, 10) || '—',
+      priority: item.Prioridade || item.Prioridade_Entrega || 'Normal',
       status: mapStatus(item.Estado),
       problema: item.Problema || '',
     }))
@@ -148,8 +155,7 @@ const filteredHistory = computed(() => {
       item.address.toLowerCase().includes(term) ||
       item.status.toLowerCase().includes(term)
 
-    const matchesDate =
-      !selectedDate.value || item.date === selectedDate.value
+    const matchesDate = !selectedDate.value || item.date === selectedDate.value
 
     return matchesSearch && matchesDate
   })

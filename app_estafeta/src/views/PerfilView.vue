@@ -17,30 +17,20 @@
         <p v-if="estafeta.telemovel">📞 {{ estafeta.telemovel }}</p>
       </div>
 
-      <section class="stats-grid profile-stats">
-        <div class="stat-card">
-          <span class="stat-label">Horas Trabalhadas</span>
-          <strong>460</strong>
-        </div>
+    <div class="profile-stats-wide">
+      <div class="profile-stat-wide">
+        <span class="stat-label">Entregas Totais</span>
+        <strong>{{ totalEntregas }}</strong>
+      </div>
 
-        <div class="stat-card">
-          <span class="stat-label">Entregas Hoje</span>
-          <strong>{{ entregasHoje }}</strong>
-        </div>
-
-        <div class="stat-card">
-          <span class="stat-label">Entregas Totais</span>
-          <strong>{{ totalEntregas }}</strong>
-        </div>
-
-        <div class="stat-card">
-          <span class="stat-label">Taxa de sucesso</span>
-          <strong>{{ taxaSucesso }}</strong>
-        </div>
-      </section>
+      <div class="profile-stat-wide">
+        <span class="stat-label">Taxa de sucesso</span>
+        <strong>{{ taxaSucesso }}</strong>
+      </div>
+    </div>
 
       <div class="small-box centered-box">
-        <p>Avaliação média: 4,3 (12 avaliações)</p>
+        <p>Avaliação média: {{ mediaReviews }} ({{ totalReviews }} avaliações)</p>
       </div>
 
       <button class="primary-btn btn-glow logout-main-btn" @click="logout">
@@ -59,7 +49,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getPedidos, getEstafetaLogado } from '../services/api'
+import { getPedidos, getEstafetaLogado, getReviews } from '../services/api'
 
 const router = useRouter()
 
@@ -70,17 +60,22 @@ const estafeta = ref({
 })
 
 const pedidos = ref([])
+const reviews = ref([])
 
 function mapStatus(status) {
-  if (!status) return 'Pendente'
+  if (!status) return 'Outro'
 
   const value = status.toLowerCase()
+
+  if (value.includes('aprovado')) {
+    return 'Pendente'
+  }
 
   if (value.includes('concluido') || value.includes('concluído')) {
     return 'Entregue'
   }
 
-  if (value.includes('não') || value.includes('nao')) {
+  if (value.includes('não') || value.includes('nao') || value.includes('rejeitado') || value.includes('cancelado')) {
     return 'Não Entregue'
   }
 
@@ -88,7 +83,7 @@ function mapStatus(status) {
     return 'Em rota'
   }
 
-  return 'Pendente'
+  return 'Outro'
 }
 
 async function carregarPerfil() {
@@ -104,39 +99,54 @@ async function carregarPerfil() {
     ...dados,
   }
 
-  const result = await getPedidos(dados.id)
-
-  pedidos.value = result.data.map((item) => ({
+  const pedidosResult = await getPedidos(dados.id)
+  pedidos.value = pedidosResult.data.map((item) => ({
     id: item.documentId,
     numero: item.id,
     status: mapStatus(item.Estado),
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
   }))
+
+  const reviewsResult = await getReviews(dados.id)
+  reviews.value = reviewsResult.data || []
 }
 
 onMounted(carregarPerfil)
 
-const totalEntregas = computed(() => pedidos.value.length)
+const totalEntregas = computed(() => {
+  return pedidos.value.filter(
+    (p) =>
+      p.status === 'Entregue' ||
+      p.status === 'Não Entregue'
+  ).length
+})
 
 const entregasConcluidas = computed(
   () => pedidos.value.filter((p) => p.status === 'Entregue').length,
 )
 
-const entregasHoje = computed(() => {
-  const hoje = new Date().toISOString().slice(0, 10)
-
-  return pedidos.value.filter((p) => {
-    const data = (p.updatedAt || p.createdAt || '').slice(0, 10)
-    return data === hoje
-  }).length
-})
+const entregasNaoEntregues = computed(
+  () => pedidos.value.filter((p) => p.status === 'Não Entregue').length,
+)
 
 const taxaSucesso = computed(() => {
-  if (totalEntregas.value === 0) return '0%'
+  const total = totalEntregas.value
 
-  const taxa = (entregasConcluidas.value / totalEntregas.value) * 100
+  if (total === 0) return '0%'
+
+  const taxa = (entregasConcluidas.value / total) * 100
   return `${taxa.toFixed(1)}%`
+})
+
+const totalReviews = computed(() => reviews.value.length)
+
+const mediaReviews = computed(() => {
+  if (reviews.value.length === 0) return '0.0'
+
+  const soma = reviews.value.reduce((total, review) => {
+    return total + Number(review.Estrela_estafeta || 0)
+  }, 0)
+
+  return (soma / reviews.value.length).toFixed(1)
 })
 
 function go(path) {
@@ -148,3 +158,30 @@ function logout() {
   router.push('/')
 }
 </script>
+
+<style scoped>
+.profile-stats-wide {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.profile-stat-wide {
+  width: 100%;
+  border: 1px solid rgba(173, 214, 255, 0.65);
+  border-radius: 12px;
+  padding: 16px;
+  background: rgba(20, 40, 65, 0.55);
+}
+
+.profile-stat-wide strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 28px;
+}
+
+
+</style>

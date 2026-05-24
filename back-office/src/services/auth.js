@@ -2,7 +2,7 @@ import { api } from './api'
 
 export const authService = {
   // Fazer login
-  async login(email, pin) {
+  async login(email, pin, keepSession = false) {
     try {
       // Buscar admin por email
       const response = await api.getAdminByEmail(email)
@@ -21,12 +21,14 @@ export const authService = {
         throw new Error('Email ou PIN incorreto')
       }
       
-      // Armazenar token no localStorage
+      // Armazenar token
       const token = btoa(`${admin.id}:${Date.now()}`)
-      localStorage.setItem('adminToken', token)
-      localStorage.setItem('adminId', admin.id)
-      localStorage.setItem('adminEmail', admin.email)
-      localStorage.setItem('adminName', admin.Nome)
+      const storage = keepSession ? localStorage : sessionStorage
+      
+      storage.setItem('adminToken', token)
+      storage.setItem('adminId', admin.id)
+      storage.setItem('adminEmail', admin.email)
+      storage.setItem('adminName', admin.Nome)
       
       return {
         success: true,
@@ -50,19 +52,24 @@ export const authService = {
     localStorage.removeItem('adminId')
     localStorage.removeItem('adminEmail')
     localStorage.removeItem('adminName')
+    
+    sessionStorage.removeItem('adminToken')
+    sessionStorage.removeItem('adminId')
+    sessionStorage.removeItem('adminEmail')
+    sessionStorage.removeItem('adminName')
   },
   
   // Verificar se está autenticado
   isAuthenticated() {
-    return !!localStorage.getItem('adminToken')
+    return !!(localStorage.getItem('adminToken') || sessionStorage.getItem('adminToken'))
   },
   
   // Obter admin atual
   getCurrentAdmin() {
     return {
-      id: localStorage.getItem('adminId'),
-      email: localStorage.getItem('adminEmail'),
-      nome: localStorage.getItem('adminName')
+      id: localStorage.getItem('adminId') || sessionStorage.getItem('adminId'),
+      email: localStorage.getItem('adminEmail') || sessionStorage.getItem('adminEmail'),
+      nome: localStorage.getItem('adminName') || sessionStorage.getItem('adminName')
     }
   }
 }

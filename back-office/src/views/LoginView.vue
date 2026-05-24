@@ -9,6 +9,7 @@ const email = ref('')
 const pin = ref('')
 const isLoading = ref(false)
 const error = ref('')
+const keepSession = ref(false)
 
 const submitLogin = async () => {
   error.value = ''
@@ -26,7 +27,7 @@ const submitLogin = async () => {
   isLoading.value = true
   
   try {
-    const result = await authService.login(email.value, pin.value)
+    const result = await authService.login(email.value, pin.value, keepSession.value)
     
     if (result.success) {
       // Login bem-sucedido
@@ -96,10 +97,9 @@ const submitLogin = async () => {
 
         <div class="form-row">
           <label class="remember">
-            <input type="checkbox" />
+            <input type="checkbox" v-model="keepSession" />
             <span>Manter sessão</span>
           </label>
-          <button type="button" class="ghost-link">Recuperar acesso</button>
         </div>
 
         <button class="login-button" type="submit" :disabled="isLoading">
