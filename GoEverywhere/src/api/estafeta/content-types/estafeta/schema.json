@@ -53,9 +53,9 @@
       "target": "api::pedido-mission.pedido-mission",
       "mappedBy": "estafeta2"
     },
-    "review": {
+    "reviews": {
       "type": "relation",
-      "relation": "oneToOne",
+      "relation": "oneToMany",
       "target": "api::review.review",
       "mappedBy": "estafeta"
     }

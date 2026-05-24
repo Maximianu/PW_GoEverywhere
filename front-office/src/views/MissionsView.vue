@@ -7,8 +7,18 @@
           <h1 class="headline">Veja as suas Entregas e Viagens</h1>
         </div>
         <div class="header-actions">
-          <button class="btn btn-secondary">Ativas</button>
-          <button class="btn btn-secondary">Concluídas</button>
+          <button 
+            :class="['btn', 'btn-secondary', { 'btn-active': filtroAtivo === 'ativas' }]" 
+            @click="alternarFiltro('ativas')"
+          >
+            Ativas
+          </button>
+          <button 
+            :class="['btn', 'btn-secondary', { 'btn-active': filtroAtivo === 'concluidas' }]" 
+            @click="alternarFiltro('concluidas')"
+          >
+            Concluídas
+          </button>
         </div>
       </div>
 
@@ -28,7 +38,7 @@
         <template v-else>
           <div
             class="list-row"
-            v-for="bilhete in viagens"
+            v-for="bilhete in viagensFiltradas"
             :key="bilhete.id"
           >
             <div class="mission-info">
@@ -40,11 +50,12 @@
               </div>
             </div>
 
+            <router-link :to="`/missions/${bilhete.documentId}`" class="btn btn-primary" style="text-decoration: none;">→</router-link>
+
             <div class="mission-passengers">
               Lotação Max: {{ getMissaoLota(bilhete) }}
             </div>
 
-            <div class="btn btn-primary">→</div>
           </div>
         </template>
       </div>
@@ -53,7 +64,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue' // Adicionado o 'computed'
 import { useBookingStore } from '../stores/BookingStore'
 import { useUserStore } from '../stores/UserStore'
 import { obterBilhetesPorClienteStrapi } from '../services/strapi'
@@ -63,6 +74,35 @@ const userStore = useUserStore()
 const viagens = ref([])
 const loading = ref(false)
 const error = ref(null)
+
+// Estado do filtro ativo: null (mostra tudo), 'ativas' ou 'concluidas'
+const filtroAtivo = ref(null)
+
+// Lógica para alternar, desativar ao clicar de novo ou comutar para o oposto
+const alternarFiltro = (tipo) => {
+  if (filtroAtivo.value === tipo) {
+    filtroAtivo.value = null
+  } else {
+    filtroAtivo.value = tipo
+  }
+}
+
+// Propriedade Computada que filtra com base estritamente no estado da viagem
+const viagensFiltradas = computed(() => {
+  if (!filtroAtivo.value) return viagens.value
+
+  return viagens.value.filter(bilhete => {
+    const estadoViagem = getMissaoEstado(bilhete)
+    
+    if (filtroAtivo.value === 'ativas') {
+      return estadoViagem === 'Agendada' || estadoViagem === 'Em Curso'
+    }
+    if (filtroAtivo.value === 'concluidas') {
+      return estadoViagem === 'Concluída'
+    }
+    return true
+  })
+})
 
 const getClienteId = () => {
   const id = userStore.clienteData?.id || bookingStore.clienteId || null
@@ -81,6 +121,7 @@ const fetchViagens = async () => {
 
   try {
     viagens.value = await obterBilhetesPorClienteStrapi(clienteId)
+    console.log("Viagens carregadas: ", viagens.value)
   } catch (err) {
     console.error('Erro ao carregar viagens:', err)
     error.value = err.message || 'Erro desconhecido ao carregar viagens.'
@@ -102,19 +143,21 @@ const getField = (relation, field, fallback) => {
 }
 
 const getPedidoEstado = (bilhete) => {
-  return getField(bilhete?.pedido, 'Estado', 'desconhecido')
+  return bilhete?.Estado_Equipamento ?? 'desconhecido'
 }
 
 const getMissaoTitulo = (bilhete) => {
-  return getField(bilhete?.missao, 'Nome', 'Missão desconhecida')
+  // Access missao2 populated data from bilhete
+  return getField(bilhete?.missao2, 'Nome', 'Missão desconhecida')
 }
 
 const getMissaoLota = (bilhete) => {
-  return getField(bilhete?.missao, 'Lota', '—')
+  // Access missao2 populated data from bilhete
+  return getField(bilhete?.missao2, 'Lota', '—')
 }
 
 const getMissaoDataTexto = (bilhete) => {
-  const missao = getRelationAttributes(bilhete?.missao)
+  const missao = getRelationAttributes(bilhete?.missao2)
   if (!missao) return 'Data desconhecida'
 
   const data = missao.Data || ''
@@ -126,7 +169,7 @@ const getMissaoDataTexto = (bilhete) => {
 }
 
 const getMissaoInterval = (bilhete) => {
-  const missao = getRelationAttributes(bilhete?.missao)
+  const missao = getRelationAttributes(bilhete?.missao2)
   if (!missao || !missao.Data) return null
 
   const partida = missao.Hora_Partida || '00:00'
@@ -149,9 +192,9 @@ const getMissaoEstado = (bilhete) => {
   if (!interval) return 'desconhecida'
 
   const now = new Date()
-  if (now < interval.start) return 'agendada'
-  if (now >= interval.start && now <= interval.end) return 'em curso'
-  return 'Concluida'
+  if (now < interval.start) return 'Agendada'
+  if (now >= interval.start && now <= interval.end) return 'Em Curso'
+  return 'Concluída'
 }
 
 const statusClass = (bilhete) => {
@@ -286,7 +329,14 @@ onMounted(fetchViagens)
 }
 
 .btn:hover {
-  transform: translateY(-0.125rem);
+  background: #53e4ff;
+  box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+}
+
+/* Nova classe adicionada estritamente para destacar visualmente o botão do filtro ativo */
+.btn-active {
+  box-shadow: 0 0 20px #00f2ff;
+  transform: scale(1.05);
 }
 
 @media (max-width: 56.25rem) {

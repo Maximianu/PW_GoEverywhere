@@ -7,6 +7,27 @@ export const useBookingStore = defineStore('booking', () => {
   const loading = ref(false)
   const error = ref(null)
 
+  const getLotacaoMaxima = (missao) => {
+    const raw = missao?.Lota ?? missao?.attributes?.Lota ?? missao?.lotacaoMaxima ?? missao?.attributes?.lotacaoMaxima ?? missao?.Lotacao ?? missao?.attributes?.Lotacao
+    const parsed = Number(raw)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+
+  const getBilhetesVendidos = (missao) => {
+    // Support multiple shapes: direct arrays, Strapi v4 attributes.bilhetes.data, or alternative relation name 'missao2'
+    const bilhetes = missao?.Bilhetes ?? missao?.bilhetes ?? missao?.attributes?.Bilhetes ?? missao?.attributes?.bilhetes ?? missao?.attributes?.missao2 ?? missao?.missao2
+    if (bilhetes == null) return 0
+    if (typeof bilhetes === 'number') return bilhetes
+    if (Array.isArray(bilhetes)) return bilhetes.length
+    if (bilhetes.data && Array.isArray(bilhetes.data)) return bilhetes.data.length
+    if (typeof bilhetes === 'object') {
+      const count = bilhetes.length ?? bilhetes.data?.length
+      if (Number.isFinite(count)) return count
+    }
+    const parsed = Number(bilhetes)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+
   const missaoSelecionada = ref(null)
   const numeroPassageiros = ref(1)
   const dataLancamento = ref('')
@@ -29,7 +50,8 @@ export const useBookingStore = defineStore('booking', () => {
     error.value = null
 
     try {
-      const response = await fetch(`${STRAPI_URL}/api/missaos?filters[Data][$notNull]=true&filters[Planeta][$notNull]=true&sort=Data:asc`, {
+      // Populate the bilhetes relation so we can count tickets per mission (Strapi v4)
+      const response = await fetch(`${STRAPI_URL}/api/missaos?filters[Data][$notNull]=true&filters[Planeta][$notNull]=true&sort=Data:asc&populate=bilhetes`, {
         method: 'GET',
         headers
       })
@@ -207,6 +229,20 @@ export const useBookingStore = defineStore('booking', () => {
     dataLancamento.value = data
   }
 
+  const lotacaoDisponivel = computed(() => {
+    const missao = missaoSelecionada.value
+    if (!missao) return 0
+    console.log("lotacao max: ", getLotacaoMaxima(missao))
+    console.log("bilhetes vendidos: ", getBilhetesVendidos(missao))
+    return Math.max(0, getLotacaoMaxima(missao) - getBilhetesVendidos(missao))
+  })
+
+  const missoesDisponiveis = computed(() => {
+    return missoes.value.filter((missao) => {
+      return getLotacaoMaxima(missao) - getBilhetesVendidos(missao) > 0
+    })
+  })
+
   const custoMissao = computed(() => {
     if (!missaoSelecionada.value) return 0
     return missaoSelecionada.value.Preco || missaoSelecionada.value.attributes?.Preco || 0
@@ -261,7 +297,7 @@ export const useBookingStore = defineStore('booking', () => {
   const custoTotal = computed(() => custoMissao.value)
 
   const paymentTotal = computed(() => {
-    return custoTotal.value + kitPrice.value
+    return Number(custoTotal.value) + Number(kitPrice.value)
   })
 
   const nomeMissao = computed(() => {
@@ -329,6 +365,8 @@ export const useBookingStore = defineStore('booking', () => {
     nomeMissao,
     dataMissao,
     planetaMissao,
-    formatPrice
+    formatPrice,
+    lotacaoDisponivel,
+    missoesDisponiveis
   }
 })
