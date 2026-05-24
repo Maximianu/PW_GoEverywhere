@@ -46,3 +46,7 @@ export function getEstafetaLogado() {
     const dados = localStorage.getItem('estafeta')
     return dados ? JSON.parse(dados) : null
 }
+
+export async function getReviews() {
+    return request('/reviews')
+}

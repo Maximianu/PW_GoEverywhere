@@ -17,17 +17,7 @@
         <p v-if="estafeta.telemovel">📞 {{ estafeta.telemovel }}</p>
       </div>
 
-      <section class="stats-grid profile-stats">
-        <div class="stat-card">
-          <span class="stat-label">Horas Trabalhadas</span>
-          <strong>460</strong>
-        </div>
-
-        <div class="stat-card">
-          <span class="stat-label">Entregas Hoje</span>
-          <strong>{{ entregasHoje }}</strong>
-        </div>
-
+      <section class="stats-grid stats-grid-2 profile-stats">
         <div class="stat-card">
           <span class="stat-label">Entregas Totais</span>
           <strong>{{ totalEntregas }}</strong>
@@ -40,7 +30,7 @@
       </section>
 
       <div class="small-box centered-box">
-        <p>Avaliação média: 4,3 (12 avaliações)</p>
+        <p>Avaliação média: {{ mediaReviews }} ({{ totalReviews }} avaliações)</p>
       </div>
 
       <button class="primary-btn btn-glow logout-main-btn" @click="logout">
@@ -59,7 +49,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getPedidos, getEstafetaLogado } from '../services/api'
+import { getPedidos, getEstafetaLogado, getReviews } from '../services/api'
 
 const router = useRouter()
 
@@ -70,6 +60,7 @@ const estafeta = ref({
 })
 
 const pedidos = ref([])
+const reviews = ref([])
 
 function mapStatus(status) {
   if (!status) return 'Pendente'
@@ -80,7 +71,7 @@ function mapStatus(status) {
     return 'Entregue'
   }
 
-  if (value.includes('não') || value.includes('nao')) {
+  if (value.includes('não') || value.includes('nao') || value.includes('rejeitado')) {
     return 'Não Entregue'
   }
 
@@ -104,15 +95,15 @@ async function carregarPerfil() {
     ...dados,
   }
 
-  const result = await getPedidos(dados.id)
-
-  pedidos.value = result.data.map((item) => ({
+  const pedidosResult = await getPedidos(dados.id)
+  pedidos.value = pedidosResult.data.map((item) => ({
     id: item.documentId,
     numero: item.id,
     status: mapStatus(item.Estado),
-    createdAt: item.createdAt,
-    updatedAt: item.updatedAt,
   }))
+
+  const reviewsResult = await getReviews()
+  reviews.value = reviewsResult.data || []
 }
 
 onMounted(carregarPerfil)
@@ -123,20 +114,29 @@ const entregasConcluidas = computed(
   () => pedidos.value.filter((p) => p.status === 'Entregue').length,
 )
 
-const entregasHoje = computed(() => {
-  const hoje = new Date().toISOString().slice(0, 10)
-
-  return pedidos.value.filter((p) => {
-    const data = (p.updatedAt || p.createdAt || '').slice(0, 10)
-    return data === hoje
-  }).length
-})
+const entregasNaoEntregues = computed(
+  () => pedidos.value.filter((p) => p.status === 'Não Entregue').length,
+)
 
 const taxaSucesso = computed(() => {
-  if (totalEntregas.value === 0) return '0%'
+  const totalFinalizadas = entregasConcluidas.value + entregasNaoEntregues.value
 
-  const taxa = (entregasConcluidas.value / totalEntregas.value) * 100
+  if (totalFinalizadas === 0) return '0%'
+
+  const taxa = (entregasConcluidas.value / totalFinalizadas) * 100
   return `${taxa.toFixed(1)}%`
+})
+
+const totalReviews = computed(() => reviews.value.length)
+
+const mediaReviews = computed(() => {
+  if (reviews.value.length === 0) return '0.0'
+
+  const soma = reviews.value.reduce((total, review) => {
+    return total + Number(review.Estrela_estafeta || 0)
+  }, 0)
+
+  return (soma / reviews.value.length).toFixed(1)
 })
 
 function go(path) {

@@ -9,8 +9,6 @@
         <p><strong>Cliente:</strong> {{ pedido.name }}</p>
         <p><strong>Encomenda:</strong> #{{ pedido.numero }}</p>
         <p><strong>Morada:</strong> {{ pedido.address }}</p>
-        <p><strong>Telefone:</strong> {{ pedido.phone }}</p>
-        <p><strong>Janela:</strong> {{ pedido.time }}</p>
         <p><strong>Prioridade:</strong> {{ pedido.priority }}</p>
         <p><strong>Estado:</strong> {{ pedido.status }}</p>
       </div>
