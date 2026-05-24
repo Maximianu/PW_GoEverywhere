@@ -26,7 +26,8 @@
         "Aprovado",
         "Rejeitado",
         "Transito",
-        "Concluido"
+        "Concluido",
+        "Cancelado"
       ]
     },
     "LocalEntrega": {
@@ -56,6 +57,11 @@
     },
     "Problema": {
       "type": "string"
+    },
+    "cliente": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::cliente.cliente"
     }
   }
 }

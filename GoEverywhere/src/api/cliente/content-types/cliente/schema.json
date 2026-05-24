@@ -25,6 +25,11 @@
       "relation": "oneToMany",
       "target": "api::bilhete.bilhete",
       "mappedBy": "cliente2"
+    },
+    "pedidos": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::pedido-mission.pedido-mission"
     }
   }
 }
