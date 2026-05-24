@@ -648,6 +648,10 @@ export interface ApiClienteCliente extends Struct.CollectionTypeSchema {
       'api::cliente.cliente'
     > &
       Schema.Attribute.Private;
+    pedidos: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::pedido-mission.pedido-mission'
+    >;
     PrimeiroNome: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     UltimoNome: Schema.Attribute.String;
@@ -859,11 +863,19 @@ export interface ApiPedidoMissionPedidoMission
   };
   attributes: {
     bilhete: Schema.Attribute.Relation<'oneToOne', 'api::bilhete.bilhete'>;
+    cliente: Schema.Attribute.Relation<'oneToOne', 'api::cliente.cliente'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     Estado: Schema.Attribute.Enumeration<
-      ['Pendente', 'Aprovado', 'Rejeitado', 'Transito', 'Concluido']
+      [
+        'Pendente',
+        'Aprovado',
+        'Rejeitado',
+        'Transito',
+        'Concluido',
+        'Cancelado',
+      ]
     >;
     estafeta: Schema.Attribute.Relation<'oneToOne', 'api::estafeta.estafeta'>;
     estafeta2: Schema.Attribute.Relation<'manyToOne', 'api::estafeta.estafeta'>;

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { mockData } from '../mockData'
-import { MapPin, CheckCircle2, XCircle, UserPlus, ChevronLeft, ChevronRight, X, Clock, List, Layers, ChevronDown } from 'lucide-vue-next'
+import { MapPin, CheckCircle2, XCircle, UserPlus, ChevronLeft, ChevronRight, X, Clock, List, Layers, ChevronDown, Calendar } from 'lucide-vue-next'
 
 const filter = ref('todos')
 const viewMode = ref('missions')
@@ -300,7 +300,7 @@ const groupedByMission = computed(() => {
               <tr class="border-b border-[#233246] text-gray-400 text-xs uppercase tracking-widest font-semibold bg-[#111926]">
                 <th class="p-6 font-semibold w-24 text-center">ID</th>
                 <th class="p-6 font-semibold w-1/3">Cliente</th>
-                <th class="p-6 font-semibold w-1/4">Destino</th>
+                <th class="p-6 font-semibold w-1/4">Local de Entrega</th>
                 <th class="p-6 font-semibold w-1/6">Data</th>
                 <th class="p-6 font-semibold">Estado</th>
                 <th class="p-6 font-semibold">Ações</th>
@@ -329,7 +329,7 @@ const groupedByMission = computed(() => {
                 <td class="p-6 text-sm">
                   <div class="flex items-center gap-2 text-gray-300">
                     <MapPin :size="16" class="text-gray-500" />
-                    {{ order.destination }}
+                    {{ order.localEntrega }}
                   </div>
                 </td>
                 <td class="p-6 text-gray-300 text-sm">
@@ -400,6 +400,8 @@ const groupedByMission = computed(() => {
                   <div v-if="group.mission" class="flex items-center gap-3 text-sm text-gray-400 mt-1">
                     <span class="inline-flex items-center gap-1"><MapPin :size="14"/> {{ group.mission.planeta }}</span>
                     <span>&bull;</span>
+                    <span class="inline-flex items-center gap-1"><Calendar :size="14"/> {{ group.mission.data }}</span>
+                    <span>&bull;</span>
                     <span class="text-gray-300 font-medium">Lotação: {{ group.orders.length }} / {{ group.mission.lota }}</span>
                   </div>
                   <div v-else class="text-sm text-gray-400 mt-1">Pedidos sem missão específica</div>
@@ -426,7 +428,7 @@ const groupedByMission = computed(() => {
                     <tr class="border-b border-[#233246] text-gray-400 text-xs uppercase tracking-widest font-semibold bg-[#0c1219]">
                       <th class="p-5 pl-6 font-semibold">ID</th>
                       <th class="p-5 font-semibold">Cliente</th>
-                      <th class="p-5 font-semibold">Destino Final</th>
+                      <th class="p-5 font-semibold">Local de Entrega</th>
                       <th class="p-5 font-semibold">Status</th>
                       <th class="p-5 pr-6 font-semibold">Ações</th>
                     </tr>
@@ -449,7 +451,7 @@ const groupedByMission = computed(() => {
                       <td class="p-5 text-sm">
                         <div class="flex items-center gap-2 text-gray-400">
                           <MapPin :size="14" class="text-gray-500" />
-                          {{ order.destination }}
+                          {{ order.localEntrega }}
                         </div>
                       </td>
                       <td class="p-5">
