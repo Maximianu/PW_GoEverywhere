@@ -73,6 +73,35 @@ const selectedCourierOrders = computed(() => {
   })
 })
 
+const selectedStatusFilter = ref('todos')
+
+watch(selectedCourier, () => {
+  selectedStatusFilter.value = 'todos'
+})
+
+const filteredCourierOrders = computed(() => {
+  const orders = selectedCourierOrders.value
+  if (selectedStatusFilter.value === 'todos') return orders
+
+  return orders.filter(order => {
+    const status = (order.status || '').toLowerCase()
+    
+    if (selectedStatusFilter.value === 'concluido') {
+      return status.includes('concluido') || status.includes('concluído') || status.includes('entregue')
+    }
+    if (selectedStatusFilter.value === 'rejeitado') {
+      return status.includes('rejeitado')
+    }
+    if (selectedStatusFilter.value === 'aprovado') {
+      return status.includes('aprovado') || status.includes('pendente')
+    }
+    if (selectedStatusFilter.value === 'transito') {
+      return status.includes('transito') || status.includes('trânsito') || status.includes('em transito')
+    }
+    return true
+  })
+})
+
 const isSameCourier = (a, b) => {
   if (!a || !b) return false
   return String(a.id) === String(b.id) ||
@@ -447,15 +476,33 @@ onUnmounted(() => {
                   <span class="orders-eyebrow">Pedidos associados</span>
                   <h3>{{ selectedCourier.nome }}</h3>
                 </div>
-                <span class="orders-count">{{ selectedCourierOrders.length }}</span>
+                <span class="orders-count">{{ filteredCourierOrders.length }}</span>
               </div>
 
-              <div v-if="selectedCourierOrders.length === 0" class="empty-orders">
-                Nenhum pedido associado a este estafeta.
+              <!-- Opções de filtro de estado -->
+              <div class="orders-status-filters">
+                <button 
+                  v-for="opt in [
+                    { value: 'todos', label: 'Todos' },
+                    { value: 'aprovado', label: 'Aprovados' },
+                    { value: 'transito', label: 'Trânsito' },
+                    { value: 'concluido', label: 'Concluídos' },
+                    { value: 'rejeitado', label: 'Rejeitados' }
+                  ]"
+                  :key="opt.value"
+                  :class="['status-filter-pill', selectedStatusFilter === opt.value ? 'active' : '']"
+                  @click="selectedStatusFilter = opt.value"
+                >
+                  {{ opt.label }}
+                </button>
+              </div>
+
+              <div v-if="filteredCourierOrders.length === 0" class="empty-orders">
+                Nenhum pedido encontrado com este estado.
               </div>
 
               <div v-else class="orders-list">
-                <div v-for="order in selectedCourierOrders" :key="order.id" class="order-card">
+                <div v-for="order in filteredCourierOrders" :key="order.id" class="order-card">
                   <div class="order-card-top">
                     <span class="order-client">{{ order.client }}</span>
                     <span class="order-status">{{ order.status }}</span>
@@ -692,12 +739,26 @@ onUnmounted(() => {
 .stat-chip.green { background: rgba(22, 163, 74, 0.2); color: #4ade80; }
 .stat-chip.blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
 
-.courier-list { flex: 1; overflow-y: auto; padding: 10px 0; }
+.courier-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.courier-list::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
 
 .selected-courier-detail {
   flex: 1;
   overflow-y: auto;
   padding-top: 10px;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.selected-courier-detail::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 .detail-top-card {
@@ -840,6 +901,42 @@ onUnmounted(() => {
 
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.orders-status-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
+.status-filter-pill {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.status-filter-pill:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.status-filter-pill.active {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
 
 :deep(.custom-marker) { filter: drop-shadow(0 2px 6px rgba(0,0,0,0.3)); }
 </style>

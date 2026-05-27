@@ -1,5 +1,11 @@
 * {
   box-sizing: border-box;
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
+}
+
+::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari and Opera */
 }
 
 body {

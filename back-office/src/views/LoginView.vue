@@ -33,7 +33,7 @@ const submitLogin = async () => {
       // Login bem-sucedido
       setTimeout(() => {
         isLoading.value = false
-        router.push('/dashboard')
+        router.push('/moon-3d')
       }, 450)
     } else {
       // Erro no login

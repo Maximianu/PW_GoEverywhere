@@ -152,6 +152,12 @@ const formatNumber = (value) => {
   return number.toLocaleString('pt-PT')
 }
 
+const planetImages = {
+  Lua: '/mission-lunar.png',
+  Marte: '/mission-mars.png',
+  Terra: '/mission-earth-orbit.png'
+}
+
 const goToMissionPlanet = (mission) => {
   const layoutByPlanet = {
     Lua: 'moon',
@@ -282,7 +288,7 @@ const openMissionsDrawer = () => {
 const loadMissions = async () => {
   isLoadingMissions.value = true
   try {
-    const res = await fetch('http://127.0.0.1:1338/api/missaos?populate[bilhetes][populate]=cliente')
+    const res = await fetch('http://127.0.0.1:1338/api/missaos?status=draft&populate[bilhetes][populate]=cliente')
     const json = await res.json()
     allMissions.value = json.data || []
     renderDynamicMissions(allMissions.value)
@@ -295,6 +301,30 @@ const loadMissions = async () => {
 
 const dynamicPoints = ref([])
 const dynamicMissionMeshes = []
+
+const fallbackMissionPositions = {
+  Lua: [35, -75, 55],
+  Terra: [0, 0, 50],
+  Marte: [35, 30, 25]
+}
+
+const getMissionVector = (mission, index) => {
+  const x = Number(mission.X) || 0
+  const y = Number(mission.Y) || 0
+  const z = Number(mission.Z) || 0
+
+  if (x || y || z) return new window.THREE.Vector3(x, y, z)
+
+  const fallback = fallbackMissionPositions[mission.Planeta]
+  if (!fallback) return null
+
+  const offset = (index % 5) * 8
+  return new window.THREE.Vector3(
+    fallback[0] + offset,
+    fallback[1] + Math.floor(index / 5) * 8,
+    fallback[2] - offset
+  )
+}
 
 const renderDynamicMissions = (missions) => {
   if (!moon || !earth || !mars) {
@@ -311,9 +341,7 @@ const renderDynamicMissions = (missions) => {
   dynamicMissionMeshes.length = 0
   dynamicPoints.value = []
 
-  missions.forEach(m => {
-    if (!m.X && !m.Y && !m.Z) return
-
+  missions.forEach((m, index) => {
     let targetPlanet, radius
     if (m.Planeta === 'Lua') {
       targetPlanet = moon
@@ -328,8 +356,8 @@ const renderDynamicMissions = (missions) => {
       return
     }
 
-    const v = new window.THREE.Vector3(m.X, m.Y, m.Z).normalize()
-    if (v.lengthSq() === 0) return
+    const v = getMissionVector(m, index)?.normalize()
+    if (!v || v.lengthSq() === 0) return
 
     const missionColor = 0xff3dcb
     const pin = createPinMesh(missionColor)
@@ -347,7 +375,8 @@ const renderDynamicMissions = (missions) => {
       color: missionColor,
       isDynamic: true,
       planet: m.Planeta,
-      fullDescription: m.Descricao_missao || ''
+      fullDescription: m.Descricao_missao || '',
+      image: planetImages[m.Planeta] || planetImages['Terra']
     }
 
     pin.children[0].userData = pointData
@@ -474,20 +503,20 @@ const MODEL_SCALE = {
 }
 
 const moonPoints = [
-  { id: 1, name: 'Apollo 11', description: 'A histórica missão da NASA que levou os primeiros seres humanos à superfície lunar. Neil Armstrong e Buzz Aldrin exploraram o Mar da Tranquilidade enquanto Michael Collins os aguardava em órbita. Este marco monumental ocorreu no auge da Corrida Espacial, mudando para sempre a nossa compreensão sobre os limites da exploração espacial e demonstrando a incrível capacidade da engenharia humana.', date: 'Julho 1969', color: 0x00f2ff, x: 50, y: 20, z: 80 },
-  { id: 2, name: 'Apollo 12', description: 'A segunda aterragem tripulada, que se destacou pela sua enorme precisão. A tripulação aterrou a uma curta distância da sonda Surveyor 3, no Oceano das Tormentas, permitindo-lhes recuperar peças que estavam expostas ao ambiente lunar há anos. O voo enfrentou momentos de tensão após ser atingido por um raio durante a descolagem, mas a missão foi um sucesso estrondoso.', date: 'Novembro 1969', color: 0xff6b6b, x: -60, y: -30, z: 70 },
-  { id: 3, name: 'Apollo 15', description: 'A primeira das missões "J" da Apollo, desenhada para uma permanência mais prolongada e exploração científica mais profunda. Introduziu o icónico Lunar Roving Vehicle (LRV), permitindo aos astronautas percorrer distâncias inéditas na zona de Hadley-Apennine. A missão recolheu amostras vitais de rocha, incluindo a famosa Rocha do Génesis, revolucionando os estudos lunares.', date: 'Julho 1971', color: 0xffd93d, x: -20, y: 70, z: 60 },
-  { id: 4, name: "Chang'e 4", description: 'Uma missão pioneira da agência espacial chinesa, tornando-se a primeira sonda a efetuar uma alunagem suave no lado oculto da Lua. Pousou na cratera Von Kármán, transmitindo dados através de um satélite de retransmissão estrategicamente posicionado. Esta missão abriu as portas a estudos de radioastronomia num ambiente livre de interferências terrestres.', date: 'Janeiro 2019', color: 0x6bcf7f, x: 80, y: -60, z: -20 },
-  { id: 5, name: 'Artemis I', description: 'O voo inaugural sem tripulação do monumental foguetão SLS e da nave Orion. Viajou até à Lua e colocou-se em órbita retrógrada, atestando a segurança e o desempenho de todos os sistemas críticos. Este passo crucial foi desenhado para testar as capacidades de reentrada na atmosfera terrestre a alta velocidade, certificando as bases para o futuro retorno humano.', date: 'Novembro 2022', color: 0xa78bfa, x: 10, y: 90, z: 20 },
-  { id: 10, name: 'Artemis II', description: 'A primeira missão tripulada do programa Artemis. Quatro astronautas farão uma viagem à volta da Lua, testando os sistemas de suporte de vida e navegação em espaço profundo da nave Orion. Esta missão histórica não só assinala o regresso da humanidade às redondezas lunares desde a era Apollo, mas também prepara as fundações cruciais para futuras missões a Marte.', date: 'Novembro 2025', color: 0x38b6ff, x: -80, y: 10, z: 40 },
+  { id: 1, name: 'Apollo 11', description: 'A histórica missão da NASA que levou os primeiros seres humanos à superfície lunar. Neil Armstrong e Buzz Aldrin exploraram o Mar da Tranquilidade enquanto Michael Collins os aguardava em órbita. Este marco monumental ocorreu no auge da Corrida Espacial, mudando para sempre a nossa compreensão sobre os limites da exploração espacial e demonstrando a incrível capacidade da engenharia humana.', date: 'Julho 1969', color: 0x00f2ff, x: 50, y: 20, z: 80, image: '/mission-apollo-11.png' },
+  { id: 2, name: 'Apollo 12', description: 'A segunda aterragem tripulada, que se destacou pela sua enorme precisão. A tripulação aterrou a uma curta distância da sonda Surveyor 3, no Oceano das Tormentas, permitindo-lhes recuperar peças que estavam expostas ao ambiente lunar há anos. O voo enfrentou momentos de tensão após ser atingido por um raio durante a descolagem, mas a missão foi um sucesso estrondoso.', date: 'Novembro 1969', color: 0xff6b6b, x: -60, y: -30, z: 70, image: '/mission-apollo-12.png' },
+  { id: 3, name: 'Apollo 15', description: 'A primeira das missões "J" da Apollo, desenhada para uma permanência mais prolongada e exploração científica mais profunda. Introduziu o icónico Lunar Roving Vehicle (LRV), permitindo aos astronautas percorrer distâncias inéditas na zona de Hadley-Apennine. A missão recolheu amostras vitais de rocha, incluindo a famosa Rocha do Génesis, revolucionando os estudos lunares.', date: 'Julho 1971', color: 0xffd93d, x: -20, y: 70, z: 60, image: '/mission-apollo-15.png' },
+  { id: 4, name: "Chang'e 4", description: 'Uma missão pioneira da agência espacial chinesa, tornando-se a primeira sonda a efetuar uma alunagem suave no lado oculto da Lua. Pousou na cratera Von Kármán, transmitindo dados através de um satélite de retransmissão estrategicamente posicionado. Esta missão abriu as portas a estudos de radioastronomia num ambiente livre de interferências terrestres.', date: 'Janeiro 2019', color: 0x6bcf7f, x: 80, y: -60, z: -20, image: '/mission-change-4.png' },
+  { id: 5, name: 'Artemis I', description: 'O voo inaugural sem tripulação do monumental foguetão SLS e da nave Orion. Viajou até à Lua e colocou-se em órbita retrógrada, atestando a segurança e o desempenho de todos os sistemas críticos. Este passo crucial foi desenhado para testar as capacidades de reentrada na atmosfera terrestre a alta velocidade, certificando as bases para o futuro retorno humano.', date: 'Novembro 2022', color: 0xa78bfa, x: 10, y: 90, z: 20, image: '/mission-artemis-1.png' },
+  { id: 10, name: 'Artemis II', description: 'A primeira missão tripulada do programa Artemis. Quatro astronautas farão uma viagem à volta da Lua, testando os sistemas de suporte de vida e navegação em espaço profundo da nave Orion. Esta missão histórica não só assinala o regresso da humanidade às redondezas lunares desde a era Apollo, mas também prepara as fundações cruciais para futuras missões a Marte.', date: 'Novembro 2025', color: 0x38b6ff, x: -80, y: 10, z: 40, image: '/mission-artemis-2.png' },
   { id: 20, name: '+ Criar Missão', isMissionPoint: true, planet: 'Lua', color: 0xffffff, x: 30, y: -80, z: 50 }
 ]
 
 const marsPoints = [
-  { id: 6, name: 'Perseverance', description: 'Um rover altamente avançado desenhado para investigar astrobiologia e procurar vestígios de vida microbiana antiga. Aterrou na Cratera Jezero, onde outrora existiu um lago e um delta de rio. Em conjunto com o helicóptero Ingenuity, tem recolhido e armazenado amostras vitais de rochas marcianas que deverão ser trazidas de volta à Terra em missões futuras.', date: 'Fevereiro 2021', color: 0xff4500, x: 60, y: 50, z: 50 },
-  { id: 7, name: 'Curiosity', description: 'Aterrou de forma espetacular com a ajuda de um "sky crane" na Cratera Gale. O seu principal objetivo é estudar o clima e a geologia, determinando se a região alguma vez ofereceu condições favoráveis à vida microbiana. Equipado com um poderoso laboratório móvel a laser e vários sensores, alterou fundamentalmente o nosso conhecimento sobre o passado húmido de Marte.', date: 'Agosto 2012', color: 0x00ff00, x: 80, y: -30, z: 30 },
-  { id: 8, name: 'Viking 1', description: 'A primeira parte da missão Viking e a primeira sonda americana a realizar uma aterragem suave no planeta vermelho. Tocou o solo em Chryse Planitia e tirou as primeiras fotos panorâmicas a cores da superfície marciana. O lander e o orbiter executaram diversas experiências biológicas que ainda hoje são analisadas e geram debate sobre os seus resultados controversos.', date: 'Julho 1976', color: 0xffd700, x: -60, y: 60, z: 40 },
-  { id: 9, name: 'Opportunity', description: 'Um dos rovers gémeos da missão MER, aterrou no Meridiani Planum e revelou provas conclusivas de que a água líquida já fluiu em Marte. Originalmente concebido para uma missão de apenas 90 dias, o pequeno e robusto veículo surpreendeu a todos ao permanecer ativo por incríveis 15 anos. Explorou diversas crateras até se silenciar devido a uma colossal tempestade de poeira global.', date: 'Janeiro 2004', color: 0x00f2ff, x: -30, y: -50, z: 80 },
+  { id: 6, name: 'Perseverance', description: 'Um rover altamente avançado desenhado para investigar astrobiologia e procurar vestígios de vida microbiana antiga. Aterrou na Cratera Jezero, onde outrora existiu um lago e um delta de rio. Em conjunto com o helicóptero Ingenuity, tem recolhido e armazenado amostras vitais de rochas marcianas que deverão ser trazidas de volta à Terra em missões futures.', date: 'Fevereiro 2021', color: 0xff4500, x: 60, y: 50, z: 50, image: '/mission-perseverance.png' },
+  { id: 7, name: 'Curiosity', description: 'Aterrou de forma espetacular com a ajuda de um "sky crane" na Cratera Gale. O seu principal objetivo é estudar o clima e a geologia, determinando se a região alguma vez ofereceu condições favoráveis à vida microbiana. Equipado com um poderoso laboratório móvel a laser e vários sensores, alterou fundamentalmente o nosso conhecimento sobre o passado húmido de Marte.', date: 'Agosto 2012', color: 0x00ff00, x: 80, y: -30, z: 30, image: '/mission-curiosity.png' },
+  { id: 8, name: 'Viking 1', description: 'A primeira parte da missão Viking e a primeira sonda americana a realizar uma aterragem suave no planeta vermelho. Tocou o solo em Chryse Planitia e tirou as primeiras fotos panorâmicas a cores da superfície marciana. O lander e o orbiter executaram diversas experiências biológicas que ainda hoje são analisadas e geram debate sobre os seus resultados controversos.', date: 'Julho 1976', color: 0xffd700, x: -60, y: 60, z: 40, image: '/mission-viking-1.png' },
+  { id: 9, name: 'Opportunity', description: 'Um dos rovers gémeos da missão MER, aterrou no Meridiani Planum e revelou provas conclusivas de que a água líquida já fluiu em Marte. Originalmente concebido para uma missão de apenas 90 dias, o pequeno e robusto veículo surpreendeu a todos ao permanecer ativo por incríveis 15 anos. Explorou diversas crateras até se silenciar devido a uma colossal tempestade de poeira global.', date: 'Janeiro 2004', color: 0x00f2ff, x: -30, y: -50, z: 80, image: '/mission-opportunity.png' },
   { id: 21, name: '+ Criar Missão', isMissionPoint: true, planet: 'Marte', color: 0xffffff, x: -40, y: -70, z: 40 }
 ]
 
@@ -499,7 +528,8 @@ const earthPoints = [
     date: 'Contínuo',
     color: 0x00f2ff,
     orbitRadius: 175,
-    orbitAngle: 0.3
+    orbitAngle: 0.3,
+    image: '/orbit-low-earth.png'
   },
   {
     id: 12,
@@ -508,7 +538,8 @@ const earthPoints = [
     date: 'Contínuo',
     color: 0xffd93d,
     orbitRadius: 220,
-    orbitAngle: Math.PI * 1.25
+    orbitAngle: Math.PI * 1.25,
+    image: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?auto=format&fit=crop&w=500&q=80'
   },
   {
     id: 22,
@@ -1043,6 +1074,10 @@ const onMouseMove = (e) => {
 const onContainerClick = (e) => {
   if (Math.hypot(e.clientX - dragStartPosition.x, e.clientY - dragStartPosition.y) > 5) return
 
+  const rect = containerRef.value.getBoundingClientRect()
+  mouse.x = ((e.clientX - rect.left) / containerRef.value.clientWidth) * 2 - 1
+  mouse.y = -((e.clientY - rect.top) / containerRef.value.clientHeight) * 2 + 1
+
   raycaster.setFromCamera(mouse, camera)
   const hits = raycaster.intersectObjects(points)
 
@@ -1054,6 +1089,12 @@ const onContainerClick = (e) => {
   }
 
   const planetHits = raycaster.intersectObjects([moon, earth, mars].filter(Boolean))
+
+  if (showMissionModal.value && planetHits.length === 0) {
+    closeComboOptions()
+    showMissionModal.value = false
+    return
+  }
 
   if (planetHits.length > 0) {
     const hitObj = planetHits[0].object
@@ -1276,7 +1317,7 @@ onBeforeUnmount(() => {
       >
         <div
           v-if="selectedPoint"
-          class="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 bg-[#0a0a0a]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 shadow-2xl max-w-2xl w-full"
+          class="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 bg-[#0a0a0a]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-8 shadow-2xl max-w-3xl w-full"
         >
           <div class="flex justify-between items-start mb-4">
             <div class="flex items-center gap-3">
@@ -1288,9 +1329,19 @@ onBeforeUnmount(() => {
             </div>
             <button @click="selectedPoint = null" class="text-white/30 hover:text-white transition-colors text-xl">✕</button>
           </div>
-          <p class="text-cyan-400 text-xs mb-2 font-mono">{{ selectedPoint.date }}</p>
-          <p v-if="selectedPoint.fullDescription" class="text-white text-sm mb-4 leading-relaxed text-justify">{{ selectedPoint.fullDescription }}</p>
-          <p class="text-gray-400 text-sm mb-8 leading-relaxed text-justify">{{ selectedPoint.description }}</p>
+
+          <div class="flex flex-col md:flex-row gap-6 items-start mb-6">
+            <div class="flex-1">
+              <p class="text-cyan-400 text-xs mb-3 font-mono">{{ selectedPoint.date }}</p>
+              <p v-if="selectedPoint.fullDescription" class="text-white text-sm mb-4 leading-relaxed text-justify">{{ selectedPoint.fullDescription }}</p>
+              <p class="text-gray-400 text-sm leading-relaxed text-justify">{{ selectedPoint.description }}</p>
+            </div>
+            
+            <div v-if="selectedPoint.image" class="w-full md:w-48 h-48 shrink-0 rounded-xl overflow-hidden border border-white/10 shadow-lg">
+              <img :src="selectedPoint.image" class="w-full h-full object-cover" alt="Imagem da Missão" />
+            </div>
+          </div>
+
           <button
             @click="selectedPoint = null"
             class="w-full py-4 bg-white text-black rounded-xl font-bold uppercase tracking-widest text-[10px] hover:bg-blue-600 hover:text-white transition-all shadow-lg active:scale-95"
@@ -1322,7 +1373,7 @@ onBeforeUnmount(() => {
               <button @click="showMissionModal = false" class="text-white/30 hover:text-white transition-colors text-xl leading-none">✕</button>
             </div>
 
-            <div class="flex-1 overflow-y-auto px-7 py-4 flex flex-col gap-4" style="overflow-x: visible;">
+            <div class="flex-1 overflow-y-auto px-7 py-4 flex flex-col gap-6 no-scrollbar" style="overflow-x: visible;">
               <div>
                 <label class="field-label">Nome da Missão</label>
                 <input
@@ -1332,16 +1383,6 @@ onBeforeUnmount(() => {
                   class="field-control"
                   @focus="closeFieldOptions()"
                 />
-              </div>
-
-              <div>
-                <label class="field-label">Descrição da Missão</label>
-                <textarea
-                  v-model="missionForm.Descricao_missao"
-                  placeholder="Breve descrição da missão..."
-                  class="field-control min-h-[80px] resize-none py-3"
-                  @focus="closeFieldOptions()"
-                ></textarea>
               </div>
 
               <div class="grid grid-cols-2 gap-3">
@@ -1588,6 +1629,16 @@ onBeforeUnmount(() => {
                   </div>
                 </div>
               </div>
+
+              <div>
+                <label class="field-label">Descrição da Missão</label>
+                <textarea
+                  v-model="missionForm.Descricao_missao"
+                  placeholder="Breve descrição da missão..."
+                  class="field-control min-h-[90px] resize-none py-3"
+                  @focus="closeFieldOptions()"
+                ></textarea>
+              </div>
             </div>
 
             <div class="px-7 py-4 border-t border-white/10 flex gap-3 shrink-0">
@@ -1634,7 +1685,7 @@ onBeforeUnmount(() => {
               <button @click="showMissionsDrawer = false" class="text-white/30 hover:text-white transition-colors text-xl leading-none">✕</button>
             </div>
 
-            <div class="flex-1 overflow-y-auto px-7 py-4 flex flex-col gap-4">
+            <div class="flex-1 overflow-y-auto px-7 py-4 flex flex-col gap-4 no-scrollbar">
               <div v-if="isLoadingMissions" class="text-white/50 text-xs text-center py-10">
                 A carregar missões...
               </div>
@@ -1719,6 +1770,14 @@ onBeforeUnmount(() => {
   margin: 0;
   overflow: hidden;
   background: black;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }
 
 .field-label {

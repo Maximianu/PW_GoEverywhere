@@ -7,7 +7,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/login'
+      redirect: '/moon-3d'
     },
     {
       path: '/login',
@@ -69,8 +69,8 @@ router.beforeEach((to, from) => {
     // Rota protegida e não autenticado
     return '/login'
   } else if (to.path === '/login' && isAuthenticated) {
-    // Já autenticado, redirecionar para dashboard
-    return '/dashboard'
+    // Já autenticado, redirecionar para viagens
+    return '/moon-3d'
   }
 })
 
